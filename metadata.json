@@ -1,0 +1,6 @@
+{
+  "name": "ICSN Panda Playgroup Class Booking",
+  "description": "A class booking web application for the Thai preschool playgroup 'ICSN Panda Playgroup'. Supports parent registration, session booking, slip verification, and admin controls with real-time sync via Supabase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

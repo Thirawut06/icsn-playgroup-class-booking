@@ -1,0 +1,129 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-sans: var(--font-sarabun), "Sarabun", ui-sans-serif, system-ui, sans-serif;
+    --font-sarabun: var(--font-sarabun), "Sarabun", ui-sans-serif, system-ui, sans-serif;
+    --font-outfit: var(--font-outfit), "Outfit", ui-sans-serif, system-ui, sans-serif;
+
+    /* Custom ICSN Colors from Figma */
+    --color-icsn-navy: #211551;
+    --color-icsn-teal: #00B0B9;
+    --color-icsn-pink: #CC3366;
+    --color-icsn-yellow: #F6C654;
+    --color-icsn-gray: #777777;
+    --color-icsn-bg: #F8FAFC;
+
+    /* Map Shadcn Variables */
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+    /* Shadcn Base Colors Overridden with ICSN Theme */
+    --background: #f8fafc;
+    --foreground: #211551;
+    --card: #ffffff;
+    --card-foreground: #211551;
+    --popover: #ffffff;
+    --popover-foreground: #211551;
+    
+    /* Primary is Teal */
+    --primary: #00B0B9;
+    --primary-foreground: #ffffff;
+    
+    /* Secondary is Navy */
+    --secondary: #211551;
+    --secondary-foreground: #ffffff;
+    
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --accent: #f1f5f9;
+    --accent-foreground: #211551;
+    
+    /* Destructive is Pink */
+    --destructive: #CC3366;
+    --destructive-foreground: #ffffff;
+    
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: #00B0B9;
+    
+    --radius: 1rem;
+}
+
+.dark {
+    --background: #0A0F2E;
+    --foreground: #f8fafc;
+    --card: #1C2448;
+    --card-foreground: #f8fafc;
+    --popover: #1C2448;
+    --popover-foreground: #f8fafc;
+    
+    --primary: #00B0B9;
+    --primary-foreground: #ffffff;
+    
+    --secondary: #211551;
+    --secondary-foreground: #ffffff;
+    
+    --muted: #1A1A2E;
+    --muted-foreground: #8890A8;
+    --accent: #1A1A2E;
+    --accent-foreground: #f8fafc;
+    
+    --destructive: #CC3366;
+    --destructive-foreground: #ffffff;
+    
+    --border: #3F3D6B;
+    --input: #3F3D6B;
+    --ring: #00B0B9;
+}
+
+/* Custom Component Styles missing from shadcn */
+@layer components {
+    .glass-panel {
+        @apply bg-white/80 backdrop-blur-md border border-white/40 shadow-sm;
+    }
+}
+
+/* Global resets for smoother UI */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hide scrollbar for clean UI but allow scrolling */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
