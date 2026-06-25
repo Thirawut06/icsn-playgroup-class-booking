@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, AppDB } from '@/lib/supabase';
 import { Lock, LogOut, CheckCircle, XCircle, Users, Check, X } from 'lucide-react';
 
 export default function Admin() {
@@ -13,6 +13,12 @@ export default function Admin() {
   const [dailyDate, setDailyDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [dailyAttendance, setDailyAttendance] = useState<any[]>([]);
   const [slipsPending, setSlipsPending] = useState<any[]>([]);
+
+  // Walk-in form state
+  const [walkinPhone, setWalkinPhone] = useState('');
+  const [walkinName, setWalkinName] = useState('');
+  const [walkinFree, setWalkinFree] = useState(false);
+  const [walkinLoading, setWalkinLoading] = useState(false);
 
   useEffect(() => {
     if (sessionStorage.getItem('icsn_admin_verified') === 'true') {
@@ -90,6 +96,46 @@ export default function Admin() {
       fetchDailyAttendance();
     }
   }, [dailyDate, isAuthorized]);
+
+  const handleWalkin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!walkinPhone || !walkinName) return;
+    
+    setWalkinLoading(true);
+    try {
+      // 1. Get or Create Session
+      const session = await AppDB.getOrCreateSession(dailyDate);
+      
+      // 2. Add Walkin Parent & Child
+      const { child_id } = await AppDB.adminAddWalkin(walkinPhone, walkinName);
+      
+      // 3. Book Class
+      await AppDB.adminBookClass(child_id, session.id, walkinFree);
+      
+      alert('บันทึกสำเร็จ!');
+      setWalkinPhone('');
+      setWalkinName('');
+      fetchDailyAttendance();
+    } catch (err: any) {
+      alert('Error: ' + err.message);
+    } finally {
+      setWalkinLoading(false);
+    }
+  };
+
+  const handleCancelBooking = async (bookingId: string) => {
+    if (!confirm('แน่ใจหรือไม่ว่าต้องการยกเลิกการจองนี้? (ระบบจะคืนเครดิตให้อัตโนมัติ)')) return;
+    
+    const pwd = sessionStorage.getItem('icsn_admin_pwd');
+    try {
+      await supabase.functions.invoke('admin-actions', {
+        body: { action: 'cancel-booking', password: pwd, bookingId, cancelReason: 'Admin Cancelled' }
+      });
+      fetchDailyAttendance();
+    } catch (err: any) {
+      alert('Error: ' + err.message);
+    }
+  };
 
   const approveSlip = async (id: string, parentId: string) => {
     const pwd = sessionStorage.getItem('icsn_admin_pwd');
@@ -178,6 +224,25 @@ export default function Admin() {
               <h2 className="font-bold text-lg">รายชื่อเด็กเข้าเรียน</h2>
               <input type="date" value={dailyDate} onChange={e => setDailyDate(e.target.value)} className="border p-2 rounded-lg text-sm" />
             </div>
+
+            {/* Walk-in Form */}
+            <form onSubmit={handleWalkin} className="mb-6 p-4 bg-gray-50 border rounded-xl flex flex-wrap items-end gap-4">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">เบอร์โทรศัพท์</label>
+                <input type="text" required value={walkinPhone} onChange={e => setWalkinPhone(e.target.value)} placeholder="08XXXXXXXX" className="border px-3 py-2 rounded-lg text-sm w-40" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">ชื่อเล่นน้อง</label>
+                <input type="text" required value={walkinName} onChange={e => setWalkinName(e.target.value)} placeholder="ชื่อเล่น" className="border px-3 py-2 rounded-lg text-sm w-40" />
+              </div>
+              <div className="flex items-center gap-2 pb-2">
+                <input type="checkbox" id="walkinFree" checked={walkinFree} onChange={e => setWalkinFree(e.target.checked)} />
+                <label htmlFor="walkinFree" className="text-sm font-bold text-gray-700 cursor-pointer">ให้เข้าฟรี (ไม่หักเครดิต)</label>
+              </div>
+              <button type="submit" disabled={walkinLoading} className="bg-[#211551] text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#1a1040]">
+                {walkinLoading ? 'กำลังบันทึก...' : '+ เพิ่ม Walk-in'}
+              </button>
+            </form>
             
             <table className="w-full text-sm text-left">
               <thead className="bg-gray-50 text-gray-500">
@@ -188,6 +253,7 @@ export default function Admin() {
                   <th className="p-3">ผู้ปกครอง</th>
                   <th className="p-3">เบอร์โทร</th>
                   <th className="p-3 text-center">เข้าเรียน</th>
+                  <th className="p-3 text-center">จัดการ</th>
                 </tr>
               </thead>
               <tbody>
@@ -203,6 +269,11 @@ export default function Admin() {
                       <td className="p-3">{bk.parent?.phone}</td>
                       <td className="p-3 text-center">
                         <div className="w-6 h-6 border rounded border-gray-300 mx-auto"></div>
+                      </td>
+                      <td className="p-3 text-center">
+                        <button onClick={() => handleCancelBooking(bk.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition" title="ยกเลิกการจอง">
+                          <XCircle className="w-5 h-5" />
+                        </button>
                       </td>
                     </tr>
                   ))

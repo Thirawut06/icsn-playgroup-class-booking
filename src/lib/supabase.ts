@@ -4,7 +4,17 @@ import type { Parent, Child, Package, Session, Booking, PackageOption, SlipUploa
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const createOrGetSupabase = () => {
+  if (typeof window === 'undefined') {
+    return createClient(supabaseUrl, supabaseAnonKey);
+  }
+  if (!(globalThis as any)._supabaseInstance) {
+    (globalThis as any)._supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+  }
+  return (globalThis as any)._supabaseInstance;
+};
+
+export const supabase = createOrGetSupabase();
 
 export const AppDB = {
   async getSessions(startDate: string, endDate: string): Promise<Session[]> {
@@ -19,6 +29,29 @@ export const AppDB = {
     return data || [];
   },
 
+  async getOrCreateSession(dateStr: string): Promise<Session> {
+    const { data: existing, error } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('session_date', dateStr)
+      .maybeSingle();
+      
+    if (existing) return existing;
+
+    const { data: newSession, error: insertError } = await supabase
+      .from('sessions')
+      .insert([{
+        session_date: dateStr,
+        total_capacity: 15,
+        is_active: true
+      }])
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
+    return newSession;
+  },
+
   async getBookedCountForSession(sessionId: string): Promise<number> {
     const { count, error } = await supabase
       .from('bookings')
@@ -28,6 +61,17 @@ export const AppDB = {
       
     if (error) throw error;
     return count || 0;
+  },
+
+  async hasDuplicateBooking(childId: string, sessionId: string): Promise<boolean> {
+    const { count, error } = await supabase
+      .from('bookings')
+      .select('*', { count: 'exact', head: true })
+      .eq('child_id', childId)
+      .eq('session_id', sessionId)
+      .eq('status', 'confirmed');
+    if (error) throw error;
+    return (count || 0) > 0;
   },
 
   async getPackageOptions(): Promise<PackageOption[]> {
@@ -60,7 +104,7 @@ export const AppDB = {
 
     if (error) {
       if (error.code === 'PGRST116') {
-        throw new Error('ไม่พบเบอร์โทรศัพท์นี้ในระบบ โปรดลงทะเบียนก่อนค่ะ');
+        throw new Error('ไม่พบเบอร์โทรศัพท์นี้ในระบบ โปรดลงทะเบียนก่อน');
       }
       throw error;
     }
@@ -72,7 +116,12 @@ export const AppDB = {
       email,
       password
     });
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes('already registered')) {
+        throw new Error('อีเมลนี้ถูกใช้ลงทะเบียนไปแล้ว กรุณาไปที่หน้า เข้าสู่ระบบ');
+      }
+      throw error;
+    }
     if (!data?.user) throw new Error('การสมัครสมาชิกไม่สำเร็จ โปรดลองอีกครั้ง');
 
     const userId = data.user.id;
@@ -167,23 +216,42 @@ export const AppDB = {
     return data || [];
   },
 
-  async submitNewChild(parentId: string, childName: string, childNickname: string, childDob: string, childPhotoBase64: string, allergy: string, mediaPerm: boolean, noPhotoPerm: boolean): Promise<Child> {
-    // Implement edge function call for child photo
+  async uploadFile(bucket: string, file: File, path: string): Promise<string> {
+    const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+    if (error) throw error;
+    const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(data.path);
+    return publicUrlData.publicUrl;
+  },
+
+  async submitNewChild(parentId: string, childName: string, childNickname: string, childDob: string, childPhotoFile: File | null, parentPhotoFile: File | null, allergy: string, info: string, mediaPerm: boolean, noPhotoPerm: boolean): Promise<Child> {
     let actualPhotoUrl = "";
-    if (childPhotoBase64) {
+    if (childPhotoFile) {
       try {
-        const payload = {
-          form_type: 'trial',
-          childName,
-          childPhoto: childPhotoBase64
-        };
-        const { data, error } = await supabase.functions.invoke('forward-webhook', { body: payload });
-        if (!error && data?.driveLinks) {
-          actualPhotoUrl = data.driveLinks.childPhoto || "";
-        }
+        const ext = childPhotoFile.name.split('.').pop() || 'jpg';
+        const fileName = `${parentId}_child_${Date.now()}.${ext}`;
+        actualPhotoUrl = await this.uploadFile('profiles', childPhotoFile, fileName);
       } catch (e) {
-        console.error("Webhook forwarding failed", e);
+        console.error("Storage child photo upload failed", e);
       }
+    }
+
+    let actualParentPhotoUrl = "";
+    if (parentPhotoFile) {
+      try {
+        const ext = parentPhotoFile.name.split('.').pop() || 'jpg';
+        const fileName = `${parentId}_parent_${Date.now()}.${ext}`;
+        actualParentPhotoUrl = await this.uploadFile('profiles', parentPhotoFile, fileName);
+      } catch (e) {
+        console.error("Storage parent photo upload failed", e);
+      }
+    }
+
+    // Calculate age rough estimate (required by schema)
+    let ageYears = 3;
+    if (childDob) {
+      const birthDate = new Date(childDob);
+      const diff = Date.now() - birthDate.getTime();
+      ageYears = Math.max(0, Math.floor(diff / 31557600000));
     }
 
     const { data, error } = await supabase
@@ -193,10 +261,13 @@ export const AppDB = {
         full_name: childName,
         nickname: childNickname,
         dob: childDob || null,
+        age: ageYears,
         food_allergy: allergy,
+        special_info: info,
         media_perm: mediaPerm,
         no_photo_perm: noPhotoPerm,
-        photo_url: actualPhotoUrl
+        photo_url: actualPhotoUrl,
+        parent_photo_url: actualParentPhotoUrl
       }])
       .select()
       .single();
@@ -205,17 +276,46 @@ export const AppDB = {
     return data;
   },
 
-  async submitTopUp(parentId: string, packageType: string, fileUrlWithCredits: string): Promise<SlipUpload> {
+  async grantTrialPackage(parentId: string): Promise<void> {
+    const { data: existing } = await supabase
+      .from('packages')
+      .select('id')
+      .eq('parent_id', parentId)
+      .eq('type', 'trial')
+      .maybeSingle();
+
+    if (!existing) {
+      const { error } = await supabase
+        .from('packages')
+        .insert([{
+          parent_id: parentId,
+          type: 'trial',
+          credits_remaining: 1,
+          non_refundable: true
+        }]);
+      if (error) throw error;
+    }
+  },
+
+  async submitTopUp(parentId: string, packageType: string, slipFile: File | null, nonRefundable: boolean): Promise<any> {
+    let actualSlipUrl = "";
+    if (slipFile) {
+      const ext = slipFile.name.split('.').pop() || 'jpg';
+      const fileName = `${parentId}_${Date.now()}.${ext}`;
+      actualSlipUrl = await this.uploadFile('slips', slipFile, fileName);
+    }
+
     const { data, error } = await supabase
       .from('slip_uploads')
       .insert([{
         parent_id: parentId,
-        file_url: fileUrlWithCredits,
+        package_id: packageType,
+        non_refundable: nonRefundable,
+        file_url: actualSlipUrl,
         status: 'pending'
       }])
       .select()
       .single();
-
     if (error) throw error;
     return data;
   },
@@ -242,6 +342,36 @@ export const AppDB = {
         p_package_id: packageId
       });
       
+    if (error) throw error;
+  },
+
+  // --- Admin Functions ---
+
+  async adminAddWalkin(phone: string, childName: string): Promise<{ parent_id: string, child_id: string }> {
+    const { data, error } = await supabase.rpc('admin_add_walkin', {
+      p_phone: phone,
+      p_child_name: childName
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  async adminBookClass(childId: string, sessionId: string, isFree: boolean): Promise<{ booking_id: string }> {
+    const { data, error } = await supabase.rpc('admin_book_class', {
+      p_child_id: childId,
+      p_session_id: sessionId,
+      p_is_free: isFree
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  async adminEditUser(table: 'parents' | 'children', id: string, updateData: any): Promise<void> {
+    const { error } = await supabase.rpc('admin_edit_user', {
+      p_table: table,
+      p_id: id,
+      p_data: updateData
+    });
     if (error) throw error;
   }
 };

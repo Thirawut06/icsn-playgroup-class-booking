@@ -111,6 +111,9 @@
     .glass-panel {
         @apply bg-white/80 backdrop-blur-md border border-white/40 shadow-sm;
     }
+    .mobile-container {
+        @apply max-w-[480px] mx-auto bg-[#ffffff] min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)];
+    }
 }
 
 /* Global resets for smoother UI */

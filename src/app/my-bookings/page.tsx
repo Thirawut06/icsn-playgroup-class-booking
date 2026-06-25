@@ -108,7 +108,7 @@ export default function MyBookings() {
     <div className="bg-gray-50 flex flex-col min-h-screen pb-16 font-sarabun">
       {/* Header Section */}
       <header className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-[480px] mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button onClick={() => router.push('/book')} className="p-2 text-gray-500 hover:text-[#00B0B9] rounded-xl hover:bg-[#00B0B9]/5 transition">
               <ArrowLeft className="w-5 h-5" />
@@ -130,7 +130,7 @@ export default function MyBookings() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-6 space-y-6">
+      <main className="flex-1 max-w-[480px] w-full mx-auto px-4 py-6 space-y-6">
         {/* Stats */}
         <div className="bg-white border border-gray-100 rounded-3xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-sm">
           <div className="space-y-1">
@@ -164,7 +164,7 @@ export default function MyBookings() {
               <div className="w-16 h-16 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CalendarCheck className="w-8 h-8" />
               </div>
-              <p className="text-gray-500 font-medium">ยังไม่มีรายการจองชั้นเรียนค่ะ</p>
+              <p className="text-gray-500 font-medium">ยังไม่มีรายการจองชั้นเรียน</p>
             </div>
           ) : (
             <div className="space-y-4">
