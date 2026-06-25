@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppDB } from '@/lib/supabase';
-import { Ticket, Wallet, ChevronRight, Check, ArrowLeft, Loader2, UploadCloud } from 'lucide-react';
+import { Ticket, Wallet, ChevronRight, Check, ArrowLeft, Loader2, UploadCloud, AlertCircle } from 'lucide-react';
 import type { PackageOption } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ export default function Apply() {
   const [path, setPath] = useState<'trial' | 'payment' | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Parent fields
   const [parentEmail, setParentEmail] = useState('');
@@ -73,10 +74,11 @@ export default function Apply() {
   }, [router]);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>, setData: React.Dispatch<React.SetStateAction<string>>, setFile: React.Dispatch<React.SetStateAction<File | null>>) => {
+    setErrorMessage('');
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        alert("ขนาดไฟล์ต้องไม่เกิน 10MB");
+        setErrorMessage("ขนาดไฟล์ต้องไม่เกิน 10MB กรุณาเลือกไฟล์ใหม่");
         e.target.value = "";
         return;
       }
@@ -90,6 +92,7 @@ export default function Apply() {
   const submitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMessage('');
 
     try {
       const parentId = localStorage.getItem("icsn_parent_id");
@@ -130,7 +133,7 @@ export default function Apply() {
 
       setShowSuccess(true);
     } catch (error: any) {
-      alert(error.message || "เกิดข้อผิดพลาด");
+      setErrorMessage(error.message || "เกิดข้อผิดพลาด");
     } finally {
       setIsSubmitting(false);
     }
@@ -576,8 +579,16 @@ export default function Apply() {
                 </div>
               )}
 
+              {/* Error Message */}
+              {errorMessage && (
+                <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-[14px] font-medium flex items-start gap-2.5">
+                  <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                  <p>{errorMessage}</p>
+                </div>
+              )}
+
               {/* Submit */}
-              <div className="pt-6 pb-4">
+              <div className="pt-2 pb-4">
                 <Button
                   type="submit"
                   disabled={isSubmitting}
