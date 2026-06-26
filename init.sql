@@ -216,22 +216,202 @@ BEGIN
 END;
 $$;
 
--- cancel_booking: ยกเลิกการจอง (คืนเครดิต)
-CREATE OR REPLACE FUNCTION cancel_booking(p_booking_id UUID, p_package_id UUID)
-RETURNS void
+-- cancel_booking: ยกเลิกการจอง (คืนเครดิต) — parent ถูกบล็อกหลัง 07:00 น. วันคลาส (เวลาไทย)
+CREATE OR REPLACE FUNCTION cancel_booking(
+    p_booking_id UUID,
+    p_package_id UUID DEFAULT NULL,
+    p_cancelled_by TEXT DEFAULT 'parent',
+    p_cancel_reason TEXT DEFAULT NULL
+)
+RETURNS json
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
     v_status TEXT;
+    v_parent_id UUID;
+    v_child_id UUID;
+    v_session_date DATE;
+    v_pkg_id UUID;
+    v_bkk_date DATE;
+    v_bkk_hour INT;
+    v_child_nickname TEXT;
 BEGIN
-    SELECT status INTO v_status FROM bookings WHERE id = p_booking_id;
+    SELECT status, parent_id, child_id, session_date
+    INTO v_status, v_parent_id, v_child_id, v_session_date
+    FROM bookings WHERE id = p_booking_id;
+
+    IF v_status IS NULL THEN
+        RAISE EXCEPTION 'Booking not found / ไม่พบข้อมูลการจอง';
+    END IF;
     IF v_status = 'cancelled' THEN
         RAISE EXCEPTION 'Booking is already cancelled / คลาสนี้ถูกยกเลิกไปแล้ว';
     END IF;
 
-    UPDATE bookings SET status = 'cancelled' WHERE id = p_booking_id;
-    UPDATE packages SET credits_remaining = credits_remaining + 1 WHERE id = p_package_id;
+    IF p_cancelled_by = 'parent' THEN
+        v_bkk_date := (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Bangkok')::date;
+        v_bkk_hour := EXTRACT(HOUR FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Bangkok'))::INT;
+        IF v_session_date = v_bkk_date AND v_bkk_hour >= 7 THEN
+            RAISE EXCEPTION 'เลยเวลา 7:00 แล้ว ติดต่อทีมโดยตรงนะคะ';
+        END IF;
+    END IF;
+
+    v_pkg_id := p_package_id;
+    IF v_pkg_id IS NULL THEN
+        SELECT id INTO v_pkg_id FROM packages
+        WHERE parent_id = v_parent_id
+        ORDER BY created_at DESC
+        LIMIT 1;
+    END IF;
+
+    UPDATE bookings SET
+        status = 'cancelled',
+        cancelled_at = CURRENT_TIMESTAMP,
+        cancelled_by = p_cancelled_by,
+        cancel_reason = p_cancel_reason
+    WHERE id = p_booking_id;
+
+    IF v_pkg_id IS NOT NULL THEN
+        UPDATE packages SET credits_remaining = credits_remaining + 1 WHERE id = v_pkg_id;
+        INSERT INTO credit_transactions (parent_id, package_id, action_type, amount, notes)
+        VALUES (v_parent_id, v_pkg_id, 'cancel', 1, COALESCE(p_cancel_reason, p_cancelled_by || ' cancel'));
+    END IF;
+
+    SELECT nickname INTO v_child_nickname FROM children WHERE id = v_child_id;
+
+    RETURN json_build_object(
+        'session_date', v_session_date,
+        'child_nickname', COALESCE(v_child_nickname, 'ไม่ระบุ')
+    );
+END;
+$$;
+
+-- admin_book_class: Admin จอง Walk-in (เลือกหักเครดิตหรือฟรี)
+CREATE OR REPLACE FUNCTION admin_book_class(
+    p_child_id UUID,
+    p_session_id UUID,
+    p_is_free BOOLEAN DEFAULT false
+)
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_parent_id UUID;
+    v_capacity INT;
+    v_booked INT;
+    v_booking_id UUID;
+    v_session_date DATE;
+    v_package_id UUID;
+    v_credits INT;
+BEGIN
+    SELECT parent_id INTO v_parent_id FROM children WHERE id = p_child_id;
+    IF v_parent_id IS NULL THEN
+        RAISE EXCEPTION 'Child not found / ไม่พบข้อมูลเด็ก';
+    END IF;
+
+    SELECT session_date, total_capacity INTO v_session_date, v_capacity
+    FROM sessions WHERE id = p_session_id;
+    IF v_session_date IS NULL THEN
+        RAISE EXCEPTION 'Session not found / ไม่พบข้อมูลคลาส';
+    END IF;
+
+    SELECT count(*) INTO v_booked FROM bookings
+    WHERE session_id = p_session_id AND status = 'confirmed';
+    IF v_booked >= v_capacity THEN
+        RAISE EXCEPTION 'Session is full / คลาสเรียนเต็มแล้ว';
+    END IF;
+
+    IF NOT p_is_free THEN
+        SELECT id, credits_remaining INTO v_package_id, v_credits
+        FROM packages
+        WHERE parent_id = v_parent_id AND credits_remaining > 0
+        ORDER BY created_at ASC
+        LIMIT 1;
+        IF v_package_id IS NULL THEN
+            RAISE EXCEPTION 'Not enough credits / สิทธิ์ไม่เพียงพอ';
+        END IF;
+        UPDATE packages SET credits_remaining = credits_remaining - 1 WHERE id = v_package_id;
+        INSERT INTO credit_transactions (parent_id, package_id, action_type, amount, notes)
+        VALUES (v_parent_id, v_package_id, 'booking', -1, 'admin walk-in booking');
+    END IF;
+
+    INSERT INTO bookings (session_id, session_date, child_id, parent_id, status)
+    VALUES (p_session_id, v_session_date, p_child_id, v_parent_id, 'confirmed')
+    RETURNING id INTO v_booking_id;
+
+    RETURN json_build_object('booking_id', v_booking_id);
+END;
+$$;
+
+-- adjust_credits: Admin ปรับเครดิตด้วยเหตุผล (บันทึก audit log)
+CREATE OR REPLACE FUNCTION adjust_credits(
+    p_parent_id UUID,
+    p_amount INT,
+    p_reason TEXT
+)
+RETURNS INT
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_pkg_id UUID;
+    v_new_credits INT;
+BEGIN
+    IF p_reason IS NULL OR trim(p_reason) = '' THEN
+        RAISE EXCEPTION 'Reason is required / กรุณาระบุเหตุผล';
+    END IF;
+
+    SELECT id INTO v_pkg_id FROM packages
+    WHERE parent_id = p_parent_id
+    ORDER BY created_at DESC
+    LIMIT 1;
+
+    IF v_pkg_id IS NOT NULL THEN
+        SELECT GREATEST(0, credits_remaining + p_amount) INTO v_new_credits
+        FROM packages WHERE id = v_pkg_id;
+        UPDATE packages SET credits_remaining = v_new_credits WHERE id = v_pkg_id;
+    ELSE
+        v_new_credits := GREATEST(0, p_amount);
+        INSERT INTO packages (parent_id, type, credits_remaining)
+        VALUES (p_parent_id, 'purchase', v_new_credits)
+        RETURNING id INTO v_pkg_id;
+    END IF;
+
+    INSERT INTO credit_transactions (parent_id, package_id, action_type, amount, notes)
+    VALUES (p_parent_id, v_pkg_id, 'topup', p_amount, p_reason);
+
+    RETURN v_new_credits;
+END;
+$$;
+
+-- admin_edit_user: Admin แก้ไขข้อมูล parent หรือ child
+CREATE OR REPLACE FUNCTION admin_edit_user(
+    p_table TEXT,
+    p_id UUID,
+    p_data JSONB
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    IF p_table = 'parents' THEN
+        UPDATE parents SET
+            name = COALESCE(p_data->>'name', name),
+            phone = COALESCE(p_data->>'phone', phone),
+            email = COALESCE(p_data->>'email', email)
+        WHERE id = p_id;
+    ELSIF p_table = 'children' THEN
+        UPDATE children SET
+            nickname = COALESCE(p_data->>'nickname', nickname),
+            full_name = COALESCE(p_data->>'full_name', full_name),
+            food_allergy = COALESCE(p_data->>'food_allergy', food_allergy),
+            special_info = COALESCE(p_data->>'special_info', special_info)
+        WHERE id = p_id;
+    ELSE
+        RAISE EXCEPTION 'Invalid table / ตารางไม่ถูกต้อง';
+    END IF;
 END;
 $$;
 
@@ -299,3 +479,18 @@ CREATE TRIGGER trg_update_session_booked_count
 AFTER INSERT OR UPDATE OR DELETE ON bookings
 FOR EACH ROW
 EXECUTE FUNCTION update_session_booked_count();
+
+-- ============================================================
+-- INDEXES (performance)
+-- ============================================================
+
+CREATE INDEX IF NOT EXISTS idx_parents_phone ON parents(phone);
+CREATE INDEX IF NOT EXISTS idx_children_parent ON children(parent_id);
+CREATE INDEX IF NOT EXISTS idx_packages_parent ON packages(parent_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_parent ON bookings(parent_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(session_date);
+CREATE INDEX IF NOT EXISTS idx_bookings_session ON bookings(session_id);
+CREATE INDEX IF NOT EXISTS idx_slips_parent ON slip_uploads(parent_id);
+CREATE INDEX IF NOT EXISTS idx_slips_status ON slip_uploads(status);
+CREATE INDEX IF NOT EXISTS idx_sessions_date ON sessions(session_date);
+CREATE INDEX IF NOT EXISTS idx_credit_tx_parent ON credit_transactions(parent_id);
