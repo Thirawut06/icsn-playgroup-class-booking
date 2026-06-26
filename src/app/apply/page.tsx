@@ -7,6 +7,9 @@ import { Ticket, Wallet, ChevronRight, Check, ArrowLeft, Loader2, UploadCloud, A
 import type { PackageOption } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ApplyHeader } from '@/components/apply/ApplyHeader';
+import { PathSelector } from '@/components/apply/PathSelector';
+import { SuccessScreen } from '@/components/apply/SuccessScreen';
 
 export default function Apply() {
   const router = useRouter();
@@ -14,6 +17,15 @@ export default function Apply() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [fileToast, setFileToast] = useState('');
+
+  // Auto-dismiss toast after 5 seconds
+  useEffect(() => {
+    if (fileToast) {
+      const timer = setTimeout(() => setFileToast(''), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [fileToast]);
 
   // Parent fields
   const [parentEmail, setParentEmail] = useState('');
@@ -74,11 +86,12 @@ export default function Apply() {
   }, [router]);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>, setData: React.Dispatch<React.SetStateAction<string>>, setFile: React.Dispatch<React.SetStateAction<File | null>>) => {
-    setErrorMessage('');
+    setFileToast('');
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        setErrorMessage("ขนาดไฟล์ต้องไม่เกิน 10MB กรุณาเลือกไฟล์ใหม่");
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        setFileToast(`ไฟล์มีขนาด ${sizeMB}MB — ขนาดไฟล์ต้องไม่เกิน 10MB`);
         e.target.value = "";
         return;
       }
@@ -143,111 +156,30 @@ export default function Apply() {
     <div className="bg-[#f8fafc] min-h-screen font-sarabun">
       <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-sm flex flex-col relative overflow-hidden pb-10">
         
-        {/* Header */}
-        <div 
-          className="bg-[#211551] px-6 py-8 text-white text-center relative overflow-hidden bg-cover bg-center"
-          style={{ backgroundImage: 'url("/playgroup-banner-icsn.png")' }}
-        >
-          <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
-          {(!showSuccess && path) ? (
-            <button onClick={() => setPath(null)} className="absolute top-4 left-4 z-20 text-white hover:text-gray-200 cursor-pointer">
-              <ArrowLeft className="w-6 h-6" />
-            </button>
-          ) : (
-            <button onClick={() => router.push('/')} className="absolute top-4 left-4 z-20 text-white hover:text-gray-200 cursor-pointer">
-              <ArrowLeft className="w-6 h-6" />
-            </button>
-          )}
-
-          <div className="inline-flex items-center justify-center w-20 h-auto mb-3 relative z-10">
-            <img src="/white-main-logo-icsn.png" alt="ICSN Logo" className="w-full h-auto object-contain drop-shadow-sm" />
-          </div>
-          <h1 className="text-[22px] font-bold text-white relative z-10 drop-shadow-md">
-            ICSN Panda Playgroup
-          </h1>
-          <p className="text-[13px] font-medium text-white/90 mt-0.5 relative z-10 drop-shadow-md">
-            Registration Form (แบบฟอร์มลงทะเบียนเรียน)
-          </p>
-        </div>
-
-        {/* Step Selector */}
-        {!path && !showSuccess && (
-          <div className="px-6 py-6 relative z-10">
-            <h2 className="text-[17px] font-bold text-center text-[#211551] mb-6">
-              Please select your registration path<br/>
-              <span className="text-xs text-gray-500 font-normal block mt-1">เลือกทางเลือกเพื่อสั่งซื้อสิทธิ์หรือลงทะเบียนเรียน</span>
-            </h2>
-
-            <div className="space-y-4">
-              <button
-                onClick={() => setPath('trial')}
-                className="w-full bg-white border-2 border-gray-100 hover:border-[#00B0B9] rounded-2xl p-5 text-left transition-all duration-200 shadow-sm hover:shadow-md group flex items-center justify-between cursor-pointer"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-[#00B0B9]/10 text-[#00B0B9] rounded-full flex items-center justify-center group-hover:bg-[#00B0B9] group-hover:text-white transition-colors">
-                    <Ticket className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-[#211551] text-[16px]">Free Trial Class</div>
-                    <div className="text-[12px] text-gray-500 mt-0.5">
-                      Register for a free 1-session playgroup class<br/>
-                      <span className="text-[11px] text-gray-400 block mt-0.5">ลงทะเบียนทดลองเรียนกลุ่มเล่น ครั้งที่ 1 ฟรี (สิทธิ์ทดลองเรียน)</span>
-                    </div>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-[#00B0B9]" />
-              </button>
-
-              <button
-                onClick={() => setPath('payment')}
-                className="w-full bg-white border-2 border-gray-100 hover:border-[#CC3366] rounded-2xl p-5 text-left transition-all duration-200 shadow-sm hover:shadow-md group flex items-center justify-between cursor-pointer"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-[#CC3366]/10 text-[#CC3366] rounded-full flex items-center justify-center group-hover:bg-[#CC3366] group-hover:text-white transition-colors">
-                    <Wallet className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-[#211551] text-[16px]">Purchase Package</div>
-                    <div className="text-[12px] text-gray-500 mt-0.5">
-                      Buy playgroup session packages and top up credits<br/>
-                      <span className="text-[11px] text-gray-400 block mt-0.5">ซื้อแพ็กเกจเรียนกลุ่มเล่นและเติมเครดิตการเรียน</span>
-                    </div>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-[#CC3366]" />
+        {/* Floating Toast Notification */}
+        {fileToast && (
+          <div className="fixed top-6 left-1/2 z-[200] max-w-[400px] w-[calc(100%-48px)]" style={{ transform: 'translateX(-50%)', animation: 'toastIn 0.25s ease-out' }}>
+            <div className="bg-rose-600 text-white px-5 py-4 rounded-2xl shadow-2xl flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+              <p className="font-bold text-[13px] leading-snug flex-1">{fileToast}</p>
+              <button onClick={() => setFileToast('')} className="text-white/70 hover:text-white shrink-0">
+                <span className="text-lg leading-none">&times;</span>
               </button>
             </div>
           </div>
         )}
+        
+        {/* Header */}
+        <ApplyHeader showSuccess={showSuccess} path={path} setPath={setPath} />
+
+        {/* Step Selector */}
+        {!path && !showSuccess && (
+          <PathSelector setPath={setPath} />
+        )}
 
         {/* Success */}
         {showSuccess && (
-          <div className="px-5 py-10 relative z-10 flex-1 flex flex-col justify-center items-center text-center">
-            <div className="w-20 h-20 bg-[#00B0B9]/10 text-[#00B0B9] rounded-full flex items-center justify-center mb-6">
-              <Check className="w-10 h-10" />
-            </div>
-            <h2 className="text-2xl font-bold text-[#211551] mb-2">ลงทะเบียนสำเร็จ!</h2>
-            
-            {path === 'trial' && (
-              <p className="text-gray-600 text-[16px] leading-relaxed mb-8">
-                ระบบได้บันทึกข้อมูลของท่านเรียบร้อยแล้ว<br/>
-                สามารถเลือกวันเรียนทดลองได้ที่ปฏิทินจองคลาส
-              </p>
-            )}
-            {path === 'payment' && (
-              <p className="text-gray-600 text-[16px] leading-relaxed mb-8">
-                สลิปของท่านจะได้รับการตรวจสอบภายใน 24 ชม.<br/>
-                เมื่ออนุมัติแล้วท่านจะสามารถจองคลาสได้ทันที
-              </p>
-            )}
-
-            <Button
-              onClick={() => router.push('/book')}
-              className="w-full bg-[#00B0B9] text-white font-bold py-3.5 px-6 rounded-xl flex flex-col items-center justify-center hover:bg-[#00969e] h-auto"
-            >
-              <span className="text-[16px]">ไปที่ปฏิทินจองคลาส</span>
-            </Button>
-          </div>
+          <SuccessScreen path={path} />
         )}
 
         {/* Form */}
