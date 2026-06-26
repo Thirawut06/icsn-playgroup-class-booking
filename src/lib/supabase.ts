@@ -29,11 +29,12 @@ export const AppDB = {
     return data || [];
   },
 
-  async getOrCreateSession(dateStr: string): Promise<Session> {
+  async getOrCreateSession(dateStr: string, timeLabel: string = 'เช้า (09:00 - 12:00)'): Promise<Session> {
     const { data: existing, error } = await supabase
       .from('sessions')
       .select('*')
       .eq('session_date', dateStr)
+      .eq('time_label', timeLabel)
       .maybeSingle();
       
     if (existing) return existing;
@@ -42,6 +43,7 @@ export const AppDB = {
       .from('sessions')
       .insert([{
         session_date: dateStr,
+        time_label: timeLabel,
         total_capacity: 15,
         is_active: true
       }])
@@ -50,17 +52,6 @@ export const AppDB = {
 
     if (insertError) throw insertError;
     return newSession;
-  },
-
-  async getBookedCountForSession(sessionId: string): Promise<number> {
-    const { count, error } = await supabase
-      .from('bookings')
-      .select('*', { count: 'exact', head: true })
-      .eq('session_id', sessionId)
-      .eq('status', 'confirmed');
-      
-    if (error) throw error;
-    return count || 0;
   },
 
   async hasDuplicateBooking(childId: string, sessionId: string): Promise<boolean> {
@@ -357,16 +348,7 @@ export const AppDB = {
     if (error) throw error;
     return data;
   },
-  
-  async cancelBooking(bookingId: string, packageId: string): Promise<void> {
-    const { error } = await supabase
-      .rpc('cancel_booking', {
-        p_booking_id: bookingId,
-        p_package_id: packageId
-      });
-      
-    if (error) throw error;
-  },
+
 
   // --- Admin Functions ---
 

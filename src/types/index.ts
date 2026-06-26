@@ -45,7 +45,9 @@ export interface PackageOption {
 export interface Session {
   id: string;
   session_date: string;
+  time_label?: string;
   total_capacity: number;
+  booked_count?: number;
   is_active: boolean;
   theme?: string;
   activity_desc?: string;

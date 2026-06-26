@@ -10,6 +10,7 @@ import { UpcomingBookings } from '@/components/book/UpcomingBookings';
 import { CalendarWidget } from '@/components/book/CalendarWidget';
 import { BookingSummary } from '@/components/book/BookingSummary';
 import { CancelConfirmModal } from '@/components/book/CancelConfirmModal';
+import { BookingConfirmModal } from '@/components/book/BookingConfirmModal';
 
 export default function Book() {
   const router = useRouter();
@@ -29,13 +30,14 @@ export default function Book() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [selectedChildId, setSelectedChildId] = useState('');
-  const [bookedCount, setBookedCount] = useState(0);
+
 
   // Modals / Status
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingError, setBookingError] = useState('');
   const [showTopUpModal, setShowTopUpModal] = useState(false);
+  const [showBookingConfirm, setShowBookingConfirm] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
 
@@ -99,25 +101,23 @@ export default function Book() {
     setBookingSuccess(false);
     setBookingError('');
     setSelectedDate(dayObj.dateStr);
-    setSelectedSession(dayObj.session || null);
-    
-    if (dayObj.session) {
-      try {
-        const count = await AppDB.getBookedCountForSession(dayObj.session.id);
-        setBookedCount(count);
-      } catch (e) {
-        setBookedCount(0);
-      }
-    } else {
-      setBookedCount(0);
-    }
+
+    // Auto-select first available session (currently only morning exists)
+    const firstSession = dayObj.sessions?.[0] || null;
+    setSelectedSession(firstSession);
   };
 
-  const handleBookClass = async () => {
+  const handleBookClass = () => {
     if (!selectedDate || !selectedChildId || packages.length === 0) {
       setBookingError("กรุณาเลือกน้อง และตรวจสอบเครดิตคงเหลือ");
       return;
     }
+    setBookingError('');
+    setShowBookingConfirm(true);
+  };
+
+  const confirmBookClass = async () => {
+    if (!selectedDate || !selectedChildId || packages.length === 0) return;
     const pkgToUse = packages[0];
     setIsSubmitting(true);
     setBookingError('');
@@ -134,13 +134,14 @@ export default function Book() {
       }
       
       await AppDB.bookClass(parentId, selectedChildId, finalSessionId, pkgToUse.id);
-      setBookingSuccess(true);
+      setShowBookingConfirm(false);
+      setSelectedDate(null);
+      setSelectedSession(null);
+      setBookingSuccess(false);
+      setBookingError('');
       loadData(parentId);
-      setTimeout(() => {
-        setSelectedDate(null);
-        setBookingSuccess(false);
-      }, 3000);
     } catch (e: any) {
+      setShowBookingConfirm(false);
       setBookingError("ไม่สามารถจองได้: " + e.message);
     } finally {
       setIsSubmitting(false);
@@ -170,8 +171,9 @@ export default function Book() {
   // ─── Derived State ───────────────────────────────────────────
 
   const capacity = selectedSession ? selectedSession.total_capacity : 15;
+  const currentBookedCount = selectedSession ? (selectedSession.booked_count || 0) : 0;
   const isSameDayPast7AM = selectedDate ? (new Date(selectedDate).toDateString() === new Date().toDateString() && new Date().getHours() >= 7) : false;
-  const selectedDateAvailable = selectedDate ? (capacity - bookedCount > 0 && !isSameDayPast7AM) : false;
+  const selectedDateAvailable = selectedDate ? (capacity - currentBookedCount > 0 && !isSameDayPast7AM) : false;
   const selectedSessionStatus = selectedDateAvailable ? 'เปิดรับจอง' : 'เต็มแล้ว / ปิดรับจอง';
   const selectedChildObj = children.find(c => c.id === selectedChildId);
 
@@ -218,6 +220,9 @@ export default function Book() {
             selectedChildObj={selectedChildObj}
             creditsRemaining={creditsRemaining}
             selectedChildId={selectedChildId}
+            availableSessions={sessions.filter(s => s.session_date === selectedDate)}
+            selectedSession={selectedSession}
+            onSelectSession={setSelectedSession}
             isSubmitting={isSubmitting}
             bookingSuccess={bookingSuccess}
             bookingError={bookingError}
@@ -237,6 +242,16 @@ export default function Book() {
           isCancelling={isCancelling}
           onClose={() => setBookingToCancel(null)}
           onConfirm={() => bookingToCancel && executeCancel(bookingToCancel)}
+        />
+
+        <BookingConfirmModal
+          isOpen={showBookingConfirm}
+          isSubmitting={isSubmitting}
+          childName={selectedChildObj?.nickname || ''}
+          dateLabel={selectedDate ? new Date(selectedDate).toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+          timeLabel={selectedSession?.time_label || 'เช้า (09:00 - 12:00)'}
+          onClose={() => setShowBookingConfirm(false)}
+          onConfirm={confirmBookClass}
         />
 
       </div>

@@ -37,7 +37,7 @@ export function UpcomingBookings({ bookings, selectedChildId, onCancelRequest }:
                   </div>
                   <div>
                     <p className="font-black text-[#211551] text-[14px]">น้อง {booking.child?.nickname}</p>
-                    <p className="text-[12px] font-bold text-[#00B0B9]">09:30 - 11:30 น.</p>
+                    <p className="text-[12px] font-bold text-[#00B0B9]">{booking.session?.time_label || 'เช้า (09:00 - 12:00)'}</p>
                   </div>
                 </div>
                 {canCancel ? (

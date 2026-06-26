@@ -1,6 +1,6 @@
 import React from 'react';
 import { ReceiptText, Hand, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import type { Child } from '@/types';
+import type { Child, Session } from '@/types';
 
 interface BookingSummaryProps {
   selectedDate: string | null;
@@ -9,6 +9,9 @@ interface BookingSummaryProps {
   selectedChildObj?: Child;
   creditsRemaining: number;
   selectedChildId: string;
+  availableSessions: Session[];
+  selectedSession: Session | null;
+  onSelectSession: (session: Session | null) => void;
   isSubmitting: boolean;
   bookingSuccess: boolean;
   bookingError: string;
@@ -22,6 +25,9 @@ export function BookingSummary({
   selectedChildObj,
   creditsRemaining,
   selectedChildId,
+  availableSessions = [],
+  selectedSession,
+  onSelectSession,
   isSubmitting,
   bookingSuccess,
   bookingError,
@@ -57,39 +63,70 @@ export function BookingSummary({
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Date Card summary */}
-            <div className="bg-[#00B0B9]/5 border border-[#00B0B9]/20 rounded-2xl p-4 flex items-center gap-3">
-              <div className="w-12 h-12 bg-[#00B0B9] text-white rounded-[14px] flex flex-col items-center justify-center shrink-0 shadow-sm">
-                <span className="text-[10px] font-bold leading-none">{selectedThaiMonthMin}</span>
-                <span className="text-xl font-black leading-none mt-0.5">{selectedDayNum}</span>
+            {/* Unified Summary Card */}
+            <div className="bg-gray-50/80 border border-gray-100 rounded-2xl p-4 space-y-3.5">
+              
+              {/* Date */}
+              <div className="flex items-center justify-between">
+                <span className="text-[14px] font-medium text-gray-500">วันที่เรียน:</span>
+                <span className="text-[15px] font-bold text-[#00B0B9]">{selectedDayNum} {selectedThaiMonthMin}</span>
               </div>
-              <div>
-                <h4 className="font-bold text-[#211551] text-[14px]">
-                  เวลา 09:30 - 11:30 น.
-                </h4>
-                <p className="text-[12px] text-[#00B0B9] font-bold mt-0.5">
-                  {selectedThaiFullDate}
-                </p>
-              </div>
-            </div>
 
-            {/* Selected Child Details */}
-            {selectedChildObj && (
-              <div className="flex items-center justify-between bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                <span className="text-[13px] font-bold text-[#211551]/70">ชื่อนักเรียน:</span>
-                <span className="text-[15px] font-black text-[#211551]">
-                  {selectedChildObj.nickname}
+              {/* Child */}
+              {selectedChildObj && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[14px] font-medium text-gray-500">นักเรียน:</span>
+                  <span className="text-[15px] font-bold text-[#211551]">{selectedChildObj.nickname}</span>
+                </div>
+              )}
+
+              {/* Status */}
+              <div className="flex items-center justify-between">
+                <span className="text-[14px] font-medium text-gray-500">สถานะ:</span>
+                <span className={`text-[14px] font-bold inline-flex items-center gap-1.5 ${selectedDateAvailable ? 'text-[#00B0B9]' : 'text-rose-500'}`}>
+                  <span className={`w-2 h-2 rounded-full shadow-sm ${selectedDateAvailable ? 'bg-[#00B0B9]' : 'bg-rose-500'}`}></span>
+                  {selectedSessionStatus}
                 </span>
               </div>
-            )}
 
-            {/* Simple Status */}
-            <div className="flex items-center justify-between bg-[#211551]/5 p-4 rounded-2xl border border-[#211551]/10">
-              <span className="text-[13px] font-bold text-[#211551]/70">สถานะคลาสเรียน:</span>
-              <span className={`text-[15px] font-black inline-flex items-center gap-1.5 ${selectedDateAvailable ? 'text-[#00B0B9]' : 'text-rose-500'}`}>
-                <span className={`w-2.5 h-2.5 rounded-full shadow-sm ${selectedDateAvailable ? 'bg-[#00B0B9]' : 'bg-rose-500'}`}></span>
-                <span>{selectedSessionStatus}</span>
-              </span>
+              {/* Time Slots */}
+              <div className="pt-3.5 border-t border-gray-100">
+                <span className="text-[14px] font-medium text-gray-500 block mb-2.5">เลือกรอบเวลา:</span>
+                
+                {availableSessions.length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    {availableSessions.map((session) => (
+                      <button
+                        key={session.id}
+                        onClick={() => onSelectSession(session)}
+                        className={`w-full text-left px-4 py-3 rounded-xl border font-bold text-[14px] transition-all flex justify-between items-center ${
+                          selectedSession?.id === session.id
+                            ? 'bg-[#00B0B9] text-white border-[#00B0B9] shadow-md ring-2 ring-[#00B0B9]/20'
+                            : 'bg-white text-gray-600 border-gray-200 hover:border-[#00B0B9]/50'
+                        }`}
+                      >
+                        <span>{session.time_label || 'เช้า (09:00 - 12:00)'}</span>
+                        <span className={`text-[12px] font-medium px-2 py-0.5 rounded-full ${
+                          selectedSession?.id === session.id 
+                            ? 'bg-white/20 text-white' 
+                            : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          ว่าง {Math.max(0, session.total_capacity - (session.booked_count || 0))}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <button className="w-full text-left px-4 py-3 rounded-xl font-bold text-[14px] transition-all flex justify-between items-center bg-[#00B0B9] text-white border border-[#00B0B9] shadow-md ring-2 ring-[#00B0B9]/20">
+                      <span>เช้า (09:00 - 12:00)</span>
+                      <span className="text-[12px] font-medium px-2 py-0.5 rounded-full bg-white/20 text-white">
+                        ว่าง 15
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Error */}
@@ -100,18 +137,6 @@ export function BookingSummary({
               </div>
             )}
 
-            {/* Success */}
-            {bookingSuccess && (
-              <div className="bg-[#00B0B9]/10 text-[#00B0B9] border border-[#00B0B9]/20 p-4 rounded-2xl text-[13px] flex items-start gap-2.5">
-                <CheckCircle2 className="w-5 h-5 text-[#00B0B9] shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-bold">สำรองที่เรียนสำเร็จแล้ว!</h4>
-                  <p className="text-[#00B0B9]/80 mt-1 font-medium">
-                    ระบบได้ลดสิทธิ์ 1 ครั้งและลงคิวเรียนในระบบเรียบร้อย
-                  </p>
-                </div>
-              </div>
-            )}
 
             {/* Action Button */}
             <div className="pt-2">

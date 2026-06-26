@@ -2,10 +2,10 @@ import React from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 import type { Session, Booking } from '@/types';
 
-interface DayObj {
+export interface DayObj {
   day: number;
   dateStr: string;
-  session?: Session;
+  sessions: Session[];
 }
 
 interface CalendarWidgetProps {
@@ -64,8 +64,8 @@ export function CalendarWidget({
     for (let i = 0; i < firstDay; i++) days.push(null);
     for (let i = 1; i <= daysInMonth; i++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-      const session = sessions.find(s => s.session_date === dateStr);
-      days.push({ day: i, dateStr, session });
+      const sessionsForDate = sessions.filter(s => s.session_date === dateStr);
+      days.push({ day: i, dateStr, sessions: sessionsForDate });
     }
     return days;
   };

@@ -39,12 +39,14 @@ CREATE TABLE IF NOT EXISTS children (
 -- 3. sessions: คลาสเรียนแต่ละวัน (สร้างอัตโนมัติเมื่อมีการจอง)
 CREATE TABLE IF NOT EXISTS sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    session_date DATE NOT NULL UNIQUE,
+    session_date DATE NOT NULL,
+    time_label TEXT NOT NULL DEFAULT 'เช้า (09:00 - 12:00)',
     total_capacity INT DEFAULT 15,
     booked_count INT NOT NULL DEFAULT 0,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ,
-    updated_at TIMESTAMPTZ
+    updated_at TIMESTAMPTZ,
+    UNIQUE (session_date, time_label)
 );
 
 -- 4. package_options: ตัวเลือกแพ็กเกจที่ Admin กำหนด
@@ -265,3 +267,35 @@ $$;
 -- ============================================================
 -- bucket: "profiles"  → รูปถ่ายผู้ปกครองและเด็ก (public)
 -- bucket: "slips"     → สลิปโอนเงิน (public)
+
+-- ============================================================
+-- DATABASE TRIGGERS
+-- ============================================================
+
+-- update_session_booked_count: อัปเดตจำนวนการจองแบบ Realtime
+CREATE OR REPLACE FUNCTION update_session_booked_count()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  IF TG_OP = 'INSERT' AND NEW.status = 'confirmed' THEN
+    UPDATE sessions SET booked_count = booked_count + 1 WHERE id = NEW.session_id;
+  ELSIF TG_OP = 'UPDATE' THEN
+    IF OLD.status != 'confirmed' AND NEW.status = 'confirmed' THEN
+      UPDATE sessions SET booked_count = booked_count + 1 WHERE id = NEW.session_id;
+    ELSIF OLD.status = 'confirmed' AND NEW.status != 'confirmed' THEN
+      UPDATE sessions SET booked_count = booked_count - 1 WHERE id = OLD.session_id;
+    END IF;
+  ELSIF TG_OP = 'DELETE' AND OLD.status = 'confirmed' THEN
+    UPDATE sessions SET booked_count = booked_count - 1 WHERE id = OLD.session_id;
+  END IF;
+  RETURN NULL;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_update_session_booked_count ON bookings;
+CREATE TRIGGER trg_update_session_booked_count
+AFTER INSERT OR UPDATE OR DELETE ON bookings
+FOR EACH ROW
+EXECUTE FUNCTION update_session_booked_count();
