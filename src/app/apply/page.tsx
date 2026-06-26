@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -106,7 +106,7 @@ export default function Apply() {
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
         const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-        setFileToast(`ไฟล์มีขนาด ${sizeMB}MB — ขนาดไฟล์ต้องไม่เกิน 10MB`);
+        setFileToast(`เนเธเธฅเนเธกเธตเธเธเธฒเธ” ${sizeMB}MB โ€” เธเธเธฒเธ”เนเธเธฅเนเธ•เนเธญเธเนเธกเนเน€เธเธดเธ 10MB`);
         e.target.value = "";
         return;
       }
@@ -124,14 +124,14 @@ export default function Apply() {
 
     try {
       const parentId = localStorage.getItem("icsn_parent_id");
-      if (!parentId) throw new Error("ไม่พบข้อมูลผู้ปกครอง");
+      if (!parentId) throw new Error("เนเธกเนเธเธเธเนเธญเธกเธนเธฅเธเธนเนเธเธเธเธฃเธญเธ");
 
       // Validate media permission
       if (!mediaPerm) {
-        throw new Error("กรุณาเลือก Media Permission (Yes/No)");
+        throw new Error("เธเธฃเธธเธ“เธฒเน€เธฅเธทเธญเธ Media Permission (Yes/No)");
       }
       if (!noPhotoPerm) {
-        throw new Error("กรุณายืนยันข้อตกลงการไม่ถ่ายรูปนักเรียนคนอื่น");
+        throw new Error("เธเธฃเธธเธ“เธฒเธขเธทเธเธขเธฑเธเธเนเธญเธ•เธเธฅเธเธเธฒเธฃเนเธกเนเธ–เนเธฒเธขเธฃเธนเธเธเธฑเธเน€เธฃเธตเธขเธเธเธเธญเธทเนเธ");
       }
 
       await AppDB.submitNewChild(
@@ -149,10 +149,10 @@ export default function Apply() {
 
       if (path === 'payment') {
         if (!paymentSlipFile || !packageType) {
-          throw new Error("กรุณาอัปโหลดสลิปและเลือกแพ็กเกจ");
+          throw new Error("เธเธฃเธธเธ“เธฒเธญเธฑเธเนเธซเธฅเธ”เธชเธฅเธดเธเนเธฅเธฐเน€เธฅเธทเธญเธเนเธเนเธเน€เธเธ");
         }
         if (!nonRefundable) {
-          throw new Error("กรุณายืนยันข้อตกลง Non-refundable");
+          throw new Error("เธเธฃเธธเธ“เธฒเธขเธทเธเธขเธฑเธเธเนเธญเธ•เธเธฅเธ Non-refundable");
         }
         await AppDB.submitTopUp(parentId, packageType, paymentSlipFile, nonRefundable);
       } else if (path === 'trial') {
@@ -161,7 +161,7 @@ export default function Apply() {
 
       setShowSuccess(true);
     } catch (error: any) {
-      setErrorMessage(error.message || "เกิดข้อผิดพลาด");
+      setErrorMessage(error.message || "เน€เธเธดเธ”เธเนเธญเธเธดเธ”เธเธฅเธฒเธ”");
     } finally {
       setIsSubmitting(false);
     }
@@ -176,7 +176,7 @@ export default function Apply() {
           <div className="fixed top-6 left-1/2 z-[200] max-w-[400px] w-[calc(100%-48px)]" style={{ transform: 'translateX(-50%)', animation: 'toastIn 0.25s ease-out' }}>
             <div className="bg-rose-600 text-white px-5 py-4 rounded-2xl shadow-2xl flex items-start gap-3">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-              <p className="font-bold text-[13px] leading-snug flex-1">{fileToast}</p>
+              <p className="font-bold text-sm leading-snug flex-1">{fileToast}</p>
               <button onClick={() => setFileToast('')} className="text-white/70 hover:text-white shrink-0">
                 <span className="text-lg leading-none">&times;</span>
               </button>
@@ -202,7 +202,7 @@ export default function Apply() {
           <div className="px-6 pb-10 mt-6 relative z-10">
             <div className="flex items-center justify-center pb-6 mb-6 border-b border-gray-100">
               <h2 className="text-lg font-bold text-[#211551] text-center">
-                {path === 'trial' ? 'แบบฟอร์มลงทะเบียนทดลองเรียน (Trial)' : 'แบบฟอร์มซื้อแพ็กเกจ (Payment)'}
+                {path === 'trial' ? 'เนเธเธเธเธญเธฃเนเธกเธฅเธเธ—เธฐเน€เธเธตเธขเธเธ—เธ”เธฅเธญเธเน€เธฃเธตเธขเธ (Trial)' : 'เนเธเธเธเธญเธฃเนเธกเธเธทเนเธญเนเธเนเธเน€เธเธ (Payment)'}
               </h2>
             </div>
 
@@ -212,19 +212,19 @@ export default function Apply() {
 
               {/* Section Header */}
               <div className="border-b border-gray-100 pb-3">
-                <h3 className="text-[17px] font-bold text-[#211551]">
+                <h3 className="text-lg font-bold text-[#211551]">
                   {path === 'trial' ? 'Further Information' : 'Personal Information'}
                 </h3>
-                <p className="text-[12px] text-gray-500 font-medium">
-                  {path === 'trial' ? 'ข้อมูลเพิ่มเติม' : 'ข้อมูลส่วนบุคคล'}
+                <p className="text-sm text-gray-500 font-medium">
+                  {path === 'trial' ? 'เธเนเธญเธกเธนเธฅเน€เธเธดเนเธกเน€เธ•เธดเธก' : 'เธเนเธญเธกเธนเธฅเธชเนเธงเธเธเธธเธเธเธฅ'}
                 </p>
               </div>
 
               {/* Parent Name */}
               <div>
                 <label className="block mb-1.5">
-                  <span className="text-[14px] font-bold text-gray-800">Parent&apos;s full name <span className="text-red-500">*</span></span>
-                  <span className="block text-[12px] text-gray-500 -mt-0.5">ชื่อ-นามสกุลผู้ปกครอง</span>
+                  <span className="text-base font-bold text-gray-800">Parent&apos;s full name <span className="text-red-500">*</span></span>
+                  <span className="block text-sm text-gray-500 -mt-0.5">เธเธทเนเธญ-เธเธฒเธกเธชเธเธธเธฅเธเธนเนเธเธเธเธฃเธญเธ</span>
                 </label>
                 <Input
                   type="text"
@@ -239,8 +239,8 @@ export default function Apply() {
               {/* Parent Phone */}
               <div>
                 <label className="block mb-1.5">
-                  <span className="text-[14px] font-bold text-gray-800">Parent&apos;s telephone number <span className="text-red-500">*</span></span>
-                  <span className="block text-[12px] text-gray-500 -mt-0.5">หมายเลขโทรศัพท์ผู้ปกครอง</span>
+                  <span className="text-base font-bold text-gray-800">Parent&apos;s telephone number <span className="text-red-500">*</span></span>
+                  <span className="block text-sm text-gray-500 -mt-0.5">เธซเธกเธฒเธขเน€เธฅเธเนเธ—เธฃเธจเธฑเธเธ—เนเธเธนเนเธเธเธเธฃเธญเธ</span>
                 </label>
                 <Input
                   type="tel"
@@ -256,17 +256,17 @@ export default function Apply() {
               {path === 'trial' && (
                 <div>
                   <label className="block mb-1.5">
-                    <span className="text-[14px] font-bold text-gray-800">Individual Parent&apos;s Photo <span className="text-red-500">*</span></span>
-                    <span className="block text-[12px] text-gray-500 -mt-0.5">รูปถ่ายผู้ปกครองเดี่ยวชัดเจน</span>
+                    <span className="text-base font-bold text-gray-800">Individual Parent&apos;s Photo <span className="text-red-500">*</span></span>
+                    <span className="block text-sm text-gray-500 -mt-0.5">เธฃเธนเธเธ–เนเธฒเธขเธเธนเนเธเธเธเธฃเธญเธเน€เธ”เธตเนเธขเธงเธเธฑเธ”เน€เธเธ</span>
                   </label>
                   <input
                     type="file"
                     accept="image/*,.heic,.heif"
                     onChange={(e) => handleFile(e, setParentPhotoData, setParentPhotoFile)}
                     required
-                    className="block w-full text-[13px] text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-[13px] file:font-semibold file:bg-[#00B0B9]/10 file:text-[#00B0B9] hover:file:bg-[#00B0B9]/20 border border-gray-200 rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#00B0B9]/10 file:text-[#00B0B9] hover:file:bg-[#00B0B9]/20 border border-gray-200 rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
                   />
-                  <span className="block text-[11px] text-gray-400">อัปโหลดไฟล์ที่รองรับ 1 รายการ ขนาดสูงสุด 10 MB</span>
+                  <span className="block text-xs text-gray-400">เธญเธฑเธเนเธซเธฅเธ”เนเธเธฅเนเธ—เธตเนเธฃเธญเธเธฃเธฑเธ 1 เธฃเธฒเธขเธเธฒเธฃ เธเธเธฒเธ”เธชเธนเธเธชเธธเธ” 10 MB</span>
                   {parentPhotoData && (
                     <div className="mt-2 w-28 h-28 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
                       <img src={parentPhotoData} alt="Preview" className="w-full h-full object-cover" />
@@ -278,8 +278,8 @@ export default function Apply() {
               {/* Child Name */}
               <div>
                 <label className="block mb-1.5">
-                  <span className="text-[14px] font-bold text-gray-800">Child&apos;s full name <span className="text-red-500">*</span></span>
-                  <span className="block text-[12px] text-gray-500 -mt-0.5">ชื่อ-นามสกุลบุตรหลาน</span>
+                  <span className="text-base font-bold text-gray-800">Child&apos;s full name <span className="text-red-500">*</span></span>
+                  <span className="block text-sm text-gray-500 -mt-0.5">เธเธทเนเธญ-เธเธฒเธกเธชเธเธธเธฅเธเธธเธ•เธฃเธซเธฅเธฒเธ</span>
                 </label>
                 <Input type="text" value={childName} onChange={(e) => setChildName(e.target.value)} required className="w-full h-12 rounded-xl bg-gray-50/50" />
               </div>
@@ -287,8 +287,8 @@ export default function Apply() {
               {/* Child Nickname */}
               <div>
                 <label className="block mb-1.5">
-                  <span className="text-[14px] font-bold text-gray-800">Child nickname <span className="text-red-500">*</span></span>
-                  <span className="block text-[12px] text-gray-500 -mt-0.5">ชื่อเล่นบุตรหลาน</span>
+                  <span className="text-base font-bold text-gray-800">Child nickname <span className="text-red-500">*</span></span>
+                  <span className="block text-sm text-gray-500 -mt-0.5">เธเธทเนเธญเน€เธฅเนเธเธเธธเธ•เธฃเธซเธฅเธฒเธ</span>
                 </label>
                 <Input type="text" value={childNickname} onChange={(e) => setChildNickname(e.target.value)} required className="w-full h-12 rounded-xl bg-gray-50/50" />
               </div>
@@ -296,8 +296,8 @@ export default function Apply() {
               {/* Date of Birth */}
               <div>
                 <label className="block mb-1.5">
-                  <span className="text-[14px] font-bold text-gray-800">Date of birth <span className="text-red-500">*</span></span>
-                  <span className="block text-[12px] text-gray-500 -mt-0.5">วันเดือนปีเกิด</span>
+                  <span className="text-base font-bold text-gray-800">Date of birth <span className="text-red-500">*</span></span>
+                  <span className="block text-sm text-gray-500 -mt-0.5">เธงเธฑเธเน€เธ”เธทเธญเธเธเธตเน€เธเธดเธ”</span>
                 </label>
                 <Input type="date" value={childDob} max={todayStr} onChange={(e) => setChildDob(e.target.value)} required className="w-full h-12 rounded-xl bg-gray-50/50" />
               </div>
@@ -308,17 +308,17 @@ export default function Apply() {
                   {/* Child Photo */}
                   <div>
                     <label className="block mb-1.5">
-                      <span className="text-[14px] font-bold text-gray-800">Individual Child&apos;s Photo <span className="text-red-500">*</span></span>
-                      <span className="block text-[12px] text-gray-500 -mt-0.5">รูปถ่ายบุตรหลานเดี่ยวชัดเจน (ไม่ใส่แว่นกันแดดหรือหมวก)</span>
+                      <span className="text-base font-bold text-gray-800">Individual Child&apos;s Photo <span className="text-red-500">*</span></span>
+                      <span className="block text-sm text-gray-500 -mt-0.5">เธฃเธนเธเธ–เนเธฒเธขเธเธธเธ•เธฃเธซเธฅเธฒเธเน€เธ”เธตเนเธขเธงเธเธฑเธ”เน€เธเธ (เนเธกเนเนเธชเนเนเธงเนเธเธเธฑเธเนเธ”เธ”เธซเธฃเธทเธญเธซเธกเธงเธ)</span>
                     </label>
                     <input
                       type="file"
                       accept="image/*,.heic,.heif"
                       onChange={(e) => handleFile(e, setChildPhotoData, setChildPhotoFile)}
                       required
-                      className="block w-full text-[13px] text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-[13px] file:font-semibold file:bg-[#00B0B9]/10 file:text-[#00B0B9] hover:file:bg-[#00B0B9]/20 border border-gray-200 rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#00B0B9]/10 file:text-[#00B0B9] hover:file:bg-[#00B0B9]/20 border border-gray-200 rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
                     />
-                    <span className="block text-[11px] text-gray-400">อัปโหลดไฟล์ที่รองรับ 1 รายการ ขนาดสูงสุด 10 MB</span>
+                    <span className="block text-xs text-gray-400">เธญเธฑเธเนเธซเธฅเธ”เนเธเธฅเนเธ—เธตเนเธฃเธญเธเธฃเธฑเธ 1 เธฃเธฒเธขเธเธฒเธฃ เธเธเธฒเธ”เธชเธนเธเธชเธธเธ” 10 MB</span>
                     {childPhotoData && (
                       <div className="mt-2 w-28 h-28 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
                         <img src={childPhotoData} alt="Preview" className="w-full h-full object-cover" />
@@ -329,15 +329,15 @@ export default function Apply() {
                   {/* Allergy */}
                   <div>
                     <label className="block mb-1.5">
-                      <span className="text-[14px] font-bold text-gray-800">Allergy (if any) <span className="text-red-500">*</span></span>
-                      <span className="block text-[12px] text-gray-500 -mt-0.5">มีข้อมูลการแพ้อาหารหรือสิ่งอื่นหรือไม่</span>
+                      <span className="text-base font-bold text-gray-800">Allergy (if any) <span className="text-red-500">*</span></span>
+                      <span className="block text-sm text-gray-500 -mt-0.5">เธกเธตเธเนเธญเธกเธนเธฅเธเธฒเธฃเนเธเนเธญเธฒเธซเธฒเธฃเธซเธฃเธทเธญเธชเธดเนเธเธญเธทเนเธเธซเธฃเธทเธญเนเธกเน</span>
                     </label>
                     <Input
                       type="text"
                       value={allergy}
                       onChange={(e) => setAllergy(e.target.value)}
                       required
-                      placeholder="ระบุอาการแพ้เพื่อความปลอดภัย (หากไม่มีกรุณาระบุ ไม่มี)"
+                      placeholder="เธฃเธฐเธเธธเธญเธฒเธเธฒเธฃเนเธเนเน€เธเธทเนเธญเธเธงเธฒเธกเธเธฅเธญเธ”เธ เธฑเธข (เธซเธฒเธเนเธกเนเธกเธตเธเธฃเธธเธ“เธฒเธฃเธฐเธเธธ เนเธกเนเธกเธต)"
                       className="w-full h-12 rounded-xl bg-gray-50/50"
                     />
                   </div>
@@ -345,15 +345,15 @@ export default function Apply() {
                   {/* Special Info / Concerns */}
                   <div>
                     <label className="block mb-1.5">
-                      <span className="text-[14px] font-bold text-gray-800">Any information or concerns regarding your child that you would like to share with the school?</span>
-                      <span className="block text-[12px] text-gray-500 -mt-0.5">มีข้อมูลหรือข้อกังวลเกี่ยวกับบุตรหลานของท่านที่ต้องการแจ้งให้โรงเรียนทราบหรือไม่</span>
+                      <span className="text-base font-bold text-gray-800">Any information or concerns regarding your child that you would like to share with the school?</span>
+                      <span className="block text-sm text-gray-500 -mt-0.5">เธกเธตเธเนเธญเธกเธนเธฅเธซเธฃเธทเธญเธเนเธญเธเธฑเธเธงเธฅเน€เธเธตเนเธขเธงเธเธฑเธเธเธธเธ•เธฃเธซเธฅเธฒเธเธเธญเธเธ—เนเธฒเธเธ—เธตเนเธ•เนเธญเธเธเธฒเธฃเนเธเนเธเนเธซเนเนเธฃเธเน€เธฃเธตเธขเธเธ—เธฃเธฒเธเธซเธฃเธทเธญเนเธกเน</span>
                     </label>
                     <textarea
                       value={info}
                       onChange={(e) => setInfo(e.target.value)}
                       rows={3}
-                      placeholder="ระบุพฤติกรรมพิเศษ หรือ สุขภาพที่ทางคุณครูควรดูแลอย่างใกล้ชิด"
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-[14px] bg-gray-50/50 outline-none resize-none focus:border-[#00B0B9] transition-all"
+                      placeholder="เธฃเธฐเธเธธเธเธคเธ•เธดเธเธฃเธฃเธกเธเธดเน€เธจเธฉ เธซเธฃเธทเธญ เธชเธธเธเธ เธฒเธเธ—เธตเนเธ—เธฒเธเธเธธเธ“เธเธฃเธนเธเธงเธฃเธ”เธนเนเธฅเธญเธขเนเธฒเธเนเธเธฅเนเธเธดเธ”"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base bg-gray-50/50 outline-none resize-none focus:border-[#00B0B9] transition-all"
                     />
                   </div>
 
@@ -363,8 +363,8 @@ export default function Apply() {
                     <div>
                       <span className="block text-[13.5px] font-bold text-gray-800 leading-relaxed mb-2">
                         I give permission for ICSN to use photos or videos (i.e. &quot;media&quot;) taken of my child in school-related academic and social activities. I understand and agree that this media may be used for promotional and marketing purposes without compensation. <span className="text-red-500">*</span><br/>
-                        <span className="text-[11px] text-gray-600 font-normal mt-1 block leading-relaxed">
-                          ข้าพเจ้าอนุญาตให้ ICSN ใช้รูปถ่ายหรือวิดีโอ (หรือที่เรียกว่า &quot;สื่อ&quot;) ที่ถ่ายจากกิจกรรมทางการศึกษาและสังคมของบุตรหลานข้าพเจ้าในโรงเรียน ข้าพเจ้าทราบและยอมรับว่าสื่อดังกล่าวอาจถูกนำไปใช้เพื่อการประชาสัมพันธ์และการตลาดโดยไม่ขอค่าตอบแทน
+                        <span className="text-xs text-gray-600 font-normal mt-1 block leading-relaxed">
+                          เธเนเธฒเธเน€เธเนเธฒเธญเธเธธเธเธฒเธ•เนเธซเน ICSN เนเธเนเธฃเธนเธเธ–เนเธฒเธขเธซเธฃเธทเธญเธงเธดเธ”เธตเนเธญ (เธซเธฃเธทเธญเธ—เธตเนเน€เธฃเธตเธขเธเธงเนเธฒ &quot;เธชเธทเนเธญ&quot;) เธ—เธตเนเธ–เนเธฒเธขเธเธฒเธเธเธดเธเธเธฃเธฃเธกเธ—เธฒเธเธเธฒเธฃเธจเธถเธเธฉเธฒเนเธฅเธฐเธชเธฑเธเธเธกเธเธญเธเธเธธเธ•เธฃเธซเธฅเธฒเธเธเนเธฒเธเน€เธเนเธฒเนเธเนเธฃเธเน€เธฃเธตเธขเธ เธเนเธฒเธเน€เธเนเธฒเธ—เธฃเธฒเธเนเธฅเธฐเธขเธญเธกเธฃเธฑเธเธงเนเธฒเธชเธทเนเธญเธ”เธฑเธเธเธฅเนเธฒเธงเธญเธฒเธเธ–เธนเธเธเธณเนเธเนเธเนเน€เธเธทเนเธญเธเธฒเธฃเธเธฃเธฐเธเธฒเธชเธฑเธกเธเธฑเธเธเนเนเธฅเธฐเธเธฒเธฃเธ•เธฅเธฒเธ”เนเธ”เธขเนเธกเนเธเธญเธเนเธฒเธ•เธญเธเนเธ—เธ
                         </span>
                       </span>
                       <div className="flex gap-6 mt-2 pb-1">
@@ -389,11 +389,11 @@ export default function Apply() {
                           className="mt-1 w-[18px] h-[18px] accent-[#00B0B9] rounded border-gray-300"
                         />
                         <div>
-                          <span className="block text-[13px] font-bold text-gray-800 leading-relaxed">
+                          <span className="block text-sm font-bold text-gray-800 leading-relaxed">
                             By checking the box, I agree not to take pictures of other students in the school for posting on social media. <span className="text-red-500">*</span>
                           </span>
-                          <span className="block text-[11px] text-gray-600 mt-1 leading-relaxed">
-                            โดยการเลือกช่องนี้ ข้าพเจ้ายินยอมไม่ถ่ายรูปนักเรียนคนอื่นภายในโรงเรียนเพื่อโพสต์ในสื่อโซเชียล
+                          <span className="block text-xs text-gray-600 mt-1 leading-relaxed">
+                            เนเธ”เธขเธเธฒเธฃเน€เธฅเธทเธญเธเธเนเธญเธเธเธตเน เธเนเธฒเธเน€เธเนเธฒเธขเธดเธเธขเธญเธกเนเธกเนเธ–เนเธฒเธขเธฃเธนเธเธเธฑเธเน€เธฃเธตเธขเธเธเธเธญเธทเนเธเธ เธฒเธขเนเธเนเธฃเธเน€เธฃเธตเธขเธเน€เธเธทเนเธญเนเธเธชเธ•เนเนเธเธชเธทเนเธญเนเธเน€เธเธตเธขเธฅ
                           </span>
                         </div>
                       </label>
@@ -407,15 +407,15 @@ export default function Apply() {
                 <div className="space-y-6">
                   {/* Section Header */}
                   <div className="pt-4 border-t border-gray-100 mb-2">
-                    <h3 className="text-[16px] font-bold text-[#CC3366]">Payment Confirmation</h3>
-                    <p className="text-[12px] text-gray-500 leading-relaxed mt-0.5">กรุณาโอนเงินชำระไปยังบัญชีใดบัญชีหนึ่งของโรงเรียนและแนบหลักฐานการโอนด้านล่างนี้</p>
+                    <h3 className="text-lg font-bold text-[#CC3366]">Payment Confirmation</h3>
+                    <p className="text-sm text-gray-500 leading-relaxed mt-0.5">เธเธฃเธธเธ“เธฒเนเธญเธเน€เธเธดเธเธเธณเธฃเธฐเนเธเธขเธฑเธเธเธฑเธเธเธตเนเธ”เธเธฑเธเธเธตเธซเธเธถเนเธเธเธญเธเนเธฃเธเน€เธฃเธตเธขเธเนเธฅเธฐเนเธเธเธซเธฅเธฑเธเธเธฒเธเธเธฒเธฃเนเธญเธเธ”เนเธฒเธเธฅเนเธฒเธเธเธตเน</p>
                   </div>
 
                   {/* Package Selection (Radio) */}
                   <div>
                     <label className="block mb-3">
-                      <span className="text-[14px] font-bold text-gray-800">Please choose a package of your payment <span className="text-red-500">*</span></span>
-                      <span className="block text-[12px] text-gray-500 -mt-0.5">กรุณาเลือกแพ็กเกจการชำระเงินของท่าน</span>
+                      <span className="text-base font-bold text-gray-800">Please choose a package of your payment <span className="text-red-500">*</span></span>
+                      <span className="block text-sm text-gray-500 -mt-0.5">เธเธฃเธธเธ“เธฒเน€เธฅเธทเธญเธเนเธเนเธเน€เธเธเธเธฒเธฃเธเธณเธฃเธฐเน€เธเธดเธเธเธญเธเธ—เนเธฒเธ</span>
                     </label>
                     <div className="space-y-2.5">
                       {paymentPackages.map(pkg => (
@@ -430,7 +430,7 @@ export default function Apply() {
                             onChange={() => setPackageType(pkg.name)}
                             className="w-[18px] h-[18px] accent-[#CC3366]"
                           />
-                          <span className="text-[13px] font-semibold text-gray-800 leading-relaxed">{pkg.name} - {pkg.price} บาท</span>
+                          <span className="text-sm font-semibold text-gray-800 leading-relaxed">{pkg.name} - {pkg.price} เธเธฒเธ—</span>
                         </label>
                       ))}
                     </div>
@@ -439,8 +439,8 @@ export default function Apply() {
                   {/* Payment Method Image */}
                   <div>
                     <label className="block mb-1.5">
-                      <span className="text-[14px] font-bold text-gray-800">Payment Method : Please upload your payment evident <span className="text-red-500">*</span></span>
-                      <span className="block text-[12px] text-gray-500 -mt-0.5">ขั้นตอนการชำระเงิน: กรุณาแนบหลักฐานการชำระเงิน</span>
+                      <span className="text-base font-bold text-gray-800">Payment Method : Please upload your payment evident <span className="text-red-500">*</span></span>
+                      <span className="block text-sm text-gray-500 -mt-0.5">เธเธฑเนเธเธ•เธญเธเธเธฒเธฃเธเธณเธฃเธฐเน€เธเธดเธ: เธเธฃเธธเธ“เธฒเนเธเธเธซเธฅเธฑเธเธเธฒเธเธเธฒเธฃเธเธณเธฃเธฐเน€เธเธดเธ</span>
                     </label>
                     <div className="mb-4 max-w-sm mx-auto">
                       <img src="/payment-method.jpg" alt="Payment Method Instruction" className="w-full h-auto rounded-xl border border-gray-200 shadow-sm" />
@@ -450,9 +450,9 @@ export default function Apply() {
                       accept="image/*,.heic,.heif"
                       onChange={(e) => handleFile(e, setPaymentSlipData, setPaymentSlipFile)}
                       required
-                      className="block w-full text-[13px] text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-[13px] file:font-semibold file:bg-[#CC3366]/10 file:text-[#CC3366] hover:file:bg-[#CC3366]/20 border border-gray-200 rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#CC3366]/10 file:text-[#CC3366] hover:file:bg-[#CC3366]/20 border border-gray-200 rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
                     />
-                    <span className="block text-[11px] text-gray-400 mb-2">อัปโหลดไฟล์ที่รองรับ 1 รายการ ขนาดสูงสุด 10 MB</span>
+                    <span className="block text-xs text-gray-400 mb-2">เธญเธฑเธเนเธซเธฅเธ”เนเธเธฅเนเธ—เธตเนเธฃเธญเธเธฃเธฑเธ 1 เธฃเธฒเธขเธเธฒเธฃ เธเธเธฒเธ”เธชเธนเธเธชเธธเธ” 10 MB</span>
                     {paymentSlipData && (
                       <div className="mt-2 w-32 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
                         <img src={paymentSlipData} alt="Preview" className="w-full h-auto object-contain" />
@@ -466,8 +466,8 @@ export default function Apply() {
                     <div>
                       <span className="block text-[13.5px] font-bold text-gray-800 leading-relaxed mb-2">
                         I give permission for ICSN to use photos or videos (i.e. &quot;media&quot;) taken of my child in school-related academic and social activities. I understand and agree that this media may be used for promotional and marketing purposes without compensation. <span className="text-red-500">*</span><br/>
-                        <span className="text-[11px] text-gray-600 font-normal mt-1 block leading-relaxed">
-                          ข้าพเจ้าอนุญาตให้ ICSN ใช้รูปถ่ายหรือวิดีโอ (หรือที่เรียกว่า &quot;สื่อ&quot;) ที่ถ่ายจากกิจกรรมทางการศึกษาและสังคมของบุตรหลานข้าพเจ้าในโรงเรียน ข้าพเจ้าทราบและยอมรับว่าสื่อดังกล่าวอาจถูกนำไปใช้เพื่อการประชาสัมพันธ์และการตลาดโดยไม่ขอค่าตอบแทน
+                        <span className="text-xs text-gray-600 font-normal mt-1 block leading-relaxed">
+                          เธเนเธฒเธเน€เธเนเธฒเธญเธเธธเธเธฒเธ•เนเธซเน ICSN เนเธเนเธฃเธนเธเธ–เนเธฒเธขเธซเธฃเธทเธญเธงเธดเธ”เธตเนเธญ (เธซเธฃเธทเธญเธ—เธตเนเน€เธฃเธตเธขเธเธงเนเธฒ &quot;เธชเธทเนเธญ&quot;) เธ—เธตเนเธ–เนเธฒเธขเธเธฒเธเธเธดเธเธเธฃเธฃเธกเธ—เธฒเธเธเธฒเธฃเธจเธถเธเธฉเธฒเนเธฅเธฐเธชเธฑเธเธเธกเธเธญเธเธเธธเธ•เธฃเธซเธฅเธฒเธเธเนเธฒเธเน€เธเนเธฒเนเธเนเธฃเธเน€เธฃเธตเธขเธ เธเนเธฒเธเน€เธเนเธฒเธ—เธฃเธฒเธเนเธฅเธฐเธขเธญเธกเธฃเธฑเธเธงเนเธฒเธชเธทเนเธญเธ”เธฑเธเธเธฅเนเธฒเธงเธญเธฒเธเธ–เธนเธเธเธณเนเธเนเธเนเน€เธเธทเนเธญเธเธฒเธฃเธเธฃเธฐเธเธฒเธชเธฑเธกเธเธฑเธเธเนเนเธฅเธฐเธเธฒเธฃเธ•เธฅเธฒเธ”เนเธ”เธขเนเธกเนเธเธญเธเนเธฒเธ•เธญเธเนเธ—เธ
                         </span>
                       </span>
                       <div className="flex gap-6 mt-2 pb-1">
@@ -492,11 +492,11 @@ export default function Apply() {
                           className="mt-1 w-[18px] h-[18px] accent-[#CC3366] rounded border-gray-300"
                         />
                         <div>
-                          <span className="block text-[13px] font-bold text-gray-800 leading-relaxed">
+                          <span className="block text-sm font-bold text-gray-800 leading-relaxed">
                             By checking this box, you agree that this payment is non-refundable. <span className="text-red-500">*</span>
                           </span>
-                          <span className="block text-[11px] text-gray-600 mt-1 leading-relaxed">
-                            โดยการทำเครื่องหมายในช่องนี้ ถือว่าท่านยอมรับว่าการชำระเงินนี้ไม่สามารถขอคืนได้
+                          <span className="block text-xs text-gray-600 mt-1 leading-relaxed">
+                            เนเธ”เธขเธเธฒเธฃเธ—เธณเน€เธเธฃเธทเนเธญเธเธซเธกเธฒเธขเนเธเธเนเธญเธเธเธตเน เธ–เธทเธญเธงเนเธฒเธ—เนเธฒเธเธขเธญเธกเธฃเธฑเธเธงเนเธฒเธเธฒเธฃเธเธณเธฃเธฐเน€เธเธดเธเธเธตเนเนเธกเนเธชเธฒเธกเธฒเธฃเธ–เธเธญเธเธทเธเนเธ”เน
                           </span>
                         </div>
                       </label>
@@ -512,11 +512,11 @@ export default function Apply() {
                           className="mt-1 w-[18px] h-[18px] accent-[#CC3366] rounded border-gray-300"
                         />
                         <div>
-                          <span className="block text-[13px] font-bold text-gray-800 leading-relaxed">
+                          <span className="block text-sm font-bold text-gray-800 leading-relaxed">
                             By checking the box, I agree not to take pictures of other students in the school for posting on social media. <span className="text-red-500">*</span>
                           </span>
-                          <span className="block text-[11px] text-gray-600 mt-1 leading-relaxed">
-                            โดยการเลือกช่องนี้ ข้าพเจ้ายินยอมไม่ถ่ายรูปนักเรียนคนอื่นภายในโรงเรียนเพื่อโพสต์ในสื่อโซเชียล
+                          <span className="block text-xs text-gray-600 mt-1 leading-relaxed">
+                            เนเธ”เธขเธเธฒเธฃเน€เธฅเธทเธญเธเธเนเธญเธเธเธตเน เธเนเธฒเธเน€เธเนเธฒเธขเธดเธเธขเธญเธกเนเธกเนเธ–เนเธฒเธขเธฃเธนเธเธเธฑเธเน€เธฃเธตเธขเธเธเธเธญเธทเนเธเธ เธฒเธขเนเธเนเธฃเธเน€เธฃเธตเธขเธเน€เธเธทเนเธญเนเธเธชเธ•เนเนเธเธชเธทเนเธญเนเธเน€เธเธตเธขเธฅ
                           </span>
                           <span className="block text-[12.5px] font-bold text-gray-700 mt-1">Yes</span>
                         </div>
@@ -528,7 +528,7 @@ export default function Apply() {
 
               {/* Error Message */}
               {errorMessage && (
-                <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-[14px] font-medium flex items-start gap-2.5">
+                <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-base font-medium flex items-start gap-2.5">
                   <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                   <p>{errorMessage}</p>
                 </div>
@@ -539,10 +539,10 @@ export default function Apply() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-[#00B0B9] hover:bg-[#00969e] disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3.5 px-4 rounded-full font-bold shadow-md h-[52px] flex items-center justify-center gap-2 cursor-pointer text-[16px]"
+                  className="w-full bg-[#00B0B9] hover:bg-[#00969e] disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3.5 px-4 rounded-full font-bold shadow-md h-[52px] flex items-center justify-center gap-2 cursor-pointer text-lg"
                 >
                   {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
-                  {isSubmitting ? 'Submitting (กำลังดำเนินการ...)' : 'Submit Registration (ส่งข้อมูลลงทะเบียน)'}
+                  {isSubmitting ? 'Submitting (เธเธณเธฅเธฑเธเธ”เธณเน€เธเธดเธเธเธฒเธฃ...)' : 'Submit Registration (เธชเนเธเธเนเธญเธกเธนเธฅเธฅเธเธ—เธฐเน€เธเธตเธขเธ)'}
                 </Button>
               </div>
             </form>
@@ -552,3 +552,4 @@ export default function Apply() {
     </div>
   );
 }
+

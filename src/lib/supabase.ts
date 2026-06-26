@@ -1,5 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Parent, Child, Package, Session, Booking, PackageOption, SlipUpload } from '../types';
+import type {
+  Parent,
+  Child,
+  Package,
+  Session,
+  Booking,
+  PackageOption,
+  DailyAttendanceRow,
+  PendingSlipRow,
+  ConfirmedBookingRow,
+  ExportCSVRow,
+  ParentWithDetails,
+} from '../types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -15,6 +27,24 @@ const createOrGetSupabase = () => {
 };
 
 export const supabase = createOrGetSupabase();
+
+export function getAdminPassword(): string {
+  if (typeof window === 'undefined') return '';
+  return sessionStorage.getItem('icsn_admin_pwd') || '';
+}
+
+export async function invokeAdminAction<T = Record<string, unknown>>(
+  action: string,
+  payload: Record<string, unknown> = {}
+): Promise<T> {
+  const password = getAdminPassword();
+  const { data, error } = await supabase.functions.invoke('admin-actions', {
+    body: { action, password, payload },
+  });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data as T;
+}
 
 export const AppDB = {
   async getSessions(startDate: string, endDate: string): Promise<Session[]> {
@@ -225,7 +255,9 @@ export const AppDB = {
   async cancelBooking(bookingId: string, packageId: string): Promise<void> {
     const { error } = await supabase.rpc('cancel_booking', {
       p_booking_id: bookingId,
-      p_package_id: packageId
+      p_package_id: packageId,
+      p_cancelled_by: 'parent',
+      p_cancel_reason: null,
     });
     if (error) throw error;
   },
@@ -371,12 +403,275 @@ export const AppDB = {
     return data;
   },
 
-  async adminEditUser(table: 'parents' | 'children', id: string, updateData: any): Promise<void> {
+  async adminEditUser(table: 'parents' | 'children', id: string, updateData: Record<string, unknown>): Promise<void> {
     const { error } = await supabase.rpc('admin_edit_user', {
       p_table: table,
       p_id: id,
       p_data: updateData
     });
     if (error) throw error;
-  }
+  },
+
+  async getSessionForDate(dateStr: string, timeLabel = 'เช้า (09:00 - 12:00)'): Promise<Session | null> {
+    const { data, error } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('session_date', dateStr)
+      .eq('time_label', timeLabel)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
+  async getDailyAttendance(dateStr: string): Promise<DailyAttendanceRow[]> {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select(`
+        id,
+        created_at,
+        child:children(id, nickname, full_name, age, food_allergy),
+        parent:parents(name, phone)
+      `)
+      .eq('session_date', dateStr)
+      .eq('status', 'confirmed')
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+
+    return (data || []).map((row: {
+      id: string;
+      created_at: string;
+      child: { nickname: string; full_name?: string; age: number; food_allergy: string | null } | null;
+      parent: { name: string; phone: string } | null;
+    }) => ({
+      id: row.id,
+      nickname: row.child?.nickname || '-',
+      full_name: row.child?.full_name,
+      age: row.child?.age ?? 0,
+      food_allergy: row.child?.food_allergy ?? null,
+      parent_name: row.parent?.name || '-',
+      parent_phone: row.parent?.phone || '-',
+      created_at: row.created_at,
+    }));
+  },
+
+  async getPendingSlips(): Promise<PendingSlipRow[]> {
+    const { data: slips, error } = await supabase
+      .from('slip_uploads')
+      .select(`
+        id,
+        parent_id,
+        file_url,
+        status,
+        created_at,
+        package_id,
+        parent:parents(name, phone)
+      `)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    const packageOptions = await this.getPackageOptions();
+    const optionByName = new Map(packageOptions.map(o => [o.name, o.credits]));
+
+    const rows: PendingSlipRow[] = [];
+    for (const slip of slips || []) {
+      const parent = slip.parent as { name: string; phone: string } | null;
+      const { data: children } = await supabase
+        .from('children')
+        .select('nickname')
+        .eq('parent_id', slip.parent_id)
+        .limit(1);
+      const childNickname = children?.[0]?.nickname || '-';
+
+      let creditsToAdd = 10;
+      if (slip.package_id && optionByName.has(slip.package_id)) {
+        creditsToAdd = optionByName.get(slip.package_id)!;
+      } else if (slip.file_url?.includes('||credits:')) {
+        const parts = slip.file_url.split('||credits:');
+        if (parts.length > 1) {
+          creditsToAdd = parseInt(parts[1].split('||')[0], 10) || 10;
+        }
+      }
+
+      rows.push({
+        id: slip.id,
+        parent_id: slip.parent_id,
+        file_url: slip.file_url,
+        status: slip.status,
+        created_at: slip.created_at,
+        package_id: slip.package_id,
+        parent_name: parent?.name || '-',
+        parent_phone: parent?.phone || '-',
+        child_nickname: childNickname,
+        credits_to_add: creditsToAdd,
+      });
+    }
+    return rows;
+  },
+
+  async searchParentByPhone(phone: string): Promise<ParentWithDetails | null> {
+    const { data: parent, error } = await supabase
+      .from('parents')
+      .select('*')
+      .eq('phone', phone)
+      .maybeSingle();
+    if (error) throw error;
+    if (!parent) return null;
+
+    const children = await this.getChildren(parent.id);
+    const { data: packages, error: pkgError } = await supabase
+      .from('packages')
+      .select('*')
+      .eq('parent_id', parent.id);
+    if (pkgError) throw pkgError;
+
+    return { ...parent, children, packages: packages || [] };
+  },
+
+  async getConfirmedBookingsForDate(dateStr: string): Promise<ConfirmedBookingRow[]> {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select(`
+        id,
+        session_date,
+        child:children(nickname),
+        parent:parents(name, phone)
+      `)
+      .eq('session_date', dateStr)
+      .eq('status', 'confirmed')
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+
+    return (data || []).map((row: {
+      id: string;
+      session_date: string;
+      child: { nickname: string } | null;
+      parent: { name: string; phone: string } | null;
+    }) => ({
+      id: row.id,
+      session_date: row.session_date,
+      parent_name: row.parent?.name || '-',
+      parent_phone: row.parent?.phone || '-',
+      child_nickname: row.child?.nickname || '-',
+    }));
+  },
+
+  async searchActiveBookings(searchTerm: string): Promise<ConfirmedBookingRow[]> {
+    // Search active (confirmed) bookings from today onwards by parent phone or child nickname
+    const today = new Date().toISOString().split('T')[0];
+    
+    // First find matching parents by phone (exact or partial)
+    const { data: parents } = await supabase
+      .from('parents')
+      .select('id')
+      .ilike('phone', `%${searchTerm}%`);
+      
+    // Find matching children by nickname
+    const { data: children } = await supabase
+      .from('children')
+      .select('id')
+      .ilike('nickname', `%${searchTerm}%`);
+
+    const parentIds = (parents || []).map((p: { id: string }) => p.id);
+    const childIds = (children || []).map((c: { id: string }) => c.id);
+
+    if (parentIds.length === 0 && childIds.length === 0) {
+      return []; // No matches found
+    }
+
+    let query = supabase
+      .from('bookings')
+      .select(`
+        id,
+        session_date,
+        child:children!inner(id, nickname),
+        parent:parents!inner(id, name, phone)
+      `)
+      .gte('session_date', today)
+      .eq('status', 'confirmed');
+      
+    if (parentIds.length > 0 && childIds.length > 0) {
+      query = query.or(`parent_id.in.(${parentIds.join(',')}),child_id.in.(${childIds.join(',')})`);
+    } else if (parentIds.length > 0) {
+      query = query.in('parent_id', parentIds);
+    } else if (childIds.length > 0) {
+      query = query.in('child_id', childIds);
+    }
+
+    const { data, error } = await query.order('session_date', { ascending: true });
+    
+    if (error) throw error;
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      session_date: row.session_date,
+      parent_name: row.parent?.name || '-',
+      parent_phone: row.parent?.phone || '-',
+      child_nickname: row.child?.nickname || '-',
+    }));
+  },
+
+  async getExportCSVData(): Promise<ExportCSVRow[]> {
+    const { data: parents, error } = await supabase
+      .from('parents')
+      .select(`
+        id,
+        name,
+        phone,
+        created_at,
+        children(nickname, age, food_allergy),
+        packages(credits_remaining)
+      `)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+
+    const rows: ExportCSVRow[] = [];
+    for (const p of parents || []) {
+      const children = (p.children as { nickname: string; age: number; food_allergy: string | null }[]) || [];
+      const packages = (p.packages as { credits_remaining: number }[]) || [];
+      const firstChild = children[0];
+      const totalCredits = packages.reduce((sum, pkg) => sum + (pkg.credits_remaining || 0), 0);
+
+      const { data: bookings } = await supabase
+        .from('bookings')
+        .select('session_date')
+        .eq('parent_id', p.id)
+        .eq('status', 'confirmed')
+        .order('session_date', { ascending: true });
+
+      const bookingDates = (bookings || [])
+        .map((b: { session_date: string }) => b.session_date)
+        .filter((d: string, i: number, arr: string[]) => arr.indexOf(d) === i)
+        .join('; ');
+
+      rows.push({
+        parent_name: p.name,
+        phone: p.phone,
+        child_nickname: firstChild?.nickname || '-',
+        age: firstChild?.age ?? '-',
+        food_allergy: firstChild?.food_allergy || '-',
+        credits_remaining: totalCredits,
+        booking_dates: bookingDates,
+        registration_date: p.created_at?.split('T')[0] || '',
+      });
+    }
+    return rows;
+  },
+
+  async adjustCredits(parentId: string, amount: number, reason: string): Promise<number> {
+    const result = await invokeAdminAction<{ creditsRemaining: number }>('adjust-credits', {
+      parentId,
+      amount,
+      reason,
+    });
+    return result.creditsRemaining;
+  },
+
+  async updateSessionCapacity(sessionId: string, totalCapacity: number): Promise<Session> {
+    const result = await invokeAdminAction<{ session: Session }>('update-session', {
+      sessionId,
+      totalCapacity,
+    });
+    return result.session;
+  },
 };

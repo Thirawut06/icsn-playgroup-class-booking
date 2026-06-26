@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -39,9 +39,10 @@ export function ApplyHeader({ showSuccess, path, setPath }: ApplyHeaderProps) {
       <h1 className="text-[22px] font-bold text-white relative z-10 drop-shadow-md">
         ICSN Panda Playgroup
       </h1>
-      <p className="text-[13px] font-medium text-white/90 mt-0.5 relative z-10 drop-shadow-md">
-        Registration Form (แบบฟอร์มลงทะเบียนเรียน)
+      <p className="text-sm font-medium text-white/90 mt-0.5 relative z-10 drop-shadow-md">
+        Registration Form (เนเธเธเธเธญเธฃเนเธกเธฅเธเธ—เธฐเน€เธเธตเธขเธเน€เธฃเธตเธขเธ)
       </p>
     </div>
   );
 }
+

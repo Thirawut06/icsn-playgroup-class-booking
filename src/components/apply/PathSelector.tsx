@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Ticket, Wallet, ChevronRight } from 'lucide-react';
 
 interface PathSelectorProps {
@@ -8,9 +8,9 @@ interface PathSelectorProps {
 export function PathSelector({ setPath }: PathSelectorProps) {
   return (
     <div className="px-6 py-6 relative z-10">
-      <h2 className="text-[17px] font-bold text-center text-[#211551] mb-6">
+      <h2 className="text-lg font-bold text-center text-[#211551] mb-6">
         Please select your registration path<br/>
-        <span className="text-xs text-gray-500 font-normal block mt-1">เลือกทางเลือกเพื่อสั่งซื้อสิทธิ์หรือลงทะเบียนเรียน</span>
+        <span className="text-xs text-gray-500 font-normal block mt-1">เน€เธฅเธทเธญเธเธ—เธฒเธเน€เธฅเธทเธญเธเน€เธเธทเนเธญเธชเธฑเนเธเธเธทเนเธญเธชเธดเธ—เธเธดเนเธซเธฃเธทเธญเธฅเธเธ—เธฐเน€เธเธตเธขเธเน€เธฃเธตเธขเธ</span>
       </h2>
 
       <div className="space-y-4">
@@ -23,10 +23,10 @@ export function PathSelector({ setPath }: PathSelectorProps) {
               <Ticket className="w-6 h-6" />
             </div>
             <div>
-              <div className="font-bold text-[#211551] text-[16px]">Free Trial Class</div>
-              <div className="text-[12px] text-gray-500 mt-0.5">
+              <div className="font-bold text-[#211551] text-lg">Free Trial Class</div>
+              <div className="text-sm text-gray-500 mt-0.5">
                 Register for a free 1-session playgroup class<br/>
-                <span className="text-[11px] text-gray-400 block mt-0.5">ลงทะเบียนทดลองเรียนกลุ่มเล่น ครั้งที่ 1 ฟรี (สิทธิ์ทดลองเรียน)</span>
+                <span className="text-xs text-gray-400 block mt-0.5">เธฅเธเธ—เธฐเน€เธเธตเธขเธเธ—เธ”เธฅเธญเธเน€เธฃเธตเธขเธเธเธฅเธธเนเธกเน€เธฅเนเธ เธเธฃเธฑเนเธเธ—เธตเน 1 เธเธฃเธต (เธชเธดเธ—เธเธดเนเธ—เธ”เธฅเธญเธเน€เธฃเธตเธขเธ)</span>
               </div>
             </div>
           </div>
@@ -42,10 +42,10 @@ export function PathSelector({ setPath }: PathSelectorProps) {
               <Wallet className="w-6 h-6" />
             </div>
             <div>
-              <div className="font-bold text-[#211551] text-[16px]">Purchase Package</div>
-              <div className="text-[12px] text-gray-500 mt-0.5">
+              <div className="font-bold text-[#211551] text-lg">Purchase Package</div>
+              <div className="text-sm text-gray-500 mt-0.5">
                 Buy playgroup session packages and top up credits<br/>
-                <span className="text-[11px] text-gray-400 block mt-0.5">ซื้อแพ็กเกจเรียนกลุ่มเล่นและเติมเครดิตการเรียน</span>
+                <span className="text-xs text-gray-400 block mt-0.5">เธเธทเนเธญเนเธเนเธเน€เธเธเน€เธฃเธตเธขเธเธเธฅเธธเนเธกเน€เธฅเนเธเนเธฅเธฐเน€เธ•เธดเธกเน€เธเธฃเธ”เธดเธ•เธเธฒเธฃเน€เธฃเธตเธขเธ</span>
               </div>
             </div>
           </div>
@@ -55,3 +55,4 @@ export function PathSelector({ setPath }: PathSelectorProps) {
     </div>
   );
 }
+

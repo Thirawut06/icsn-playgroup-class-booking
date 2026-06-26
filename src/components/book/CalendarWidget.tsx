@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 import type { Session, Booking } from '@/types';
 
@@ -20,8 +20,8 @@ interface CalendarWidgetProps {
 
 function getThaiMonthName(date: Date) {
   const thaiMonths = [
-    "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
-    "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    "เธกเธเธฃเธฒเธเธก", "เธเธธเธกเธ เธฒเธเธฑเธเธเน", "เธกเธตเธเธฒเธเธก", "เน€เธกเธฉเธฒเธขเธ", "เธเธคเธฉเธ เธฒเธเธก", "เธกเธดเธ–เธธเธเธฒเธขเธ",
+    "เธเธฃเธเธเธฒเธเธก", "เธชเธดเธเธซเธฒเธเธก", "เธเธฑเธเธขเธฒเธขเธ", "เธ•เธธเธฅเธฒเธเธก", "เธเธคเธจเธเธดเธเธฒเธขเธ", "เธเธฑเธเธงเธฒเธเธก"
   ];
   return `${thaiMonths[date.getMonth()]} ${date.getFullYear() + 543}`;
 }
@@ -74,9 +74,9 @@ export function CalendarWidget({
     <div className="bg-white rounded-[20px] border border-gray-100 p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-        <h3 className="font-bold text-[#211551] flex items-center gap-1.5 text-[15px]">
+        <h3 className="font-bold text-[#211551] flex items-center gap-1.5 text-base">
           <CalendarIcon className="w-5 h-5 text-[#00B0B9]" />
-          <span>2. เลือกวันที่เรียน</span>
+          <span>2. เน€เธฅเธทเธญเธเธงเธฑเธเธ—เธตเนเน€เธฃเธตเธขเธ</span>
         </h3>
 
         <div className="flex items-center gap-1">
@@ -87,14 +87,14 @@ export function CalendarWidget({
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <h4 className="text-[13px] font-bold text-[#211551] bg-gray-50 px-2.5 py-1.5 rounded-xl">
+          <h4 className="text-sm font-bold text-[#211551] bg-gray-50 px-2.5 py-1.5 rounded-xl">
             {monthName}
           </h4>
           <button
             onClick={() => onMonthChange(1)}
             className="p-2 hover:bg-gray-50 rounded-xl transition text-[#211551] disabled:opacity-30 disabled:hover:bg-transparent"
             disabled={monthIndex === 1}
-            title="ดูรอบเรียนล่วงหน้า 2 เดือน"
+            title="เธ”เธนเธฃเธญเธเน€เธฃเธตเธขเธเธฅเนเธงเธเธซเธเนเธฒ 2 เน€เธ”เธทเธญเธ"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -102,12 +102,12 @@ export function CalendarWidget({
       </div>
 
       {/* Thai Week Names */}
-      <div className="grid grid-cols-7 text-center text-[12px] font-bold text-gray-400">
-        <div>อา</div><div>จ</div><div>อ</div><div>พ</div><div>พฤ</div><div>ศ</div><div>ส</div>
+      <div className="grid grid-cols-7 text-center text-sm font-bold text-gray-400">
+        <div>เธญเธฒ</div><div>เธ</div><div>เธญ</div><div>เธ</div><div>เธเธค</div><div>เธจ</div><div>เธช</div>
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1.5 text-center font-bold text-[15px]">
+      <div className="grid grid-cols-7 gap-1.5 text-center font-bold text-base">
         {getDaysInMonth().map((dayObj, i) => {
           if (!dayObj) return <div key={`empty-${i}`} className="py-2 text-transparent"></div>;
 
@@ -162,28 +162,29 @@ export function CalendarWidget({
       </div>
 
       {/* Legend */}
-      <div className="pt-3 border-t border-gray-50 flex flex-wrap justify-center gap-4 text-[11px] text-gray-500 font-medium">
+      <div className="pt-3 border-t border-gray-50 flex flex-wrap justify-center gap-4 text-xs text-gray-500 font-medium">
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 bg-gray-100 border border-gray-200 rounded-full"></span>
-          ผ่านไปแล้ว / วันหยุด
+          เธเนเธฒเธเนเธเนเธฅเนเธง / เธงเธฑเธเธซเธขเธธเธ”
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 bg-[#00B0B9] rounded-full shadow-sm"></span>
-          เปิดให้จอง
+          เน€เธเธดเธ”เนเธซเนเธเธญเธ
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 bg-rose-400 rounded-full shadow-sm"></span>
-          เต็มแล้ว / ปิดจอง
+          เน€เธ•เนเธกเนเธฅเนเธง / เธเธดเธ”เธเธญเธ
         </span>
       </div>
       
       {/* Warning Rule Note */}
       <div className="bg-amber-50 border border-amber-200 text-amber-700 p-3 rounded-2xl flex items-start gap-2 mt-4">
         <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-amber-500" />
-        <p className="text-[11px] font-bold leading-relaxed">
-          ระบบจะปิดรับจองและ<span className="text-red-500">ไม่อนุญาตให้ยกเลิกสิทธิ์</span> ในวันที่มีการเรียนการสอนเวลา 07:00 น. เป็นต้นไป
+        <p className="text-xs font-bold leading-relaxed">
+          เธฃเธฐเธเธเธเธฐเธเธดเธ”เธฃเธฑเธเธเธญเธเนเธฅเธฐ<span className="text-red-500">เนเธกเนเธญเธเธธเธเธฒเธ•เนเธซเนเธขเธเน€เธฅเธดเธเธชเธดเธ—เธเธดเน</span> เนเธเธงเธฑเธเธ—เธตเนเธกเธตเธเธฒเธฃเน€เธฃเธตเธขเธเธเธฒเธฃเธชเธญเธเน€เธงเธฅเธฒ 07:00 เธ. เน€เธเนเธเธ•เนเธเนเธ
         </p>
       </div>
     </div>
   );
 }
+

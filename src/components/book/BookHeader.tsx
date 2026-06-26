@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { LogOut, CalendarHeart, Wallet } from 'lucide-react';
@@ -21,10 +21,10 @@ export function BookHeader({ parentName, creditsRemaining, onLogout, onTopUpClic
               <Image src="/main-logo-icsn.png" alt="ICSN Logo" width={48} height={48} className="w-full h-auto object-contain" priority />
             </div>
             <div>
-              <h1 className="font-bold text-[#211551] text-[14px] leading-none">
+              <h1 className="font-bold text-[#211551] text-base leading-none">
                 ICSN Panda Playgroup
               </h1>
-              <p className="text-[10px] text-[#00B0B9] font-extrabold tracking-wider mt-0.5">
+              <p className="text-xs text-[#00B0B9] font-extrabold tracking-wider mt-0.5">
                 PLAY & LEARN
               </p>
             </div>
@@ -51,20 +51,20 @@ export function BookHeader({ parentName, creditsRemaining, onLogout, onTopUpClic
               <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${parentName || 'Parent'}&backgroundColor=e2e8f0`} alt="Profile" className="w-full h-full object-cover" />
             </div>
             <div>
-              <h2 className="text-[15px] font-bold text-[#211551] leading-tight">
-                {parentName || 'คุณพ่อ/คุณแม่'}
+              <h2 className="text-base font-bold text-[#211551] leading-tight">
+                {parentName || 'เธเธธเธ“เธเนเธญ/เธเธธเธ“เนเธกเน'}
               </h2>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[12px] text-gray-500 font-medium">สิทธิ์เรียน:</span>
-                <span className="text-[15px] font-black text-[#00B0B9]">{creditsRemaining}</span>
-                <span className="text-[11px] text-gray-500 font-medium">ครั้ง</span>
+                <span className="text-sm text-gray-500 font-medium">เธชเธดเธ—เธเธดเนเน€เธฃเธตเธขเธ:</span>
+                <span className="text-base font-black text-[#00B0B9]">{creditsRemaining}</span>
+                <span className="text-xs text-gray-500 font-medium">เธเธฃเธฑเนเธ</span>
               </div>
             </div>
           </div>
           
           <button 
             onClick={onTopUpClick} 
-            className="bg-[#211551] text-white hover:bg-[#2d1d6e] font-bold px-4 py-2.5 rounded-[14px] text-[12px] flex items-center gap-1.5 shadow-md transition active:scale-95 shrink-0"
+            className="bg-[#211551] text-white hover:bg-[#2d1d6e] font-bold px-4 py-2.5 rounded-[14px] text-sm flex items-center gap-1.5 shadow-md transition active:scale-95 shrink-0"
           >
             <Wallet className="w-4 h-4" /> Top Up
           </button>
@@ -73,3 +73,4 @@ export function BookHeader({ parentName, creditsRemaining, onLogout, onTopUpClic
     </>
   );
 }
+

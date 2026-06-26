@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -49,16 +49,16 @@ function LoginFormContent() {
           <button
             type="button"
             onClick={() => handleTabSwitch('login')}
-            className={`py-2.5 text-[14px] font-bold rounded-xl transition-all cursor-pointer ${tab === 'login' ? 'bg-white text-[#00B0B9] shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+            className={`py-2.5 text-base font-bold rounded-xl transition-all cursor-pointer ${tab === 'login' ? 'bg-white text-[#00B0B9] shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
           >
-            Sign In (เข้าสู่ระบบ)
+            Sign In (เน€เธเนเธฒเธชเธนเนเธฃเธฐเธเธ)
           </button>
           <button
             type="button"
             onClick={() => handleTabSwitch('signup')}
-            className={`py-2.5 text-[14px] font-bold rounded-xl transition-all cursor-pointer ${tab === 'signup' ? 'bg-white text-[#00B0B9] shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+            className={`py-2.5 text-base font-bold rounded-xl transition-all cursor-pointer ${tab === 'signup' ? 'bg-white text-[#00B0B9] shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
           >
-            Sign Up (สมัครสมาชิก)
+            Sign Up (เธชเธกเธฑเธเธฃเธชเธกเธฒเธเธดเธ)
           </button>
         </div>
 
@@ -79,3 +79,4 @@ export default function Login() {
     </Suspense>
   )
 }
+

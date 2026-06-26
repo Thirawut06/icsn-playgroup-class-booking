@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppDB } from '@/lib/supabase';
@@ -70,8 +70,8 @@ export default function MyBookings() {
     const monthIdx = parseInt(parts[1]) - 1;
     const day = parseInt(parts[2]);
     const thaiFullMonths = [
-      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", 
-      "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+      "เธกเธเธฃเธฒเธเธก", "เธเธธเธกเธ เธฒเธเธฑเธเธเน", "เธกเธตเธเธฒเธเธก", "เน€เธกเธฉเธฒเธขเธ", "เธเธคเธฉเธ เธฒเธเธก", "เธกเธดเธ–เธธเธเธฒเธขเธ", 
+      "เธเธฃเธเธเธฒเธเธก", "เธชเธดเธเธซเธฒเธเธก", "เธเธฑเธเธขเธฒเธขเธ", "เธ•เธธเธฅเธฒเธเธก", "เธเธคเธจเธเธดเธเธฒเธขเธ", "เธเธฑเธเธงเธฒเธเธก"
     ];
     return `${day} ${thaiFullMonths[monthIdx]} ${yearBE}`;
   };
@@ -96,9 +96,9 @@ export default function MyBookings() {
       setShowCancelConfirm(false);
       setTargetBooking(null);
       loadData(parentId);
-      alert("ยกเลิกสำเร็จ");
+      alert("เธขเธเน€เธฅเธดเธเธชเธณเน€เธฃเนเธ");
     } catch (error: any) {
-      alert(error.message || "เกิดข้อผิดพลาดในการยกเลิก");
+      alert(error.message || "เน€เธเธดเธ”เธเนเธญเธเธดเธ”เธเธฅเธฒเธ”เนเธเธเธฒเธฃเธขเธเน€เธฅเธดเธ");
     } finally {
       setActionLoading(false);
     }
@@ -116,15 +116,15 @@ export default function MyBookings() {
             <div className="flex flex-col">
               <h1 className="font-bold text-gray-800 text-base leading-tight">Your Class History</h1>
               <div className="flex items-center gap-2 -mt-0.5">
-                <span className="text-[10px] text-gray-500 font-medium">ประวัติชั้นเรียนของคุณ</span>
-                <span className="text-[10px] text-gray-300">|</span>
+                <span className="text-xs text-gray-500 font-medium">เธเธฃเธฐเธงเธฑเธ•เธดเธเธฑเนเธเน€เธฃเธตเธขเธเธเธญเธเธเธธเธ“</span>
+                <span className="text-xs text-gray-300">|</span>
                 <span className="text-[9px] text-gray-400 font-bold tracking-wider uppercase">ICSN PLAYGROUP</span>
               </div>
             </div>
           </div>
           <button onClick={() => router.push('/book')} className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-[#00B0B9] hover:bg-[#00969e] rounded-xl transition shadow-sm h-9">
             <PlusCircle className="w-4 h-4" />
-            <span className="hidden sm:inline">Book New Class / จองชั้นเรียนเพิ่ม</span>
+            <span className="hidden sm:inline">Book New Class / เธเธญเธเธเธฑเนเธเน€เธฃเธตเธขเธเน€เธเธดเนเธก</span>
             <span className="sm:hidden">Book</span>
           </button>
         </div>
@@ -134,9 +134,9 @@ export default function MyBookings() {
         {/* Stats */}
         <div className="bg-white border border-gray-100 rounded-3xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-sm">
           <div className="space-y-1">
-            <p className="text-xs text-gray-400">ครอบครัวที่ลงทะเบียนเรียน</p>
+            <p className="text-xs text-gray-400">เธเธฃเธญเธเธเธฃเธฑเธงเธ—เธตเนเธฅเธเธ—เธฐเน€เธเธตเธขเธเน€เธฃเธตเธขเธ</p>
             <h2 className="text-lg font-bold text-gray-800">Parent/Guardian: {parentName}</h2>
-            <p className="text-[10px] text-gray-500">Contact: {phone}</p>
+            <p className="text-xs text-gray-500">Contact: {phone}</p>
           </div>
           <div className="flex gap-4">
             <div className="text-center bg-[#00B0B9]/5 border border-[#00B0B9]/20 rounded-2xl px-4 py-2.5">
@@ -154,7 +154,7 @@ export default function MyBookings() {
         <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm space-y-6">
           <h3 className="font-bold text-gray-800 text-base border-b pb-3.5 flex items-center gap-2">
             <CalendarCheck className="w-5 h-5 text-[#211551]" />
-            <span>รายการสำรองห้องเรียนทั้งหมด (Reservations)</span>
+            <span>เธฃเธฒเธขเธเธฒเธฃเธชเธณเธฃเธญเธเธซเนเธญเธเน€เธฃเธตเธขเธเธ—เธฑเนเธเธซเธกเธ” (Reservations)</span>
           </h3>
 
           {loading ? (
@@ -164,7 +164,7 @@ export default function MyBookings() {
               <div className="w-16 h-16 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CalendarCheck className="w-8 h-8" />
               </div>
-              <p className="text-gray-500 font-medium">ยังไม่มีรายการจองชั้นเรียน</p>
+              <p className="text-gray-500 font-medium">เธขเธฑเธเนเธกเนเธกเธตเธฃเธฒเธขเธเธฒเธฃเธเธญเธเธเธฑเนเธเน€เธฃเธตเธขเธ</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -178,16 +178,16 @@ export default function MyBookings() {
                   <div key={bk.id} className="border border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center hover:border-gray-200 transition-colors bg-gray-50/50">
                     <div className="flex gap-4 items-start w-full sm:w-auto">
                       <div className="w-12 h-12 bg-white rounded-xl border border-gray-100 flex flex-col items-center justify-center shrink-0 shadow-sm">
-                        <span className="text-[10px] font-bold text-[#CC3366] uppercase">{new Date(sDate).toLocaleDateString('en-US', { month: 'short' })}</span>
-                        <span className="text-[16px] font-extrabold text-gray-800 leading-none">{new Date(sDate).getDate()}</span>
+                        <span className="text-xs font-bold text-[#CC3366] uppercase">{new Date(sDate).toLocaleDateString('en-US', { month: 'short' })}</span>
+                        <span className="text-lg font-extrabold text-gray-800 leading-none">{new Date(sDate).getDate()}</span>
                       </div>
                       <div className="space-y-1 flex-1">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-gray-800 text-[15px]">{formatThaiDate(sDate)}</h4>
+                          <h4 className="font-bold text-gray-800 text-base">{formatThaiDate(sDate)}</h4>
                           {past && <span className="bg-gray-100 text-gray-500 text-[9px] px-2 py-0.5 rounded-full font-bold">Ended</span>}
                         </div>
-                        <p className="text-xs text-gray-600 font-medium">น้อง{bk.child.nickname} ({bk.child.full_name})</p>
-                        <div className="flex items-center gap-3 text-[11px] text-gray-400 font-medium mt-1">
+                        <p className="text-xs text-gray-600 font-medium">เธเนเธญเธ{bk.child.nickname} ({bk.child.full_name})</p>
+                        <div className="flex items-center gap-3 text-xs text-gray-400 font-medium mt-1">
                           <span className="flex items-center gap-1"><Info className="w-3 h-3" /> 09:30 - 11:30</span>
                         </div>
                       </div>
@@ -216,14 +216,14 @@ export default function MyBookings() {
             <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
               <XCircle className="w-7 h-7" />
             </div>
-            <h3 className="text-xl font-bold text-gray-800 text-center mb-2">ยืนยันการยกเลิกจอง?</h3>
-            <p className="text-sm text-gray-500 text-center mb-6">คุณต้องการยกเลิกการจองของ น้อง{targetBooking.child.nickname} ในวันที่ {formatThaiDate(targetBooking.session.session_date)} ใช่หรือไม่?</p>
+            <h3 className="text-xl font-bold text-gray-800 text-center mb-2">เธขเธทเธเธขเธฑเธเธเธฒเธฃเธขเธเน€เธฅเธดเธเธเธญเธ?</h3>
+            <p className="text-sm text-gray-500 text-center mb-6">เธเธธเธ“เธ•เนเธญเธเธเธฒเธฃเธขเธเน€เธฅเธดเธเธเธฒเธฃเธเธญเธเธเธญเธ เธเนเธญเธ{targetBooking.child.nickname} เนเธเธงเธฑเธเธ—เธตเน {formatThaiDate(targetBooking.session.session_date)} เนเธเนเธซเธฃเธทเธญเนเธกเน?</p>
             <div className="flex gap-3">
               <button onClick={() => setShowCancelConfirm(false)} disabled={actionLoading} className="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold py-3 rounded-xl transition">
-                ปิด (Close)
+                เธเธดเธ” (Close)
               </button>
               <button onClick={processCancel} disabled={actionLoading} className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition shadow-sm">
-                {actionLoading ? 'กำลังยกเลิก...' : 'ยืนยัน (Confirm)'}
+                {actionLoading ? 'เธเธณเธฅเธฑเธเธขเธเน€เธฅเธดเธ...' : 'เธขเธทเธเธขเธฑเธ (Confirm)'}
               </button>
             </div>
           </div>
@@ -232,6 +232,7 @@ export default function MyBookings() {
     </div>
   );
 }
+
 
 
 

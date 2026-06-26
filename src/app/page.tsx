@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React from 'react';
 import Link from 'next/link';
@@ -35,9 +35,9 @@ export default function HomePage() {
       {/* Navigation flow based on Parent State */}
       <div className="p-6 sm:p-8 space-y-6">
         <div className="text-center">
-          <h2 className="text-[#211551] font-extrabold text-[16px] leading-tight">
+          <h2 className="text-[#211551] font-extrabold text-lg leading-tight">
             Please select your status to continue<br />
-            <span className="text-[12px] text-gray-500 font-normal block mt-1">กรุณาเลือกสถานะเพื่อดำเนินการต่อ</span>
+            <span className="text-sm text-gray-500 font-normal block mt-1">เธเธฃเธธเธ“เธฒเน€เธฅเธทเธญเธเธชเธ–เธฒเธเธฐเน€เธเธทเนเธญเธ”เธณเน€เธเธดเธเธเธฒเธฃเธ•เนเธญ</span>
           </h2>
         </div>
 
@@ -53,13 +53,13 @@ export default function HomePage() {
               </div>
               <div className="text-left space-y-0.5">
                 <div className="flex items-center gap-2 -mt-0.5">
-                  <span className="font-bold text-gray-800 text-[16px]">
+                  <span className="font-bold text-gray-800 text-lg">
                     New Parent
                   </span>
-                  <span className="px-2 py-0.5 bg-[#CC3366]/10 text-[#CC3366] text-[10px] font-bold rounded-full uppercase tracking-widest mt-0.5">New</span>
+                  <span className="px-2 py-0.5 bg-[#CC3366]/10 text-[#CC3366] text-xs font-bold rounded-full uppercase tracking-widest mt-0.5">New</span>
                 </div>
-                <div className="font-semibold text-gray-500 text-[13px]">
-                  สมัครสมาชิกใหม่
+                <div className="font-semibold text-gray-500 text-sm">
+                  เธชเธกเธฑเธเธฃเธชเธกเธฒเธเธดเธเนเธซเธกเน
                 </div>
               </div>
             </div>
@@ -78,11 +78,11 @@ export default function HomePage() {
                 <LogIn className="w-5 h-5 ml-0.5" />
               </div>
               <div className="text-left space-y-0.5">
-                <div className="font-bold text-gray-800 text-[16px] -mt-0.5">
+                <div className="font-bold text-gray-800 text-lg -mt-0.5">
                   Sign In
                 </div>
-                <div className="font-semibold text-gray-500 text-[13px]">
-                  เข้าสู่ระบบเดิม
+                <div className="font-semibold text-gray-500 text-sm">
+                  เน€เธเนเธฒเธชเธนเนเธฃเธฐเธเธเน€เธ”เธดเธก
                 </div>
               </div>
             </div>
@@ -93,19 +93,20 @@ export default function HomePage() {
         </div>
 
         {/* Footer Admin section with a neat badge styling */}
-        <div className="pt-6 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400 px-1">
+        <div className="pt-6 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400 px-1">
           <div>
-            © ICSN Panda Playgroup
+            ยฉ ICSN Panda Playgroup
           </div>
           <Link
             href="/admin"
             className="font-semibold text-gray-400 hover:text-[#CC3366] transition-colors flex items-center gap-1 bg-gray-50 hover:bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-100"
           >
             <Lock className="w-3 h-3" />
-            Admin (สำหรับเจ้าหน้าที่)
+            Admin (เธชเธณเธซเธฃเธฑเธเน€เธเนเธฒเธซเธเนเธฒเธ—เธตเน)
           </Link>
         </div>
       </div>
     </div>
   );
 }
+

@@ -6,21 +6,56 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+async function sendGoogleChat(message: string) {
+  const WEBHOOK_URL = Deno.env.get('GOOGLE_CHAT_WEBHOOK_URL')
+  if (!WEBHOOK_URL) return
+  await fetch(WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+    body: JSON.stringify({ text: message })
+  }).catch(e => console.error("Webhook failed:", e))
+}
+
+async function resolveCreditsFromSlip(supabase: ReturnType<typeof createClient>, slip: { package_id?: string | null; file_url?: string }) {
+  let creditsToAdd = 10
+  if (slip.package_id) {
+    const { data: byName } = await supabase
+      .from('package_options')
+      .select('credits, name')
+      .eq('name', slip.package_id)
+      .maybeSingle()
+    if (byName) {
+      creditsToAdd = byName.credits
+    } else {
+      const { data: byId } = await supabase
+        .from('package_options')
+        .select('credits')
+        .eq('id', slip.package_id)
+        .maybeSingle()
+      if (byId) creditsToAdd = byId.credits
+    }
+  } else if (slip.file_url && slip.file_url.includes('||credits:')) {
+    const parts = slip.file_url.split('||credits:')
+    if (parts.length > 1) {
+      creditsToAdd = parseInt(parts[1].split('||')[0]) || 10
+    }
+  }
+  return creditsToAdd
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { action, payload, password } = await req.json()
-    
-    // 1. Verify Admin Password
+    const { action, payload = {}, password } = await req.json()
+
     const ADMIN_PASSWORD = Deno.env.get('ADMIN_PASSWORD') || 'admin123'
     if (password !== ADMIN_PASSWORD) {
       throw new Error('รหัสผ่าน Admin ไม่ถูกต้อง (Invalid Admin Password)')
     }
 
-    // 2. Initialize Supabase Client with Service Role (Bypasses RLS)
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     if (!supabaseUrl || !supabaseServiceKey) {
@@ -28,7 +63,6 @@ serve(async (req) => {
     }
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // 3. Handle Actions
     if (action === 'verify-password') {
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -37,97 +71,118 @@ serve(async (req) => {
     }
 
     if (action === 'approve-slip') {
-      const { slipId } = payload
-      
-      // Fetch slip to get parent_id and file_url
+      const { slipId, creditsOverride } = payload as { slipId: string; creditsOverride?: number }
+
       const { data: slip, error: sErr } = await supabase.from('slip_uploads').select('*').eq('id', slipId).single()
       if (sErr) throw sErr
 
-      let creditsToAdd = 10
-      if (slip.package_id) {
-        const { data: pkgOption } = await supabase.from('package_options').select('credits').eq('id', slip.package_id).single()
-        if (pkgOption) {
-          creditsToAdd = pkgOption.credits
-        }
-      } else if (slip.file_url && slip.file_url.includes('||credits:')) {
-        const parts = slip.file_url.split('||credits:')
-        if (parts.length > 1) {
-          creditsToAdd = parseInt(parts[1].split('||')[0]) || 10
-        }
-      }
-      
-      // Update slip status
+      let creditsToAdd = typeof creditsOverride === 'number' && creditsOverride > 0
+        ? creditsOverride
+        : await resolveCreditsFromSlip(supabase, slip)
+
       const { error: suErr } = await supabase
         .from('slip_uploads')
         .update({ status: 'approved', reviewed_at: new Date().toISOString() })
         .eq('id', slipId)
       if (suErr) throw suErr
 
-      // Add Credits
-      const { data: pkgs } = await supabase.from('packages').select('*').eq('parent_id', slip.parent_id).eq('type', 'purchase')
+      const packageType = slip.package_id || 'purchase'
+      const { data: pkgs } = await supabase
+        .from('packages')
+        .select('*')
+        .eq('parent_id', slip.parent_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      let pkgId: string | null = null
       if (pkgs && pkgs.length > 0) {
+        pkgId = pkgs[0].id
         const { error: refundErr } = await supabase
           .from('packages')
           .update({ credits_remaining: pkgs[0].credits_remaining + creditsToAdd })
           .eq('id', pkgs[0].id)
         if (refundErr) throw refundErr
       } else {
-        const { error: insErr } = await supabase
+        const { data: newPkg, error: insErr } = await supabase
           .from('packages')
-          .insert([{ parent_id: slip.parent_id, type: 'purchase', credits_remaining: creditsToAdd }])
+          .insert([{ parent_id: slip.parent_id, type: packageType, credits_remaining: creditsToAdd }])
+          .select('id')
+          .single()
         if (insErr) throw insErr
+        pkgId = newPkg.id
       }
 
-      // Trigger Webhook (using our notify function logic natively)
-      const WEBHOOK_URL = Deno.env.get('GOOGLE_CHAT_WEBHOOK_URL')
-      if (WEBHOOK_URL) {
-        const { data: child } = await supabase.from('children').select('nickname').eq('parent_id', slip.parent_id).limit(1).maybeSingle()
-        const announceMsg = `💰 ชำระเงินแล้ว: น้อง${child ? child.nickname : 'ไม่ระบุ'} — approved (+${creditsToAdd} สิทธิ์)`
-        await fetch(WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-          body: JSON.stringify({ text: announceMsg })
-        }).catch(e => console.error("Webhook failed:", e))
-      }
+      await supabase.from('credit_transactions').insert([{
+        parent_id: slip.parent_id,
+        package_id: pkgId,
+        action_type: 'topup',
+        amount: creditsToAdd,
+        notes: `slip approved: ${slipId}`
+      }])
 
-      return new Response(JSON.stringify({ success: true, creditsAdded: creditsToAdd }), {
+      const { data: child } = await supabase.from('children').select('nickname').eq('parent_id', slip.parent_id).limit(1).maybeSingle()
+      const childNickname = child?.nickname || 'ไม่ระบุ'
+      await sendGoogleChat(`💰 ชำระเงินแล้ว: น้อง${childNickname} — approved (+${creditsToAdd} สิทธิ์)`)
+
+      return new Response(JSON.stringify({ success: true, creditsAdded: creditsToAdd, childNickname }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      })
+    }
+
+    if (action === 'reject-slip') {
+      const { slipId } = payload as { slipId: string }
+      const { error } = await supabase
+        .from('slip_uploads')
+        .update({ status: 'rejected', reviewed_at: new Date().toISOString() })
+        .eq('id', slipId)
+      if (error) throw error
+
+      return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       })
     }
 
     if (action === 'cancel-booking') {
-      const { bookingId, cancelReason } = payload
-      
-      const { data: bk, error: bkErr } = await supabase.from('bookings').select('*').eq('id', bookingId).single()
-      if (bkErr) throw bkErr
+      const { bookingId, cancelReason } = payload as { bookingId: string; cancelReason?: string }
 
-      const { error: updateErr } = await supabase
-        .from('bookings')
-        .update({ status: 'cancelled', cancelled_at: new Date().toISOString(), cancelled_by: 'admin', cancel_reason: cancelReason })
-        .eq('id', bookingId)
-      if (updateErr) throw updateErr
+      const { data, error } = await supabase.rpc('cancel_booking', {
+        p_booking_id: bookingId,
+        p_package_id: null,
+        p_cancelled_by: 'admin',
+        p_cancel_reason: cancelReason || 'Admin cancelled'
+      })
+      if (error) throw error
 
-      // Refund Credit
-      const { data: pkgs } = await supabase.from('packages').select('*').eq('parent_id', bk.parent_id).order('created_at', { ascending: true })
-      if (pkgs && pkgs.length > 0) {
-        await supabase.from('packages').update({ credits_remaining: pkgs[0].credits_remaining + 1 }).eq('id', pkgs[0].id)
-      }
+      const result = data as { session_date: string; child_nickname: string }
+      const dateParts = result.session_date.split('-')
+      const displayDate = `${dateParts[2]}/${dateParts[1]}`
+      await sendGoogleChat(`❌ แอดมินยกเลิกสิทธิ์ส่งน้อง${result.child_nickname} วันที่ ${displayDate} (สาเหตุ: ${cancelReason || 'ไม่ระบุ'})`)
 
-      // Decrement Capacity
-      const { data: sess } = await supabase.from('sessions').select('*').eq('session_date', bk.session_date).single()
-      if (sess && sess.booked_count > 0) {
-        await supabase.from('sessions').update({ booked_count: sess.booked_count - 1 }).eq('id', sess.id)
-      }
+      return new Response(JSON.stringify({ success: true, ...result }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      })
+    }
 
-      return new Response(JSON.stringify({ success: true, sessionDate: bk.session_date }), {
+    if (action === 'adjust-credits') {
+      const { parentId, amount, reason } = payload as { parentId: string; amount: number; reason: string }
+      const { data, error } = await supabase.rpc('adjust_credits', {
+        p_parent_id: parentId,
+        p_amount: amount,
+        p_reason: reason
+      })
+      if (error) throw error
+
+      return new Response(JSON.stringify({ success: true, creditsRemaining: data }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       })
     }
 
     if (action === 'add-package') {
-      const { name, price, credits } = payload
+      const { name, price, credits } = payload as { name: string; price: number; credits: number }
       const { data, error } = await supabase
         .from('package_options')
         .insert([{ name, price, credits, is_active: true }])
@@ -141,7 +196,7 @@ serve(async (req) => {
     }
 
     if (action === 'toggle-package') {
-      const { packageId, isActive } = payload
+      const { packageId, isActive } = payload as { packageId: string; isActive: boolean }
       const { error } = await supabase
         .from('package_options')
         .update({ is_active: isActive })
@@ -153,9 +208,69 @@ serve(async (req) => {
       })
     }
 
+    if (action === 'update-session') {
+      const { sessionId, totalCapacity, isActive } = payload as {
+        sessionId: string
+        totalCapacity?: number
+        isActive?: boolean
+      }
+      const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+      if (typeof totalCapacity === 'number') updates.total_capacity = totalCapacity
+      if (typeof isActive === 'boolean') updates.is_active = isActive
+
+      const { data, error } = await supabase
+        .from('sessions')
+        .update(updates)
+        .eq('id', sessionId)
+        .select()
+        .single()
+      if (error) throw error
+
+      return new Response(JSON.stringify({ success: true, session: data }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      })
+    }
+
+    if (action === 'update-package') {
+      const { packageId, name, price, credits } = payload as {
+        packageId: string; name: string; price: number; credits: number
+      }
+      const updates: Record<string, unknown> = {}
+      if (name) updates.name = name
+      if (typeof price === 'number') updates.price = price
+      if (typeof credits === 'number') updates.credits = credits
+
+      const { data, error } = await supabase
+        .from('package_options')
+        .update(updates)
+        .eq('id', packageId)
+        .select()
+        .single()
+      if (error) throw error
+      return new Response(JSON.stringify({ success: true, package: data }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      })
+    }
+
+    if (action === 'delete-package') {
+      const { packageId } = payload as { packageId: string }
+      const { error } = await supabase
+        .from('package_options')
+        .delete()
+        .eq('id', packageId)
+      if (error) throw error
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      })
+    }
+
     throw new Error('Unknown action: ' + action)
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    const message = error instanceof Error ? error.message : String(error)
+    return new Response(JSON.stringify({ error: message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400
     })

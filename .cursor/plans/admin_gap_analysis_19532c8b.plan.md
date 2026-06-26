@@ -4,28 +4,28 @@ overview: เปรียบเทียบโปรเจกต์เก่า 
 todos:
   - id: fix-api-contract
     content: สร้าง invokeAdminAction helper และแก้ payload contract ทุก admin call
-    status: pending
+    status: completed
   - id: sql-rpcs
     content: เพิ่ม admin_book_class, adjust_credits, ปรับ cancel_booking + indexes ใน init.sql
-    status: pending
+    status: completed
   - id: edge-functions
     content: เพิ่ม reject-slip, adjust-credits ใน admin-actions + แก้ session lookup
-    status: pending
+    status: completed
   - id: refactor-admin-ui
     content: แยก admin/page.tsx เป็น src/components/admin/* (7 tabs)
-    status: pending
+    status: completed
   - id: port-daily-slips
     content: Port Daily tab (print, age, allergy, capacity edit) + Slips tab (auto credits, notify)
-    status: pending
+    status: completed
   - id: port-credits-cancel-export
     content: Port Credits, Override Cancel, Export CSV tabs จาก old project
-    status: pending
+    status: completed
   - id: integrate-new-features
     content: Package options tab + credit_transactions audit + walk-in RPC wiring
-    status: pending
+    status: completed
   - id: manual-test
     content: ทดสอบ end-to-end ทุก admin workflow ตาม checklist Phase D
-    status: pending
+    status: completed
 isProject: false
 ---
 

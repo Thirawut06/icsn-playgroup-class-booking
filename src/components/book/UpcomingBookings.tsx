@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { CalendarHeart } from 'lucide-react';
 import type { Booking } from '@/types';
 
@@ -15,9 +15,9 @@ export function UpcomingBookings({ bookings, selectedChildId, onCancelRequest }:
 
   return (
     <div className="bg-white rounded-[20px] border border-gray-100 p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] space-y-4">
-      <h3 className="font-bold text-[#211551] border-b border-gray-100 pb-3 flex items-center gap-1.5 text-[15px]">
+      <h3 className="font-bold text-[#211551] border-b border-gray-100 pb-3 flex items-center gap-1.5 text-base">
         <CalendarHeart className="w-5 h-5 text-[#00B0B9]" />
-        <span>รอบที่จองไว้ (Upcoming Classes)</span>
+        <span>เธฃเธญเธเธ—เธตเนเธเธญเธเนเธงเน (Upcoming Classes)</span>
       </h3>
       
       <div className="space-y-3">
@@ -32,23 +32,23 @@ export function UpcomingBookings({ bookings, selectedChildId, onCancelRequest }:
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-white shadow-sm border border-[#00B0B9]/20 text-[#00B0B9] rounded-[14px] flex flex-col items-center justify-center font-bold">
-                    <span className="text-[10px] leading-none mb-0.5">{bDate.toLocaleDateString('th-TH', { month: 'short' })}</span>
-                    <span className="text-[16px] leading-none">{bDate.getDate()}</span>
+                    <span className="text-xs leading-none mb-0.5">{bDate.toLocaleDateString('th-TH', { month: 'short' })}</span>
+                    <span className="text-lg leading-none">{bDate.getDate()}</span>
                   </div>
                   <div>
-                    <p className="font-black text-[#211551] text-[14px]">น้อง {booking.child?.nickname}</p>
-                    <p className="text-[12px] font-bold text-[#00B0B9]">{booking.session?.time_label || 'เช้า (09:00 - 12:00)'}</p>
+                    <p className="font-black text-[#211551] text-base">เธเนเธญเธ {booking.child?.nickname}</p>
+                    <p className="text-sm font-bold text-[#00B0B9]">{booking.session?.time_label || 'เน€เธเนเธฒ (09:00 - 12:00)'}</p>
                   </div>
                 </div>
                 {canCancel ? (
                   <button 
                     onClick={() => onCancelRequest(booking.id)}
-                    className="text-[12px] font-bold text-rose-500 bg-white shadow-sm px-3.5 py-2 rounded-[10px] border border-rose-100 hover:bg-rose-50 active:scale-95 transition"
+                    className="text-sm font-bold text-rose-500 bg-white shadow-sm px-3.5 py-2 rounded-[10px] border border-rose-100 hover:bg-rose-50 active:scale-95 transition"
                   >
-                    ยกเลิก
+                    เธขเธเน€เธฅเธดเธ
                   </button>
                 ) : (
-                  <span className="text-[11px] font-bold text-gray-400 bg-gray-100 px-2.5 py-1.5 rounded-[10px]">ไม่อนุญาต</span>
+                  <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2.5 py-1.5 rounded-[10px]">เนเธกเนเธญเธเธธเธเธฒเธ•</span>
                 )}
               </div>
             </div>
@@ -58,3 +58,4 @@ export function UpcomingBookings({ bookings, selectedChildId, onCancelRequest }:
     </div>
   );
 }
+

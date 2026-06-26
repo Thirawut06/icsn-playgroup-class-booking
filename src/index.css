@@ -116,7 +116,22 @@
     }
 }
 
-/* Global resets for smoother UI */
+/* Global resets for smoother UI and Accessibility */
+html {
+    /* 
+     * Increase base font size from 16px to 18px (112.5%) 
+     * This proportionally scales up ALL tailwind text, padding, margins, and heights 
+     * that use 'rem', making the entire site standard for elderly users without breaking layout.
+     */
+    font-size: 112.5%;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 118.75%; /* 19px on tablets/desktops */
+    }
+}
+
 body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -129,6 +144,28 @@ body {
 .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+}
+
+/* Admin panel print layout (matches legacy admin.html) */
+@media print {
+    body {
+        background-color: white !important;
+        color: black !important;
+    }
+    .no-print {
+        display: none !important;
+    }
+    #print-area,
+    #print-area * {
+        visibility: visible !important;
+    }
+    #print-area {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        display: block !important;
+    }
 }
 
 /* Toast slide-down animation */
