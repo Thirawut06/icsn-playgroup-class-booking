@@ -57,6 +57,21 @@ export default function Apply() {
   const [paymentPackages, setPaymentPackages] = useState<PackageOption[]>([]);
   const [packageType, setPackageType] = useState('');
 
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  // Clear form data when going back to path selector
+  useEffect(() => {
+    if (!path) {
+      setParentPhotoData('');
+      setParentPhotoFile(null);
+      setChildPhotoData('');
+      setChildPhotoFile(null);
+      setPaymentSlipData('');
+      setPaymentSlipFile(null);
+      setPackageType('');
+    }
+  }, [path]);
+
   useEffect(() => {
     const parentId = localStorage.getItem('icsn_parent_id');
     if (!parentId) {
@@ -246,7 +261,7 @@ export default function Apply() {
                   </label>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.heic,.heif"
                     onChange={(e) => handleFile(e, setParentPhotoData, setParentPhotoFile)}
                     required
                     className="block w-full text-[13px] text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-[13px] file:font-semibold file:bg-[#00B0B9]/10 file:text-[#00B0B9] hover:file:bg-[#00B0B9]/20 border border-gray-200 rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
@@ -284,7 +299,7 @@ export default function Apply() {
                   <span className="text-[14px] font-bold text-gray-800">Date of birth <span className="text-red-500">*</span></span>
                   <span className="block text-[12px] text-gray-500 -mt-0.5">วันเดือนปีเกิด</span>
                 </label>
-                <Input type="date" value={childDob} onChange={(e) => setChildDob(e.target.value)} required className="w-full h-12 rounded-xl bg-gray-50/50" />
+                <Input type="date" value={childDob} max={todayStr} onChange={(e) => setChildDob(e.target.value)} required className="w-full h-12 rounded-xl bg-gray-50/50" />
               </div>
 
               {/* ====== TRIAL ONLY FIELDS ====== */}
@@ -298,7 +313,7 @@ export default function Apply() {
                     </label>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,.heic,.heif"
                       onChange={(e) => handleFile(e, setChildPhotoData, setChildPhotoFile)}
                       required
                       className="block w-full text-[13px] text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-[13px] file:font-semibold file:bg-[#00B0B9]/10 file:text-[#00B0B9] hover:file:bg-[#00B0B9]/20 border border-gray-200 rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
@@ -432,7 +447,7 @@ export default function Apply() {
                     </div>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,.heic,.heif"
                       onChange={(e) => handleFile(e, setPaymentSlipData, setPaymentSlipFile)}
                       required
                       className="block w-full text-[13px] text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-[13px] file:font-semibold file:bg-[#CC3366]/10 file:text-[#CC3366] hover:file:bg-[#CC3366]/20 border border-gray-200 rounded-xl bg-white mb-1.5 cursor-pointer outline-none"

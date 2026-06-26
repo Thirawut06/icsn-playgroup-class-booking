@@ -50,7 +50,7 @@ export function SignupForm() {
         <div>
           <label className="block mb-1.5">
             <span className="text-[14px] font-bold text-gray-800">Email Address</span>
-            <span className="text-[12px] text-gray-500 font-normal ml-1">อีเมลผู้ปกครอง</span>
+            <span className="text-[12px] text-gray-500 font-normal ml-1">อีเมล</span>
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
@@ -70,7 +70,7 @@ export function SignupForm() {
         <div>
           <label className="block mb-1.5">
             <span className="text-[14px] font-bold text-gray-800">Password</span>
-            <span className="text-[12px] text-gray-500 font-normal ml-1">รหัสผ่านตั้งใหม่</span>
+            <span className="text-[12px] text-gray-500 font-normal ml-1">รหัสผ่าน</span>
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">

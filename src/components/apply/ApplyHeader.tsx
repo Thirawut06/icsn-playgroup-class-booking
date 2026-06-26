@@ -22,7 +22,13 @@ export function ApplyHeader({ showSuccess, path, setPath }: ApplyHeaderProps) {
           <ArrowLeft className="w-6 h-6" />
         </button>
       ) : (
-        <button onClick={() => router.push('/')} className="absolute top-4 left-4 z-20 text-white hover:text-gray-200 cursor-pointer">
+        <button onClick={() => {
+          if (typeof window !== 'undefined' && localStorage.getItem('icsn_parent_id')) {
+            router.push('/book');
+          } else {
+            router.push('/');
+          }
+        }} className="absolute top-4 left-4 z-20 text-white hover:text-gray-200 cursor-pointer">
           <ArrowLeft className="w-6 h-6" />
         </button>
       )}

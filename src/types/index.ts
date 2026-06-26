@@ -56,6 +56,9 @@ export interface Booking {
   session_id: string;
   child_id: string;
   parent_id: string;
+  session_date: string;
   status: 'confirmed' | 'cancelled';
   booking_date: string;
+  session?: Session;
+  child?: Child;
 }

@@ -200,7 +200,21 @@ export const AppDB = {
     return data || [];
   },
 
+  async getLatestPackage(parentId: string): Promise<Package | null> {
+    const { data, error } = await supabase
+      .from('packages')
+      .select('*')
+      .eq('parent_id', parentId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+      
+    if (error) throw error;
+    return data;
+  },
+
   async getBookings(parentId: string): Promise<Booking[]> {
+    const today = new Date().toISOString().split('T')[0];
     const { data, error } = await supabase
       .from('bookings')
       .select(`
@@ -210,10 +224,19 @@ export const AppDB = {
       `)
       .eq('parent_id', parentId)
       .eq('status', 'confirmed')
-      .order('booking_date', { ascending: true });
+      .gte('session_date', today)
+      .order('session_date', { ascending: true });
       
     if (error) throw error;
     return data || [];
+  },
+
+  async cancelBooking(bookingId: string, packageId: string): Promise<void> {
+    const { error } = await supabase.rpc('cancel_booking', {
+      p_booking_id: bookingId,
+      p_package_id: packageId
+    });
+    if (error) throw error;
   },
 
   async uploadFile(bucket: string, file: File, path: string): Promise<string> {
