@@ -96,7 +96,7 @@ export function SlipPreviewModal({
                 type="button"
                 onClick={() => onApprove(slip, credits)}
                 disabled={isProcessing || credits < 1}
-                className="w-full flex items-center justify-center gap-2 bg-icsn-teal hover:bg-[#00969e] text-white py-3 rounded-xl font-bold transition disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 bg-icsn-teal hover:bg-icsn-teal/90 text-white py-3 rounded-xl font-bold transition disabled:opacity-50"
               >
                 <Check className="w-5 h-5" />
                 อนุมัติสลิป (+{credits} สิทธิ์)

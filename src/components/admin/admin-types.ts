@@ -3,7 +3,6 @@ export type AdminTab =
   | 'slips'
   | 'credits'
   | 'cancel'
-  | 'export'
   | 'packages';
 
 export interface AdminTabProps {

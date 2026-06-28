@@ -2,7 +2,7 @@
 
 import React, { useCallback, useState } from 'react';
 import { CalendarX, Search } from 'lucide-react';
-import { AppDB, invokeAdminAction } from '@/lib/supabase';
+import { BookingService, AdminService } from '@/lib/supabase';
 import type { ConfirmedBookingRow } from '@/types';
 import {
   AdminEmptyState,
@@ -34,7 +34,7 @@ export function CancelTab() {
     setLoading(true);
     setHasSearched(true);
     try {
-      const data = await AppDB.searchActiveBookings(searchTerm.trim());
+      const data = await BookingService.searchActiveBookings(searchTerm.trim());
       setBookings(data);
     } catch (err) {
       console.error(err);
@@ -53,7 +53,7 @@ export function CancelTab() {
 
     setIsProcessing(true);
     try {
-      await invokeAdminAction('cancel-booking', {
+      await AdminService.invokeAdminAction('cancel-booking', {
         bookingId: cancellingBooking.id,
         cancelReason: cancelReason.trim(),
       });

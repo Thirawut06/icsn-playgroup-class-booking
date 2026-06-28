@@ -10,7 +10,7 @@ export default function HomePage() {
     <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)] pb-10 flex flex-col relative overflow-hidden">
       {/* Top banner with nice branding */}
       <div
-        className="bg-[#211551] px-6 py-12 text-white text-center relative overflow-hidden bg-cover bg-center"
+        className="bg-icsn-navy px-6 py-12 text-white text-center relative overflow-hidden bg-cover bg-center"
         style={{ backgroundImage: "url('/playgroup-banner-icsn.png')" }}
       >
         {/* Dark overlay for high contrast readability */}
@@ -35,9 +35,9 @@ export default function HomePage() {
       {/* Navigation flow based on Parent State */}
       <div className="p-6 sm:p-8 space-y-6">
         <div className="text-center">
-          <h2 className="text-[#211551] font-extrabold text-lg leading-tight">
+          <h2 className="text-icsn-navy font-extrabold text-lg leading-tight">
             Please select your status to continue<br />
-            <span className="text-sm text-gray-500 font-normal block mt-1">เธเธฃเธธเธ“เธฒเน€เธฅเธทเธญเธเธชเธ–เธฒเธเธฐเน€เธเธทเนเธญเธ”เธณเน€เธเธดเธเธเธฒเธฃเธ•เนเธญ</span>
+            <span className="text-sm text-gray-500 font-normal block mt-1">กรุณาเลือกสถานะเพื่อดำเนินการต่อ</span>
           </h2>
         </div>
 
@@ -45,10 +45,10 @@ export default function HomePage() {
           {/* Option 1: New Parents */}
           <Link
             href="/login?tab=signup"
-            className="group flex items-center justify-between w-full bg-white border border-gray-200 hover:border-[#00B0B9] hover:bg-[#00B0B9]/5 rounded-2xl p-4 sm:p-5 transition-all duration-300 shadow-sm active:scale-[0.98]"
+            className="group flex items-center justify-between w-full bg-white border border-gray-200 hover:border-icsn-teal hover:bg-icsn-teal/5 rounded-2xl p-4 sm:p-5 transition-all duration-300 shadow-sm active:scale-[0.98]"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-[#00B0B9]/10 text-[#00B0B9] rounded-full flex items-center justify-center shrink-0 border border-[#00B0B9]/20 group-hover:bg-[#00B0B9] group-hover:text-white transition-colors">
+              <div className="w-12 h-12 bg-icsn-teal/10 text-icsn-teal rounded-full flex items-center justify-center shrink-0 border border-icsn-teal/20 group-hover:bg-icsn-teal group-hover:text-white transition-colors">
                 <UserPlus className="w-5 h-5 ml-1" />
               </div>
               <div className="text-left space-y-0.5">
@@ -56,25 +56,25 @@ export default function HomePage() {
                   <span className="font-bold text-gray-800 text-lg">
                     New Parent
                   </span>
-                  <span className="px-2 py-0.5 bg-[#CC3366]/10 text-[#CC3366] text-xs font-bold rounded-full uppercase tracking-widest mt-0.5">New</span>
+                  <span className="px-2 py-0.5 bg-icsn-pink/10 text-icsn-pink text-xs font-bold rounded-full uppercase tracking-widest mt-0.5">New</span>
                 </div>
                 <div className="font-semibold text-gray-500 text-sm">
-                  เธชเธกเธฑเธเธฃเธชเธกเธฒเธเธดเธเนเธซเธกเน
+                  สมัครสมาชิกใหม่
                 </div>
               </div>
             </div>
             <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all border border-transparent group-hover:border-gray-100">
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#00B0B9] transition-colors" />
+              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-icsn-teal transition-colors" />
             </div>
           </Link>
 
           {/* Option 2: Existing Parents */}
           <Link
             href="/login?tab=login"
-            className="group flex items-center justify-between w-full bg-white border border-gray-200 hover:border-[#211551] hover:bg-[#211551]/5 rounded-2xl p-4 sm:p-5 transition-all duration-300 shadow-sm active:scale-[0.98]"
+            className="group flex items-center justify-between w-full bg-white border border-gray-200 hover:border-icsn-navy hover:bg-icsn-navy/5 rounded-2xl p-4 sm:p-5 transition-all duration-300 shadow-sm active:scale-[0.98]"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-[#211551]/5 text-[#211551] rounded-full flex items-center justify-center shrink-0 border border-[#211551]/10 group-hover:bg-[#211551] group-hover:text-white transition-colors">
+              <div className="w-12 h-12 bg-icsn-navy/5 text-icsn-navy rounded-full flex items-center justify-center shrink-0 border border-icsn-navy/10 group-hover:bg-icsn-navy group-hover:text-white transition-colors">
                 <LogIn className="w-5 h-5 ml-0.5" />
               </div>
               <div className="text-left space-y-0.5">
@@ -82,12 +82,12 @@ export default function HomePage() {
                   Sign In
                 </div>
                 <div className="font-semibold text-gray-500 text-sm">
-                  เน€เธเนเธฒเธชเธนเนเธฃเธฐเธเธเน€เธ”เธดเธก
+                  เข้าสู่ระบบเดิม
                 </div>
               </div>
             </div>
             <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all border border-transparent group-hover:border-gray-100">
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#211551] transition-colors" />
+              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-icsn-navy transition-colors" />
             </div>
           </Link>
         </div>
@@ -95,14 +95,14 @@ export default function HomePage() {
         {/* Footer Admin section with a neat badge styling */}
         <div className="pt-6 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400 px-1">
           <div>
-            ยฉ ICSN Panda Playgroup
+            © ICSN Panda Playgroup
           </div>
           <Link
             href="/admin"
-            className="font-semibold text-gray-400 hover:text-[#CC3366] transition-colors flex items-center gap-1 bg-gray-50 hover:bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-100"
+            className="font-semibold text-gray-400 hover:text-icsn-pink transition-colors flex items-center gap-1 bg-gray-50 hover:bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-100"
           >
             <Lock className="w-3 h-3" />
-            Admin (เธชเธณเธซเธฃเธฑเธเน€เธเนเธฒเธซเธเนเธฒเธ—เธตเน)
+            Admin (สำหรับเจ้าหน้าที่)
           </Link>
         </div>
       </div>

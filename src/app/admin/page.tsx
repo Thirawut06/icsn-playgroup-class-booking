@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
@@ -9,9 +9,8 @@ import { DailyTab } from '@/components/admin/DailyTab';
 import { SlipsTab } from '@/components/admin/SlipsTab';
 import { CreditsTab } from '@/components/admin/CreditsTab';
 import { CancelTab } from '@/components/admin/CancelTab';
-import { ExportTab } from '@/components/admin/ExportTab';
 import { PackageOptionsTab } from '@/components/admin/PackageOptionsTab';
-import { AppDB } from '@/lib/supabase';
+import { AdminService } from '@/lib/supabase';
 import type { AdminTab } from '@/components/admin/admin-types';
 
 export default function AdminPage() {
@@ -21,7 +20,7 @@ export default function AdminPage() {
 
   const refreshPendingCount = useCallback(async () => {
     try {
-      const slips = await AppDB.getPendingSlips();
+      const slips = await AdminService.getPendingSlips();
       setPendingSlipCount(slips.length);
     } catch {
       setPendingSlipCount(0);
@@ -76,7 +75,7 @@ export default function AdminPage() {
                 Admin Backoffice
                 <br />
                 <span className="text-xs text-gray-500 font-normal mt-0.5 inline-block font-sarabun">
-                  เธฃเธฐเธเธเธซเธฅเธฑเธเธเนเธฒเธเนเธญเธ”เธกเธดเธ
+                  ระบบหลังบ้านแอดมิน
                 </span>
               </h1>
               <p className="text-[9px] text-icsn-teal font-bold tracking-wider mt-0.5 font-outfit">
@@ -116,7 +115,6 @@ export default function AdminPage() {
           {activeTab === 'slips' ? <SlipsTab onRefresh={refreshPendingCount} /> : null}
           {activeTab === 'credits' ? <CreditsTab /> : null}
           {activeTab === 'cancel' ? <CancelTab /> : null}
-          {activeTab === 'export' ? <ExportTab /> : null}
           {activeTab === 'packages' ? <PackageOptionsTab /> : null}
         </div>
       </main>

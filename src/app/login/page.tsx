@@ -2,7 +2,7 @@
 
 import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AppDB } from '@/lib/supabase';
+import { ParentService } from '@/lib/supabase';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -27,7 +27,7 @@ function LoginFormContent() {
     <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)] pb-10 flex flex-col relative overflow-hidden">
       {/* Top banner */}
       <div
-        className="bg-[#211551] px-6 py-10 text-white text-center relative overflow-hidden bg-cover bg-center"
+        className="bg-icsn-navy px-6 py-10 text-white text-center relative overflow-hidden bg-cover bg-center"
         style={{ backgroundImage: 'url("/playgroup-banner-icsn.png")' }}
       >
         <Link href="/" className="absolute top-4 left-4 text-white/80 hover:text-white transition-colors cursor-pointer z-20">
@@ -49,16 +49,16 @@ function LoginFormContent() {
           <button
             type="button"
             onClick={() => handleTabSwitch('login')}
-            className={`py-2.5 text-base font-bold rounded-xl transition-all cursor-pointer ${tab === 'login' ? 'bg-white text-[#00B0B9] shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+            className={`py-2.5 text-base font-bold rounded-xl transition-all cursor-pointer ${tab === 'login' ? 'bg-white text-icsn-teal shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
           >
-            Sign In (เน€เธเนเธฒเธชเธนเนเธฃเธฐเธเธ)
+            Sign In (เข้าสู่ระบบ)
           </button>
           <button
             type="button"
             onClick={() => handleTabSwitch('signup')}
-            className={`py-2.5 text-base font-bold rounded-xl transition-all cursor-pointer ${tab === 'signup' ? 'bg-white text-[#00B0B9] shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+            className={`py-2.5 text-base font-bold rounded-xl transition-all cursor-pointer ${tab === 'signup' ? 'bg-white text-icsn-teal shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
           >
-            Sign Up (เธชเธกเธฑเธเธฃเธชเธกเธฒเธเธดเธ)
+            Sign Up (สมัครสมาชิก)
           </button>
         </div>
 
@@ -74,7 +74,7 @@ function LoginFormContent() {
 
 export default function Login() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-[#00B0B9]" /></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-icsn-teal" /></div>}>
       <LoginFormContent />
     </Suspense>
   )

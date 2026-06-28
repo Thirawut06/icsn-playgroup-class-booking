@@ -13,7 +13,7 @@ export function ApplyHeader({ showSuccess, path, setPath }: ApplyHeaderProps) {
 
   return (
     <div 
-      className="bg-[#211551] px-6 py-8 text-white text-center relative overflow-hidden bg-cover bg-center"
+      className="bg-icsn-navy px-6 py-8 text-white text-center relative overflow-hidden bg-cover bg-center"
       style={{ backgroundImage: 'url("/playgroup-banner-icsn.png")' }}
     >
       <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
@@ -40,7 +40,7 @@ export function ApplyHeader({ showSuccess, path, setPath }: ApplyHeaderProps) {
         ICSN Panda Playgroup
       </h1>
       <p className="text-sm font-medium text-white/90 mt-0.5 relative z-10 drop-shadow-md">
-        Registration Form (เนเธเธเธเธญเธฃเนเธกเธฅเธเธ—เธฐเน€เธเธตเธขเธเน€เธฃเธตเธขเธ)
+        Registration Form (แบบฟอร์มลงทะเบียนเรียน)
       </p>
     </div>
   );

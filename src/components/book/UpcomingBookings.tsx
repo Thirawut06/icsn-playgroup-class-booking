@@ -14,10 +14,10 @@ export function UpcomingBookings({ bookings, selectedChildId, onCancelRequest }:
   if (filtered.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-[20px] border border-gray-100 p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] space-y-4">
-      <h3 className="font-bold text-[#211551] border-b border-gray-100 pb-3 flex items-center gap-1.5 text-base">
-        <CalendarHeart className="w-5 h-5 text-[#00B0B9]" />
-        <span>เธฃเธญเธเธ—เธตเนเธเธญเธเนเธงเน (Upcoming Classes)</span>
+    <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-icsn-card space-y-4">
+      <h3 className="font-bold text-icsn-navy border-b border-gray-100 pb-3 flex items-center gap-1.5 text-base">
+        <CalendarHeart className="w-5 h-5 text-icsn-teal" />
+        <span>รอบที่จองไว้ (Upcoming Classes)</span>
       </h3>
       
       <div className="space-y-3">
@@ -28,16 +28,16 @@ export function UpcomingBookings({ bookings, selectedChildId, onCancelRequest }:
           const canCancel = !(isToday && isPast7AM);
 
           return (
-            <div key={booking.id} className="bg-[#00B0B9]/5 border border-[#00B0B9]/20 rounded-2xl p-4 flex flex-col gap-3">
+            <div key={booking.id} className="bg-icsn-teal/5 border border-icsn-teal/20 rounded-2xl p-4 flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-white shadow-sm border border-[#00B0B9]/20 text-[#00B0B9] rounded-[14px] flex flex-col items-center justify-center font-bold">
+                  <div className="w-12 h-12 bg-white shadow-sm border border-icsn-teal/20 text-icsn-teal rounded-xl flex flex-col items-center justify-center font-bold">
                     <span className="text-xs leading-none mb-0.5">{bDate.toLocaleDateString('th-TH', { month: 'short' })}</span>
                     <span className="text-lg leading-none">{bDate.getDate()}</span>
                   </div>
                   <div>
-                    <p className="font-black text-[#211551] text-base">เธเนเธญเธ {booking.child?.nickname}</p>
-                    <p className="text-sm font-bold text-[#00B0B9]">{booking.session?.time_label || 'เน€เธเนเธฒ (09:00 - 12:00)'}</p>
+                    <p className="font-black text-icsn-navy text-base">น้อง {booking.child?.nickname}</p>
+                    <p className="text-sm font-bold text-icsn-teal">{booking.session?.time_label || 'เช้า (09:00 - 12:00)'}</p>
                   </div>
                 </div>
                 {canCancel ? (
@@ -45,10 +45,10 @@ export function UpcomingBookings({ bookings, selectedChildId, onCancelRequest }:
                     onClick={() => onCancelRequest(booking.id)}
                     className="text-sm font-bold text-rose-500 bg-white shadow-sm px-3.5 py-2 rounded-[10px] border border-rose-100 hover:bg-rose-50 active:scale-95 transition"
                   >
-                    เธขเธเน€เธฅเธดเธ
+                    ยกเลิก
                   </button>
                 ) : (
-                  <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2.5 py-1.5 rounded-[10px]">เนเธกเนเธญเธเธธเธเธฒเธ•</span>
+                  <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2.5 py-1.5 rounded-[10px]">ไม่อนุญาต</span>
                 )}
               </div>
             </div>

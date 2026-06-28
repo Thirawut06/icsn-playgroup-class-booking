@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { DownloadCloud, FileSpreadsheet } from 'lucide-react';
-import { AppDB } from '@/lib/supabase';
+import { AdminService } from '@/lib/supabase';
 import type { ExportCSVRow } from '@/types';
 import { AdminPanel, AdminPanelHeader } from './admin-ui';
 
@@ -59,7 +59,7 @@ export function ExportTab() {
   const handleExport = async () => {
     setLoading(true);
     try {
-      const rows = await AppDB.getExportCSVData();
+      const rows = await AdminService.getExportCSVData();
       setRowCount(rows.length);
       downloadCSV(rows);
     } catch (err) {
@@ -91,7 +91,7 @@ export function ExportTab() {
             type="button"
             onClick={handleExport}
             disabled={loading}
-            className="inline-flex items-center gap-2 bg-icsn-teal hover:bg-[#00969e] text-white py-3 px-6 rounded-xl font-bold transition shadow-sm cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-2 bg-icsn-teal hover:bg-icsn-teal/90 text-white py-3 px-6 rounded-xl font-bold transition shadow-sm cursor-pointer disabled:opacity-50"
           >
             <FileSpreadsheet className="w-5 h-5" />
             <span>{loading ? 'กำลังสร้างไฟล์...' : 'ส่งออกเอกสาร (Export CSV Sheet)'}</span>

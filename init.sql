@@ -72,11 +72,13 @@ CREATE TABLE IF NOT EXISTS packages (
 -- 6. bookings: การจองคลาสเรียน
 CREATE TABLE IF NOT EXISTS bookings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    parent_id UUID NOT NULL REFERENCES parents(id) ON DELETE CASCADE,
-    child_id UUID NOT NULL REFERENCES children(id) ON DELETE CASCADE,
+    parent_id UUID REFERENCES parents(id) ON DELETE SET NULL,
+    child_id UUID REFERENCES children(id) ON DELETE SET NULL,
     session_id UUID REFERENCES sessions(id) ON DELETE CASCADE,
     session_date DATE NOT NULL,                -- วันที่คลาส (เก็บซ้ำเพื่อ query ง่าย)
     status TEXT NOT NULL DEFAULT 'confirmed',  -- confirmed | cancelled
+    child_name_snapshot TEXT,                  -- บันทึกชื่อย่อเด็กป้องกัน Hard Delete
+    parent_phone_snapshot TEXT,                -- บันทึกเบอร์โทรผู้ปกครองป้องกัน Hard Delete
     booking_date TIMESTAMPTZ DEFAULT now(),
     cancelled_at TIMESTAMPTZ,
     cancelled_by TEXT,
@@ -439,6 +441,79 @@ BEGIN
     RETURNING id INTO v_child_id;
 
     RETURN json_build_object('parent_id', v_parent_id, 'child_id', v_child_id);
+END;
+$$;
+
+-- book_class_transactionally: จองคลาสเรียนแบบควบคุม Concurrency และบันทึก snapshot
+CREATE OR REPLACE FUNCTION book_class_transactionally(
+    p_child_id UUID,
+    p_session_id UUID,
+    p_parent_id UUID,
+    p_child_name TEXT,
+    p_parent_phone TEXT
+) RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_session_capacity INTEGER;
+    v_current_booked INTEGER;
+    v_package_id UUID;
+    v_credits_remaining INTEGER;
+    v_booking_exists BOOLEAN;
+BEGIN
+    -- 1. Check if already booked
+    SELECT EXISTS (
+        SELECT 1 FROM bookings 
+        WHERE child_id = p_child_id AND session_id = p_session_id AND status = 'confirmed'
+    ) INTO v_booking_exists;
+    
+    IF v_booking_exists THEN
+        RETURN jsonb_build_object('success', false, 'error', 'Child is already booked for this session.');
+    END IF;
+
+    -- 2. Lock the session row to prevent race conditions
+    SELECT total_capacity INTO v_session_capacity
+    FROM sessions WHERE id = p_session_id FOR UPDATE;
+
+    IF v_session_capacity IS NULL THEN
+        RETURN jsonb_build_object('success', false, 'error', 'Session not found.');
+    END IF;
+
+    -- 3. Count current bookings
+    SELECT COUNT(*) INTO v_current_booked
+    FROM bookings WHERE session_id = p_session_id AND status = 'confirmed';
+
+    IF v_current_booked >= v_session_capacity THEN
+        RETURN jsonb_build_object('success', false, 'error', 'Session is fully booked.');
+    END IF;
+
+    -- 4. Find active package with credits for this parent
+    SELECT id, credits_remaining INTO v_package_id, v_credits_remaining
+    FROM packages 
+    WHERE parent_id = p_parent_id AND credits_remaining > 0
+    ORDER BY created_at ASC
+    LIMIT 1 
+    FOR UPDATE; -- Lock package row
+
+    IF v_package_id IS NULL THEN
+        RETURN jsonb_build_object('success', false, 'error', 'No active credits available.');
+    END IF;
+
+    -- 5. Deduct credit
+    UPDATE packages 
+    SET credits_remaining = credits_remaining - 1 
+    WHERE id = v_package_id;
+
+    -- 6. Log transaction
+    INSERT INTO credit_transactions (parent_id, package_id, amount, action_type, notes)
+    VALUES (p_parent_id, v_package_id, -1, 'booking', 'Booked session ' || p_session_id);
+
+    -- 7. Insert booking with snapshot data
+    INSERT INTO bookings (child_id, session_id, status, child_name_snapshot, parent_phone_snapshot)
+    VALUES (p_child_id, p_session_id, 'confirmed', p_child_name, p_parent_phone);
+
+    RETURN jsonb_build_object('success', true);
 END;
 $$;
 

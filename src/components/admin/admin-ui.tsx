@@ -63,7 +63,7 @@ export function AdminPrimaryButton({
   return (
     <button
       type="button"
-      className={`bg-icsn-teal hover:bg-[#00969e] text-white py-3 px-6 rounded-xl text-sm font-bold h-12 transition disabled:opacity-50 cursor-pointer shadow-sm ${className}`}
+      className={`bg-icsn-teal hover:bg-icsn-teal/90 text-white py-3 px-6 rounded-xl text-sm font-bold h-12 transition disabled:opacity-50 cursor-pointer shadow-sm ${className}`}
       {...props}
     >
       {children}

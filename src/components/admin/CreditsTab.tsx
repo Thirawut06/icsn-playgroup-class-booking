@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Ticket } from 'lucide-react';
-import { AppDB } from '@/lib/supabase';
+import { AdminService } from '@/lib/supabase';
 import type { ParentWithDetails } from '@/types';
 import {
   AdminEmptyState,
@@ -30,7 +30,7 @@ export function CreditsTab() {
     setCreditOffset(0);
     setCreditMessage('');
     try {
-      const result = await AppDB.searchParentByPhone(phone.trim());
+      const result = await AdminService.searchParentByPhone(phone.trim());
       if (!result) {
         alert('ไม่พบเบอร์โทรศัพท์นี้ในระบบ');
       }
@@ -54,8 +54,8 @@ export function CreditsTab() {
     }
     setSaving(true);
     try {
-      const newTotal = await AppDB.adjustCredits(parent.id, creditOffset, reason.trim());
-      const updated = await AppDB.searchParentByPhone(parent.phone);
+      const newTotal = await AdminService.adjustCredits(parent.id, creditOffset, reason.trim());
+      const updated = await AdminService.searchParentByPhone(parent.phone);
       setParent(updated);
       setCreditOffset(0);
       setReason('');
@@ -163,7 +163,7 @@ export function CreditsTab() {
                 type="button"
                 onClick={saveCreditsChange}
                 disabled={saving}
-                className="w-full bg-icsn-teal hover:bg-[#00969e] text-white py-3 px-4 rounded-xl text-sm font-bold h-12 cursor-pointer disabled:opacity-50 transition shadow-sm"
+                className="w-full bg-icsn-teal hover:bg-icsn-teal/90 text-white py-3 px-4 rounded-xl text-sm font-bold h-12 cursor-pointer disabled:opacity-50 transition shadow-sm"
               >
                 {saving ? 'กำลังบันทึก...' : 'บันทึกการจัดสรรสิทธิ์เครดิต'}
               </button>

@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Check, Package, Pencil, Plus, ToggleLeft, ToggleRight, Trash2, X } from 'lucide-react';
-import { AppDB, invokeAdminAction } from '@/lib/supabase';
+import { PackageService, AdminService } from '@/lib/supabase';
 import type { PackageOption } from '@/types';
 import {
   AdminEmptyState,
@@ -29,7 +29,7 @@ export function PackageOptionsTab() {
   const loadOptions = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await AppDB.getPackageOptions();
+      const data = await PackageService.getPackageOptions();
       setOptions(data);
     } catch (err) {
       console.error(err);
@@ -52,7 +52,7 @@ export function PackageOptionsTab() {
     }
     setAdding(true);
     try {
-      await invokeAdminAction('add-package', {
+      await AdminService.invokeAdminAction('add-package', {
         name: name.trim(),
         price: priceNum,
         credits: creditsNum,
@@ -70,7 +70,7 @@ export function PackageOptionsTab() {
 
   const toggleActive = async (pkg: PackageOption) => {
     try {
-      await invokeAdminAction('toggle-package', {
+      await AdminService.invokeAdminAction('toggle-package', {
         packageId: pkg.id,
         isActive: !pkg.is_active,
       });
@@ -101,7 +101,7 @@ export function PackageOptionsTab() {
     }
     setSaving(true);
     try {
-      await invokeAdminAction('update-package', {
+      await AdminService.invokeAdminAction('update-package', {
         packageId: editingId,
         name: editName.trim(),
         price: priceNum,
@@ -119,7 +119,7 @@ export function PackageOptionsTab() {
   const deletePackage = async (pkg: PackageOption) => {
     if (!confirm(`ลบแพ็กเกจ "${pkg.name}" — แน่ใจหรือไม่?`)) return;
     try {
-      await invokeAdminAction('delete-package', { packageId: pkg.id });
+      await AdminService.invokeAdminAction('delete-package', { packageId: pkg.id });
       await loadOptions();
     } catch (err) {
       alert('ลบไม่ได้: ' + (err instanceof Error ? err.message : String(err)));
@@ -230,7 +230,7 @@ export function PackageOptionsTab() {
                         type="button"
                         onClick={saveEdit}
                         disabled={saving}
-                        className="flex items-center gap-2 bg-icsn-teal hover:bg-[#00969e] text-white px-5 py-2.5 rounded-xl text-sm font-bold h-11 cursor-pointer disabled:opacity-50 transition"
+                        className="flex items-center gap-2 bg-icsn-teal hover:bg-icsn-teal/90 text-white px-5 py-2.5 rounded-xl text-sm font-bold h-11 cursor-pointer disabled:opacity-50 transition"
                       >
                         <Check className="w-5 h-5" />
                         {saving ? 'กำลังบันทึก...' : 'บันทึก'}

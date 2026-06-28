@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from 'react';
 import {
@@ -24,12 +24,11 @@ const TABS: {
   icon: React.ElementType;
   justifyBetween?: boolean;
 }[] = [
-  { id: 'daily', label: 'Daily Schedule', sub: 'เธ•เธฒเธฃเธฒเธเธฃเธฒเธขเธงเธฑเธ', icon: Calendar },
-  { id: 'slips', label: 'Approve Slips', sub: 'เธญเธเธธเธกเธฑเธ•เธดเธซเธฅเธฑเธเธเธฒเธเธชเธฅเธดเธ', icon: ReceiptText, justifyBetween: true },
-  { id: 'credits', label: 'Manage Credits', sub: 'เธเธฑเธ”เธเธฒเธฃเธชเธดเธ—เธเธดเน', icon: Ticket },
-  { id: 'cancel', label: 'Override Cancel', sub: 'เธขเธเน€เธฅเธดเธเนเธ—เธเธเธนเนเธเธเธเธฃเธญเธ', icon: CalendarX },
-  { id: 'export', label: 'Export Data', sub: 'เธชเนเธเธญเธญเธเธเนเธญเธกเธนเธฅ', icon: DownloadCloud },
-  { id: 'packages', label: 'Package Options', sub: 'เธเธฑเธ”เธเธฒเธฃเนเธเนเธเน€เธเธ', icon: Package },
+  { id: 'daily', label: 'Daily Schedule', sub: 'ตารางรายวัน', icon: Calendar },
+  { id: 'slips', label: 'Approve Slips', sub: 'อนุมัติหลักฐานสลิป', icon: ReceiptText, justifyBetween: true },
+  { id: 'credits', label: 'Manage Credits', sub: 'จัดการสิทธิ์', icon: Ticket },
+  { id: 'cancel', label: 'Override Cancel', sub: 'ยกเลิกแทนผู้ปกครอง', icon: CalendarX },
+  { id: 'packages', label: 'Package Options', sub: 'จัดการแพ็กเกจ', icon: Package },
 ];
 
 export function AdminSidebar({ activeTab, onTabChange, pendingSlipCount }: AdminSidebarProps) {

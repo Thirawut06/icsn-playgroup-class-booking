@@ -27,10 +27,10 @@ export function AdminLoginGate({ onSuccess }: AdminLoginGateProps) {
         sessionStorage.setItem('icsn_admin_pwd', password);
         onSuccess();
       } else {
-        throw new Error(data?.error || 'เธฃเธซเธฑเธชเธเนเธฒเธเนเธกเนเธ–เธนเธเธ•เนเธญเธ');
+        throw new Error(data?.error || 'รหัสผ่านไม่ถูกต้อง');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'เธฃเธซเธฑเธชเธเนเธฒเธเนเธกเนเธ–เธนเธเธ•เนเธญเธ');
+      setError(err instanceof Error ? err.message : 'รหัสผ่านไม่ถูกต้อง');
     } finally {
       setLoading(false);
     }
@@ -56,27 +56,27 @@ export function AdminLoginGate({ onSuccess }: AdminLoginGateProps) {
             Class Admin Panel
             <br />
             <span className="text-sm font-normal text-gray-600 block mt-0.5 font-sarabun">
-              เธเธนเนเธ”เธนเนเธฅเธฃเธฐเธเธเธเธฅเธฒเธชเน€เธฃเธตเธขเธ
+              ผู้ดูแลระบบคลาสเรียน
             </span>
           </h2>
           <p className="text-xs text-gray-500 mt-2">
             Please enter password to unlock adult admin panel
             <br />
-            เธเธฃเธธเธ“เธฒเธเธฃเธญเธเธฃเธซเธฑเธชเธเนเธฒเธเน€เธเธทเนเธญเธเธฅเธ”เธฅเนเธญเธเนเธเธเธเธนเนเธ”เธนเนเธฅเธฃเธฐเธเธ
+            กรุณากรอกรหัสผ่านเพื่อปลดล็อกแผงผู้ดูแลระบบ
           </p>
         </div>
 
         <form onSubmit={verifyPassword} className="space-y-4 pt-2">
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-              Admin Password / เธฃเธซเธฑเธชเธเนเธฒเธเนเธญเธ”เธกเธดเธ
+              Admin Password / รหัสผ่านแอดมิน
             </label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
-              placeholder="โ€ขโ€ขโ€ขโ€ขโ€ขโ€ขโ€ขโ€ข"
+              placeholder="••••••••"
               className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal text-black text-center font-mono placeholder-gray-300 text-lg"
             />
           </div>
@@ -90,15 +90,15 @@ export function AdminLoginGate({ onSuccess }: AdminLoginGateProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-icsn-teal hover:bg-[#00969e] text-white py-3 px-4 rounded-xl font-bold shadow-sm transition h-14 flex flex-col items-center justify-center gap-0.5 cursor-pointer disabled:opacity-50"
+            className="w-full bg-icsn-teal hover:bg-icsn-teal/90 text-white py-3 px-4 rounded-xl font-bold shadow-sm transition h-14 flex flex-col items-center justify-center gap-0.5 cursor-pointer disabled:opacity-50"
           >
             {!loading ? (
               <>
                 <span className="text-sm font-outfit">Unlock Admin Board</span>
-                <span className="text-xs font-normal text-white/80 font-sarabun">เธเธฅเธ”เธฅเนเธญเธเนเธเธเนเธญเธ”เธกเธดเธ</span>
+                <span className="text-xs font-normal text-white/80 font-sarabun">ปลดล็อกแผงแอดมิน</span>
               </>
             ) : (
-              <span className="text-sm">Verifying... / เธเธณเธฅเธฑเธเธ•เธฃเธงเธเธชเธญเธ...</span>
+              <span className="text-sm">Verifying... / กำลังตรวจสอบ...</span>
             )}
           </button>
         </form>

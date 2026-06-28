@@ -1,71 +1,25 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React from 'react';
 import { Eye, ReceiptText, Smile } from 'lucide-react';
-import { AppDB, invokeAdminAction } from '@/lib/supabase';
-import type { PendingSlipRow } from '@/types';
 import { AdminEmptyState, AdminPanel, AdminPanelHeader } from './admin-ui';
 import { SlipPreviewModal } from './SlipPreviewModal';
+import { usePendingSlips } from '@/hooks/usePendingSlips';
 
 interface SlipsTabProps {
   onRefresh?: () => void;
 }
 
 export function SlipsTab({ onRefresh }: SlipsTabProps) {
-  const [slips, setSlips] = useState<PendingSlipRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Modal state
-  const [previewSlip, setPreviewSlip] = useState<PendingSlipRow | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const loadSlips = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await AppDB.getPendingSlips();
-      setSlips(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadSlips();
-  }, [loadSlips]);
-
-  const handleApprove = async (slip: PendingSlipRow, overrideCredits: number) => {
-    setIsProcessing(true);
-    try {
-      const result = await invokeAdminAction<{ creditsAdded: number; childNickname: string }>('approve-slip', {
-        slipId: slip.id,
-        creditsOverride: overrideCredits,
-      });
-      await loadSlips();
-      onRefresh?.();
-      setPreviewSlip(null);
-      alert(`อนุมัติสำเร็จ — เพิ่ม ${result.creditsAdded} เครดิตให้น้อง${result.childNickname}`);
-    } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleReject = async (slipId: string) => {
-    setIsProcessing(true);
-    try {
-      await invokeAdminAction('reject-slip', { slipId });
-      await loadSlips();
-      onRefresh?.();
-      setPreviewSlip(null);
-    } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+  const {
+    slips,
+    loading,
+    previewSlip,
+    setPreviewSlip,
+    isProcessing,
+    handleApprove,
+    handleReject,
+  } = usePendingSlips({ onRefresh });
 
   return (
     <AdminPanel className="no-print">

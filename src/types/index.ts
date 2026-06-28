@@ -106,11 +106,23 @@ export interface Session {
 export interface Booking {
   id: string;
   session_id: string;
-  child_id: string;
-  parent_id: string;
+  child_id: string | null;
+  parent_id: string | null;
   session_date: string;
   status: 'confirmed' | 'cancelled';
   booking_date: string;
+  child_name_snapshot?: string | null;
+  parent_phone_snapshot?: string | null;
   session?: Session;
-  child?: Child;
+  child?: Child | null;
+}
+
+export interface CreditTransaction {
+  id: string;
+  parent_id: string;
+  package_id?: string | null;
+  amount: number;
+  action_type: 'booking' | 'refund' | 'topup' | 'admin_adjustment';
+  reason?: string;
+  created_at: string;
 }
