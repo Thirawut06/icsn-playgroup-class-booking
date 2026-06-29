@@ -11,11 +11,19 @@ import { BookingSummary } from '@/components/book/BookingSummary';
 import { CancelConfirmModal } from '@/components/book/CancelConfirmModal';
 import { BookingConfirmModal } from '@/components/book/BookingConfirmModal';
 
-import { useBookingData } from '@/hooks/useBookingData';
+import { BookingProvider, useBookingContext } from '@/components/book/BookingContext';
 import { useBookingActions } from '@/hooks/useBookingActions';
 import { checkIsBookableDate } from '@/utils/dateUtils';
 
 export default function Book() {
+  return (
+    <BookingProvider>
+      <BookPageContent />
+    </BookingProvider>
+  );
+}
+
+function BookPageContent() {
   const router = useRouter();
   
   // ─── Data & State via Custom Hooks ───────────────────────────
@@ -28,11 +36,13 @@ export default function Book() {
     paymentPackages,
     sessions,
     myBookings,
+    blockoutDates,
+    settings,
     loading,
     selectedChildId,
     setSelectedChildId,
     refreshData
-  } = useBookingData();
+  } = useBookingContext();
 
   const [monthIndex, setMonthIndex] = useState(0); // 0 = current, 1 = next
   
@@ -105,11 +115,12 @@ export default function Book() {
 
   // ─── Derived State ───────────────────────────────────────────
 
-  const capacity = selectedSession ? selectedSession.total_capacity : 15;
+  const capacity = selectedSession ? selectedSession.total_capacity : (settings?.default_capacity || 12);
   const currentBookedCount = selectedSession ? (selectedSession.booked_count || 0) : 0;
+  const cutoffHour = settings?.cutoff_hour || 7;
   
   // Clean code: Use extracted utility for date validation
-  const selectedDateAvailable = selectedDate ? (capacity - currentBookedCount > 0 && checkIsBookableDate(selectedDate)) : false;
+  const selectedDateAvailable = selectedDate ? (capacity - currentBookedCount > 0 && checkIsBookableDate(selectedDate, blockoutDates, cutoffHour)) : false;
   const selectedSessionStatus = selectedDateAvailable ? 'เปิดรับจอง' : 'เต็มแล้ว / ปิดรับจอง';
   const selectedChildObj = children.find(c => c.id === selectedChildId);
 
@@ -137,25 +148,23 @@ export default function Book() {
         })()}
 
         <main className="flex-1 px-4 pb-5 space-y-5">
-          <ChildSelector
-            children={children}
-            selectedChildId={selectedChildId}
-            onSelectChild={setSelectedChildId}
-          />
+          {settings?.announcement_text && (
+            <div className="bg-blue-50 border border-blue-200 text-blue-800 text-sm p-3 rounded-lg flex items-start gap-2 shadow-sm">
+              <span className="text-xl">📢</span>
+              <p className="font-medium whitespace-pre-wrap mt-0.5">{settings.announcement_text}</p>
+            </div>
+          )}
+
+          <ChildSelector />
 
           <UpcomingBookings
-            bookings={myBookings}
-            selectedChildId={selectedChildId}
             onCancelRequest={setBookingToCancel}
           />
 
           <CalendarWidget
             monthIndex={monthIndex}
             onMonthChange={setMonthIndex}
-            sessions={sessions}
-            myBookings={myBookings}
             selectedDate={selectedDate}
-            selectedChildId={selectedChildId}
             onDateSelect={handleDateSelect}
           />
 

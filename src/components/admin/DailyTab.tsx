@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { CalendarDays, Printer, Users, XCircle } from 'lucide-react';
+import { CalendarDays, Printer, Users, XCircle, Power } from 'lucide-react';
 import { AdminEmptyState, AdminFieldLabel, AdminPanel, AdminPanelHeader, AdminPrimaryButton } from './admin-ui';
 import { formatAgeDisplay, formatThaiFullDate } from './admin-utils';
 import { useDailyAttendance } from '@/hooks/useDailyAttendance';
@@ -28,9 +28,12 @@ export function DailyTab({ onRefresh }: DailyTabProps) {
     savingCapacity,
     bookedCount,
     totalCapacity,
+    sessionIsActive,
+    togglingSession,
     handleWalkin,
     handleCancel,
     handleSaveCapacity,
+    handleToggleSession,
   } = useDailyAttendance({ onRefresh });
 
   return (
@@ -42,7 +45,7 @@ export function DailyTab({ onRefresh }: DailyTabProps) {
         />
 
         {/* Desktop-optimized Layout for Controls */}
-        <div className="space-y-6">
+        <div className="bg-white p-5 border border-gray-200 rounded shadow-sm space-y-6">
           
           {/* Section 1: Date & Actions (Inline header style, no card) */}
           <div className="flex flex-col sm:flex-row gap-4 sm:items-end justify-between pb-6 border-b border-gray-100">
@@ -63,7 +66,25 @@ export function DailyTab({ onRefresh }: DailyTabProps) {
               <Printer className="w-4 h-4 text-emerald-600" />
               <span>พิมพ์ใบเช็คชื่อ</span>
             </button>
+            <button
+              type="button"
+              onClick={handleToggleSession}
+              disabled={togglingSession}
+              className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 text-sm font-semibold py-2 px-5 rounded-lg transition-colors shadow-sm h-10 cursor-pointer disabled:opacity-50 border ${
+                sessionIsActive
+                  ? 'bg-white border-rose-200 text-rose-600 hover:bg-rose-50'
+                  : 'bg-emerald-500 border-emerald-500 text-white hover:bg-emerald-600'
+              }`}
+            >
+              <Power className="w-4 h-4" />
+              <span>{sessionIsActive ? 'ปิดคลาสวันนี้' : 'เปิดคลาสวันนี้'}</span>
+            </button>
           </div>
+          {!sessionIsActive && (
+            <div className="bg-rose-50 border border-rose-200 rounded px-4 py-2 text-rose-700 text-sm font-bold">
+              ⚠️ คลาสวันนี้ถูกปิดรับจอง — ผู้ปกครองจะไม่สามารถจองวันนี้ได้
+            </div>
+          )}
 
           {/* Section 2: Capacity Stats & Settings */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -155,48 +176,50 @@ export function DailyTab({ onRefresh }: DailyTabProps) {
         </div>
 
         {loading ? (
-          <p className="text-center text-gray-500 py-10 text-base font-medium">กำลังโหลด...</p>
+          <p className="text-center text-gray-500 py-10 text-sm font-medium">กำลังโหลด...</p>
         ) : attendance.length === 0 ? (
           <AdminEmptyState message="ไม่มีกิจกรรมจองสิทธิ์เข้าเรียนในวันนี้" />
         ) : (
-          <div className="overflow-x-auto border border-gray-200 rounded-2xl shadow-sm">
-            <table className="w-full text-left text-sm border-collapse bg-white">
+          <div className="overflow-x-auto border border-gray-300 shadow-sm">
+            <table className="w-full text-left text-xs sm:text-sm border-collapse bg-white">
               <thead>
-                <tr className="bg-gray-100 border-b border-gray-200 text-gray-600 uppercase tracking-wider font-bold">
-                  <th className="p-4">Nickname (ชื่อเล่น)</th>
-                  <th className="p-4">Age (อายุ)</th>
-                  <th className="p-4">Allergies (แพ้อาหาร)</th>
-                  <th className="p-4">Parent / Contact (ผู้ปกครอง)</th>
-                  <th className="p-4 text-center print:hidden">จัดการ</th>
+                <tr className="bg-gray-100 text-gray-700 font-bold border-b border-gray-300">
+                  <th className="border border-gray-300 px-3 py-2">Nickname (ชื่อเล่น)</th>
+                  <th className="border border-gray-300 px-3 py-2">Age (อายุ)</th>
+                  <th className="border border-gray-300 px-3 py-2">Allergies (แพ้อาหาร)</th>
+                  <th className="border border-gray-300 px-3 py-2">Parent / Contact (ผู้ปกครอง)</th>
+                  <th className="border border-gray-300 px-3 py-2 text-center print:hidden w-16">จัดการ</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {attendance.map(row => (
-                  <tr key={row.id} className="hover:bg-gray-50/50 transition">
-                    <td className="p-4 font-bold text-gray-900 text-base">{row.nickname}</td>
-                    <td className="p-4 text-gray-700">{formatAgeDisplay(row.age)}</td>
-                    <td className="p-4">
+                  <tr key={row.id} className="hover:bg-blue-50/50 transition">
+                    <td className="border border-gray-300 px-3 py-1.5 font-bold text-gray-900">{row.nickname}</td>
+                    <td className="border border-gray-300 px-3 py-1.5 text-gray-700">{formatAgeDisplay(row.age)}</td>
+                    <td className="border border-gray-300 px-3 py-1.5">
                       {row.food_allergy ? (
-                        <span className="inline-flex px-3 py-1 bg-red-100 text-red-700 rounded-lg font-bold text-xs border border-red-200 uppercase">
+                        <span className="font-bold text-red-600 uppercase">
                           {row.food_allergy}
                         </span>
                       ) : (
-                        <span className="text-gray-400 font-medium">-</span>
+                        <span className="text-gray-400">-</span>
                       )}
                     </td>
-                    <td className="p-4">
-                      <p className="font-bold text-gray-800 text-sm">{row.parent_name}</p>
-                      <p className="text-gray-500 font-mono text-sm mt-0.5">{row.parent_phone}</p>
+                    <td className="border border-gray-300 px-3 py-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-gray-800">{row.parent_name}</span>
+                        <span className="text-gray-500 font-mono text-[11px] sm:text-xs">({row.parent_phone})</span>
+                      </div>
                     </td>
-                    <td className="p-4 text-center print:hidden">
+                    <td className="border border-gray-300 px-3 py-1.5 text-center print:hidden">
                       <button
                         type="button"
                         onClick={() => handleCancel(row.id)}
-                        className="text-rose-500 hover:text-white hover:bg-rose-500 p-2.5 rounded-xl transition cursor-pointer"
+                        className="text-rose-500 hover:text-white hover:bg-rose-500 p-1.5 rounded transition cursor-pointer"
                         title="ยกเลิกการจอง"
                         aria-label="ยกเลิกการจอง"
                       >
-                        <XCircle className="w-6 h-6" />
+                        <XCircle className="w-4 h-4 mx-auto" />
                       </button>
                     </td>
                   </tr>

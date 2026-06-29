@@ -15,6 +15,8 @@ export interface Child {
   food_allergy: string | null;
   media_perm: boolean | null;
   no_photo_perm: boolean;
+  parent_photo_url?: string;
+  photo_url?: string;
 }
 
 export interface Package {

@@ -3,11 +3,16 @@
 import React from 'react';
 import {
   Calendar,
+  CalendarCog,
   ReceiptText,
   Ticket,
+  Baby,
   CalendarX,
   DownloadCloud,
   Package,
+  Settings,
+  LayoutDashboard,
+  LogOut,
 } from 'lucide-react';
 import type { AdminTab } from './admin-types';
 
@@ -17,18 +22,24 @@ interface AdminSidebarProps {
   pendingSlipCount: number;
 }
 
-const TABS: {
+interface TabItem {
   id: AdminTab;
   label: string;
   sub: string;
   icon: React.ElementType;
   justifyBetween?: boolean;
-}[] = [
+}
+
+const TABS: TabItem[] = [
+  { id: 'dashboard', label: 'Dashboard', sub: 'ภาพรวมระบบ', icon: LayoutDashboard },
   { id: 'daily', label: 'Daily Schedule', sub: 'ตารางรายวัน', icon: Calendar },
+  { id: 'calendar', label: 'Calendar & Rules', sub: 'ปฏิทิน/วันหยุด', icon: CalendarCog },
   { id: 'slips', label: 'Approve Slips', sub: 'อนุมัติหลักฐานสลิป', icon: ReceiptText, justifyBetween: true },
-  { id: 'credits', label: 'Manage Credits', sub: 'จัดการสิทธิ์', icon: Ticket },
+  { id: 'credits', label: 'Parents & Credits', sub: 'ผู้ปกครอง/เครดิต', icon: Ticket },
+  { id: 'children', label: 'Children', sub: 'ข้อมูลนักเรียน', icon: Baby },
   { id: 'cancel', label: 'Override Cancel', sub: 'ยกเลิกแทนผู้ปกครอง', icon: CalendarX },
   { id: 'packages', label: 'Package Options', sub: 'จัดการแพ็กเกจ', icon: Package },
+  { id: 'settings', label: 'System Settings', sub: 'ตั้งค่าระบบ', icon: Settings },
 ];
 
 export function AdminSidebar({ activeTab, onTabChange, pendingSlipCount }: AdminSidebarProps) {

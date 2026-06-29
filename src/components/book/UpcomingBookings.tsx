@@ -2,14 +2,15 @@ import React from 'react';
 import { CalendarHeart } from 'lucide-react';
 import type { Booking } from '@/types';
 
+import { useBookingContext } from './BookingContext';
+
 interface UpcomingBookingsProps {
-  bookings: Booking[];
-  selectedChildId: string;
   onCancelRequest: (bookingId: string) => void;
 }
 
-export function UpcomingBookings({ bookings, selectedChildId, onCancelRequest }: UpcomingBookingsProps) {
-  const filtered = bookings.filter(b => !selectedChildId || b.child_id === selectedChildId);
+export function UpcomingBookings({ onCancelRequest }: UpcomingBookingsProps) {
+  const { myBookings, selectedChildId } = useBookingContext();
+  const filtered = myBookings.filter(b => !selectedChildId || b.child_id === selectedChildId);
   
   if (filtered.length === 0) return null;
 

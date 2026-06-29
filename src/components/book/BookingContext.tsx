@@ -1,11 +1,34 @@
-import { useState, useEffect } from 'react';
+"use client";
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ParentService, PackageService, BookingService } from '@/lib/supabase';
+import { ParentService, PackageService, BookingService, SettingsService } from '@/lib/supabase';
 import type { Child, Package, Session, PackageOption, Booking } from '@/types';
+import type { SystemSettings } from '@/lib/services/settings.service';
 import { STORAGE_KEYS } from '@/config/constants';
 
-export function useBookingData() {
+interface BookingContextValue {
+  parentId: string;
+  parentName: string;
+  creditsRemaining: number;
+  children: Child[];
+  packages: Package[];
+  paymentPackages: PackageOption[];
+  sessions: Session[];
+  myBookings: Booking[];
+  blockoutDates: string[];
+  settings: SystemSettings | null;
+  loading: boolean;
+  selectedChildId: string;
+  setSelectedChildId: (id: string) => void;
+  refreshData: () => Promise<void>;
+}
+
+const BookingContext = createContext<BookingContextValue | undefined>(undefined);
+
+export function BookingProvider({ children: reactChildren }: { children: React.ReactNode }) {
   const router = useRouter();
+  
   const [parentId, setParentId] = useState('');
   const [parentName, setParentName] = useState('');
   const [creditsRemaining, setCreditsRemaining] = useState(0);
@@ -14,6 +37,8 @@ export function useBookingData() {
   const [paymentPackages, setPaymentPackages] = useState<PackageOption[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [myBookings, setMyBookings] = useState<Booking[]>([]);
+  const [blockoutDates, setBlockoutDates] = useState<string[]>([]);
+  const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedChildId, setSelectedChildId] = useState('');
 
@@ -43,8 +68,14 @@ export function useBookingData() {
       const loadedSessions = await BookingService.getSessions(startDate, endDate);
       setSessions(loadedSessions);
 
+      const blockedDates = await BookingService.getBlockoutDates();
+      setBlockoutDates(blockedDates);
+
       const bookings = await BookingService.getBookings(pId);
       setMyBookings(bookings);
+
+      const sysSettings = await SettingsService.getAllSettings();
+      setSettings(sysSettings);
     } catch (e) {
       console.error(e);
     } finally {
@@ -62,18 +93,34 @@ export function useBookingData() {
     loadData(pId);
   }, [router]);
 
-  return {
-    parentId,
-    parentName,
-    creditsRemaining,
-    children,
-    packages,
-    paymentPackages,
-    sessions,
-    myBookings,
-    loading,
-    selectedChildId,
-    setSelectedChildId,
-    refreshData: () => loadData(parentId)
-  };
+  return (
+    <BookingContext.Provider
+      value={{
+        parentId,
+        parentName,
+        creditsRemaining,
+        children,
+        packages,
+        paymentPackages,
+        sessions,
+        myBookings,
+        blockoutDates,
+        settings,
+        loading,
+        selectedChildId,
+        setSelectedChildId,
+        refreshData: () => loadData(parentId),
+      }}
+    >
+      {reactChildren}
+    </BookingContext.Provider>
+  );
+}
+
+export function useBookingContext() {
+  const context = useContext(BookingContext);
+  if (context === undefined) {
+    throw new Error('useBookingContext must be used within a BookingProvider');
+  }
+  return context;
 }

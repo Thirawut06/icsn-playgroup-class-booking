@@ -1,9 +1,13 @@
 export type AdminTab =
+  | 'dashboard'
   | 'daily'
+  | 'calendar'
   | 'slips'
   | 'credits'
+  | 'children'
   | 'cancel'
-  | 'packages';
+  | 'packages'
+  | 'settings';
 
 export interface AdminTabProps {
   onRefresh?: () => void;

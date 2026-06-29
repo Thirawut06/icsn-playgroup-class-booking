@@ -9,7 +9,7 @@ export function AdminPanel({
   className?: string;
 }) {
   return (
-    <div className={`bg-white rounded-3xl border border-gray-200 p-6 md:p-8 shadow-xs space-y-6 ${className}`}>
+    <div className={`space-y-6 ${className}`}>
       {children}
     </div>
   );
@@ -18,15 +18,20 @@ export function AdminPanel({
 export function AdminPanelHeader({
   icon: Icon,
   title,
+  action,
 }: {
   icon: LucideIcon;
   title: React.ReactNode;
+  action?: React.ReactNode;
 }) {
   return (
-    <h2 className="text-lg md:text-xl font-bold text-gray-800 flex items-center gap-3 border-b border-gray-100 pb-4">
-      <Icon className="text-icsn-teal w-6 h-6 shrink-0" strokeWidth={2} />
-      <span>{title}</span>
-    </h2>
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+      <h2 className="text-lg md:text-xl font-bold text-gray-800 flex items-center gap-3">
+        <Icon className="text-icsn-teal w-6 h-6 shrink-0" strokeWidth={2} />
+        <span>{title}</span>
+      </h2>
+      {action && <div>{action}</div>}
+    </div>
   );
 }
 

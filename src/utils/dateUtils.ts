@@ -49,11 +49,14 @@ export function formatThaiFullDate(date: Date): string {
  * 1. Cannot book past dates.
  * 2. Cannot book today if the current time is past the cutoff hour.
  * 3. Cannot book on weekends (Sunday=0, Saturday=6).
+ * 4. Cannot book on blockout dates (admin-defined holidays).
  * 
  * @param dateStr The date string to check (YYYY-MM-DD)
+ * @param blockoutDates Optional array of blocked date strings (YYYY-MM-DD)
+ * @param cutoffHour Optional hour of the day (0-23) after which same-day booking is disallowed (default 7)
  * @returns true if bookable, false otherwise
  */
-export function checkIsBookableDate(dateStr: string): boolean {
+export function checkIsBookableDate(dateStr: string, blockoutDates: string[] = [], cutoffHour: number = 7): boolean {
   const today = new Date();
   
   // Format today as YYYY-MM-DD in local time
@@ -67,9 +70,9 @@ export function checkIsBookableDate(dateStr: string): boolean {
     return false;
   }
   
-  // 2. Cannot book today if past cutoff time (07:00 AM)
+  // 2. Cannot book today if past cutoff time
   const isToday = dateStr === todayStr;
-  if (isToday && today.getHours() >= CUTOFF_HOUR_FOR_SAME_DAY_BOOKING) {
+  if (isToday && today.getHours() >= cutoffHour) {
     return false;
   }
 
@@ -78,6 +81,11 @@ export function checkIsBookableDate(dateStr: string): boolean {
   const dayOfWeek = targetDate.getDay();
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
   if (isWeekend) {
+    return false;
+  }
+
+  // 4. Cannot book on blockout dates
+  if (blockoutDates.includes(dateStr)) {
     return false;
   }
 

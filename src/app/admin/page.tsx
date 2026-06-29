@@ -9,13 +9,17 @@ import { DailyTab } from '@/components/admin/DailyTab';
 import { SlipsTab } from '@/components/admin/SlipsTab';
 import { CreditsTab } from '@/components/admin/CreditsTab';
 import { CancelTab } from '@/components/admin/CancelTab';
+import { ChildrenTab } from '@/components/admin/ChildrenTab';
+import { CalendarSettingsTab } from '@/components/admin/CalendarSettingsTab';
 import { PackageOptionsTab } from '@/components/admin/PackageOptionsTab';
+import { DashboardTab } from '@/components/admin/DashboardTab';
+import { SettingsTab } from '@/components/admin/SettingsTab';
 import { AdminService } from '@/lib/supabase';
 import type { AdminTab } from '@/components/admin/admin-types';
 
 export default function AdminPage() {
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [activeTab, setActiveTab] = useState<AdminTab>('daily');
+  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [pendingSlipCount, setPendingSlipCount] = useState(0);
 
   const refreshPendingCount = useCallback(async () => {
@@ -59,7 +63,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col text-gray-800 font-sarabun">
       <header className="bg-white border-b border-gray-100 shadow-xs no-print sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-[1600px] w-full mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex items-center justify-center w-12 h-auto shrink-0">
               <Image
@@ -103,7 +107,7 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl w-full mx-auto px-4 py-6 flex-1 flex flex-col md:flex-row gap-6">
+      <main className="max-w-[1600px] w-full mx-auto px-4 py-6 flex-1 flex flex-col md:flex-row gap-6">
         <AdminSidebar
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -111,11 +115,15 @@ export default function AdminPage() {
         />
 
         <div className="flex-1 min-w-0">
+          {activeTab === 'dashboard' ? <DashboardTab /> : null}
           {activeTab === 'daily' ? <DailyTab onRefresh={refreshPendingCount} /> : null}
+          {activeTab === 'calendar' ? <CalendarSettingsTab /> : null}
           {activeTab === 'slips' ? <SlipsTab onRefresh={refreshPendingCount} /> : null}
           {activeTab === 'credits' ? <CreditsTab /> : null}
+          {activeTab === 'children' ? <ChildrenTab /> : null}
           {activeTab === 'cancel' ? <CancelTab /> : null}
           {activeTab === 'packages' ? <PackageOptionsTab /> : null}
+          {activeTab === 'settings' ? <SettingsTab /> : null}
         </div>
       </main>
     </div>

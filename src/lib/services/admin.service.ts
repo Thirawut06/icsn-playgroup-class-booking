@@ -188,6 +188,37 @@ export const AdminService = {
     return rows;
   },
 
+  async getAllParentsWithCredits(): Promise<any[]> {
+    const { data: parents, error } = await supabase
+      .from('parents')
+      .select(`
+        id,
+        name,
+        phone,
+        created_at,
+        children(nickname),
+        packages(credits_remaining)
+      `)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+
+    return (parents || []).map((p: any) => {
+      const children = (p.children as any[]) || [];
+      const packages = (p.packages as any[]) || [];
+      const totalCredits = packages.reduce((sum, pkg) => sum + (pkg.credits_remaining || 0), 0);
+      
+      return {
+        id: p.id,
+        name: p.name,
+        phone: p.phone,
+        children_nicknames: children.map((c: any) => c.nickname).join(', '),
+        total_credits: totalCredits,
+        raw_parent: p
+      };
+    });
+  },
+
   async searchParentByPhone(phone: string): Promise<any | null> {
     const { data: parent, error } = await supabase
       .from('parents')
@@ -205,5 +236,81 @@ export const AdminService = {
     if (pkgError) throw pkgError;
 
     return { ...parent, children: children || [], packages: packages || [] };
-  }
+  },
+
+  // ===== Blockout Dates =====
+
+  async getBlockoutDates(): Promise<{ id: string; block_date: string; reason: string | null }[]> {
+    const { data, error } = await supabase
+      .from('blockout_dates')
+      .select('*')
+      .order('block_date', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async addBlockoutDate(blockDate: string, reason?: string): Promise<void> {
+    const { error } = await supabase
+      .from('blockout_dates')
+      .insert({ block_date: blockDate, reason: reason || null });
+    if (error) throw error;
+  },
+
+  async removeBlockoutDate(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('blockout_dates')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+  },
+
+  // ===== Session Toggle (Open/Close) =====
+
+  async toggleSessionActive(sessionId: string, isActive: boolean): Promise<void> {
+    const { error } = await supabase
+      .from('sessions')
+      .update({ is_active: isActive })
+      .eq('id', sessionId);
+    if (error) throw error;
+  },
+
+  // ===== Phase 2: User Management =====
+
+  async getAllChildren(): Promise<any[]> {
+    // Fetch children along with their parent's name and phone
+    const { data, error } = await supabase
+      .from('children')
+      .select(`
+        *,
+        parents (
+          name,
+          phone,
+          email
+        )
+      `)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getCreditLogs(parentId: string): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('credit_transactions')
+      .select('*')
+      .eq('parent_id', parentId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  async updateChildProfile(childId: string, updates: any): Promise<void> {
+    const { error } = await supabase
+      .from('children')
+      .update(updates)
+      .eq('id', childId);
+    
+    if (error) throw error;
+  },
 };

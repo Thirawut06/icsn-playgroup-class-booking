@@ -1,47 +1,68 @@
 "use client";
 
-import React, { useCallback, useState } from 'react';
-import { CalendarX, Search } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { CalendarX, Search, Loader2 } from 'lucide-react';
 import { BookingService, AdminService } from '@/lib/supabase';
-import type { ConfirmedBookingRow } from '@/types';
 import {
-  AdminEmptyState,
-  AdminFieldLabel,
   AdminPanel,
   AdminPanelHeader,
-  AdminPrimaryButton,
+  AdminFieldLabel,
 } from './admin-ui';
 import { formatThaiFullDate } from './admin-utils';
 
+interface ActiveBookingRow {
+  id: string;
+  session_date: string;
+  parent_name: string;
+  parent_phone: string;
+  child_nickname: string;
+}
+
 export function CancelTab() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [bookings, setBookings] = useState<ConfirmedBookingRow[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [bookings, setBookings] = useState<ActiveBookingRow[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  // Modal State
-  const [cancellingBooking, setCancellingBooking] = useState<ConfirmedBookingRow | null>(null);
+  // Quick Action Modal State
+  const [cancellingBooking, setCancellingBooking] = useState<ActiveBookingRow | null>(null);
   const [cancelReason, setCancelReason] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleSearch = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!searchTerm.trim()) {
-      alert('กรุณาระบุชื่อเล่น หรือเบอร์โทรศัพท์');
-      return;
-    }
-    
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  const fetchBookings = async () => {
     setLoading(true);
-    setHasSearched(true);
     try {
-      const data = await BookingService.searchActiveBookings(searchTerm.trim());
+      const data = await BookingService.getAllActiveBookings();
       setBookings(data);
     } catch (err) {
-      console.error(err);
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      alert('Error fetching bookings: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
+  };
+
+  const filteredBookings = useMemo(() => {
+    if (!searchTerm.trim()) return bookings;
+    const lower = searchTerm.toLowerCase();
+    return bookings.filter(b => 
+      b.child_nickname.toLowerCase().includes(lower) || 
+      b.parent_name.toLowerCase().includes(lower) || 
+      b.parent_phone.includes(lower) ||
+      b.session_date.includes(lower) // can filter by YYYY-MM-DD
+    );
+  }, [bookings, searchTerm]);
+
+  const openModal = (booking: ActiveBookingRow) => {
+    setCancellingBooking(booking);
+    setCancelReason('');
+  };
+
+  const closeModal = () => {
+    setCancellingBooking(null);
+    setCancelReason('');
   };
 
   const processAdminCancel = async () => {
@@ -58,26 +79,16 @@ export function CancelTab() {
         cancelReason: cancelReason.trim(),
       });
       
-      // Remove cancelled booking from list
+      // Remove cancelled booking from local state instantly
       setBookings(curr => curr.filter(b => b.id !== cancellingBooking.id));
       
-      alert('ยกเลิกสำเร็จ — คืนเครดิตให้ผู้ปกครองแล้ว');
+      alert('ยกเลิกสำเร็จ — คืน 1 เครดิตให้ผู้ปกครองแล้ว');
       closeModal();
     } catch (err) {
       alert('Error: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const openModal = (booking: ConfirmedBookingRow) => {
-    setCancellingBooking(booking);
-    setCancelReason(''); // reset
-  };
-
-  const closeModal = () => {
-    setCancellingBooking(null);
-    setCancelReason('');
   };
 
   return (
@@ -88,9 +99,10 @@ export function CancelTab() {
       />
 
       <div className="space-y-6">
-        <form onSubmit={handleSearch} className="bg-gray-50 p-6 border border-gray-200 rounded-2xl flex flex-wrap items-end gap-4">
+        {/* Search Bar */}
+        <div className="bg-white p-4 border border-gray-200 rounded shadow-sm flex flex-wrap items-end gap-4">
           <div className="flex-1 min-w-[200px]">
-            <AdminFieldLabel>ค้นหาจากชื่อเล่นน้อง หรือเบอร์โทรศัพท์ผู้ปกครอง:</AdminFieldLabel>
+            <AdminFieldLabel>ค้นหารายการจอง (ชื่อ, เบอร์โทร, วันที่ YYYY-MM-DD):</AdminFieldLabel>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
@@ -99,60 +111,73 @@ export function CancelTab() {
                 type="text"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                placeholder="เช่น 0812345678 หรือ น้องแพนด้า"
+                placeholder="พิมพ์ค้นหาแบบ Real-time..."
                 className="block w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-sm h-12 bg-white focus:ring-1 focus:ring-icsn-teal outline-none transition"
               />
             </div>
           </div>
-          <AdminPrimaryButton type="submit" disabled={loading} className="h-12 px-6 shadow-sm">
-            {loading ? 'กำลังค้นหา...' : 'ค้นหาประวัติ'}
-          </AdminPrimaryButton>
-        </form>
+        </div>
 
-        <div className="space-y-4">
-          <h4 className="text-base font-bold text-gray-600">
-            รายการจองที่สามารถยกเลิกได้ (นับตั้งแต่วันนี้เป็นต้นไป):
+        {/* Data Table */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-bold text-gray-700">
+            รายการจองที่สามารถยกเลิกได้ (Upcoming Bookings):
           </h4>
 
           {loading ? (
-            <p className="text-center text-gray-500 py-10 text-base font-medium">กำลังค้นหา...</p>
-          ) : hasSearched && bookings.length === 0 ? (
-            <AdminEmptyState message="ไม่พบประวัติการจองที่ยัง Active อยู่สำหรับคำค้นหานี้" />
-          ) : !hasSearched ? (
-             <div className="py-12 text-center border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
-               <p className="text-gray-500 text-base font-medium">พิมพ์ชื่อ หรือ เบอร์โทร เพื่อค้นหารายการจอง</p>
+             <div className="py-12 text-center border border-gray-300 bg-white shadow-sm">
+               <Loader2 className="w-6 h-6 text-gray-400 animate-spin mx-auto mb-3" />
+               <p className="text-gray-500 text-sm font-medium">กำลังโหลดรายการจอง...</p>
+             </div>
+          ) : filteredBookings.length === 0 ? (
+             <div className="py-12 text-center border-2 border-dashed border-gray-300 bg-gray-50/50">
+               <p className="text-gray-500 text-sm font-medium">ไม่พบรายการจองที่ตรงกับเงื่อนไข</p>
              </div>
           ) : (
-            <div className="space-y-4">
-              {bookings.map(bk => (
-                <div
-                  key={bk.id}
-                  className="border border-gray-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white gap-4 shadow-sm"
-                >
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-lg uppercase">
-                        Confirmed
-                      </span>
-                      <p className="font-bold text-gray-900 text-lg">น้อง{bk.child_nickname}</p>
-                    </div>
-                    <p className="text-icsn-teal font-bold text-base">
-                      รอบเรียน: {formatThaiFullDate(bk.session_date)}
-                    </p>
-                    <p className="text-gray-500 text-sm mt-1.5">
-                      ผู้ปกครอง: <span className="font-bold text-gray-700">{bk.parent_name}</span> ({bk.parent_phone})
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => openModal(bk)}
-                    className="px-5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold rounded-xl transition cursor-pointer text-sm shrink-0"
-                  >
-                    ยกเลิกการจอง
-                  </button>
-                </div>
-              ))}
+            <div className="overflow-x-auto border border-gray-300 shadow-sm">
+              <table className="w-full text-left text-xs sm:text-sm border-collapse bg-white">
+                <thead>
+                  <tr className="bg-gray-100 text-gray-700 font-bold border-b border-gray-300">
+                    <th className="border border-gray-300 px-3 py-2 w-24 text-center">Status</th>
+                    <th className="border border-gray-300 px-3 py-2">Child (ชื่อเล่น)</th>
+                    <th className="border border-gray-300 px-3 py-2">Session Date (รอบเรียน)</th>
+                    <th className="border border-gray-300 px-3 py-2">Parent / Contact</th>
+                    <th className="border border-gray-300 px-3 py-2 text-center w-32">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBookings.map(bk => (
+                    <tr key={bk.id} className="hover:bg-blue-50/50 transition">
+                      <td className="border border-gray-300 px-3 py-1.5 text-center">
+                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] sm:text-xs font-bold rounded uppercase tracking-wide border border-emerald-200">
+                          Confirmed
+                        </span>
+                      </td>
+                      <td className="border border-gray-300 px-3 py-1.5 font-bold text-gray-900">
+                        น้อง{bk.child_nickname}
+                      </td>
+                      <td className="border border-gray-300 px-3 py-1.5 text-icsn-teal font-bold">
+                        {formatThaiFullDate(bk.session_date)}
+                      </td>
+                      <td className="border border-gray-300 px-3 py-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-gray-800">{bk.parent_name}</span>
+                          <span className="text-gray-500 font-mono text-[11px] sm:text-xs">({bk.parent_phone})</span>
+                        </div>
+                      </td>
+                      <td className="border border-gray-300 px-3 py-1.5 text-center">
+                        <button
+                          type="button"
+                          onClick={() => openModal(bk)}
+                          className="px-3 py-1 bg-rose-50 hover:bg-rose-500 hover:text-white text-rose-600 border border-rose-200 font-bold rounded text-xs transition cursor-pointer shadow-sm w-full"
+                        >
+                          ยกเลิก
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
@@ -164,10 +189,10 @@ export function CancelTab() {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 flex flex-col animate-in zoom-in-95 duration-200">
             <h3 className="text-xl font-black text-rose-600 mb-4">ยืนยันการยกเลิกสิทธิ์?</h3>
             
-            <div className="bg-rose-50 text-rose-800 p-4 rounded-xl text-sm border border-rose-100 mb-5">
-              <p>คุณกำลังจะยกเลิกการจองของ <strong>น้อง{cancellingBooking.child_nickname}</strong></p>
-              <p className="mt-1">วันที่: <strong>{formatThaiFullDate(cancellingBooking.session_date)}</strong></p>
-              <p className="mt-2 text-xs opacity-90">* ระบบจะทำการคืนเครดิต 1 ครั้งกลับไปยังบัญชีของผู้ปกครองโดยอัตโนมัติ</p>
+            <div className="bg-rose-50 text-rose-800 p-4 rounded-xl text-sm border border-rose-100 mb-5 space-y-1">
+              <p>ยกเลิกการจองของ <strong>น้อง{cancellingBooking.child_nickname}</strong></p>
+              <p>วันที่: <strong>{formatThaiFullDate(cancellingBooking.session_date)}</strong></p>
+              <p className="pt-2 text-[11px] opacity-90 font-medium">* ระบบจะทำการคืน 1 เครดิต กลับไปยังบัญชีผู้ปกครองโดยอัตโนมัติ</p>
             </div>
             
             <div className="mb-6">
@@ -179,7 +204,7 @@ export function CancelTab() {
                 autoFocus
                 value={cancelReason}
                 onChange={e => setCancelReason(e.target.value)}
-                placeholder="เช่น ผู้ปกครองแจ้งขอยกเลิกทาง Line..."
+                placeholder="เช่น ป่วยกระทันหัน, ผู้ปกครองแจ้งทาง Line..."
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-rose-400 focus:ring-1 focus:ring-rose-400 outline-none transition h-12 text-sm"
               />
             </div>
@@ -194,10 +219,10 @@ export function CancelTab() {
               </button>
               <button
                 onClick={processAdminCancel}
-                disabled={isProcessing}
-                className="flex-[2] py-3 bg-rose-500 text-white font-bold rounded-xl hover:bg-rose-600 shadow-md shadow-rose-500/20 transition disabled:opacity-50 flex items-center justify-center"
+                disabled={isProcessing || !cancelReason.trim()}
+                className="flex-[2] py-3 bg-rose-500 text-white font-bold rounded-xl hover:bg-rose-600 shadow-md shadow-rose-500/20 transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {isProcessing ? 'กำลังยกเลิก...' : 'ยืนยันยกเลิก และคืน 1 เครดิต'}
+                {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : 'ยืนยันยกเลิก และคืน 1 เครดิต'}
               </button>
             </div>
           </div>

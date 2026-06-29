@@ -1,15 +1,10 @@
 import React from 'react';
 import Link from 'next/link';
 import { User, ChevronRight, Plus } from 'lucide-react';
-import type { Child } from '@/types';
+import { useBookingContext } from './BookingContext';
 
-interface ChildSelectorProps {
-  children: Child[];
-  selectedChildId: string;
-  onSelectChild: (childId: string) => void;
-}
-
-export function ChildSelector({ children, selectedChildId, onSelectChild }: ChildSelectorProps) {
+export function ChildSelector() {
+  const { children, selectedChildId, setSelectedChildId } = useBookingContext();
   const selectedChild = children.find(c => c.id === selectedChildId);
 
   return (
@@ -40,7 +35,7 @@ export function ChildSelector({ children, selectedChildId, onSelectChild }: Chil
         <div className="flex-1 relative">
           <select
             value={selectedChildId}
-            onChange={(e) => onSelectChild(e.target.value)}
+            onChange={(e) => setSelectedChildId(e.target.value)}
             className="w-full text-base pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:border-transparent bg-gray-50 hover:bg-gray-100 transition text-icsn-navy font-bold appearance-none cursor-pointer"
           >
             {children.length === 0 && <option value="">-- ยังไม่มีรายชื่อนักเรียน --</option>}

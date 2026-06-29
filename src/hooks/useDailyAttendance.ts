@@ -22,6 +22,7 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
   // Capacity form state
   const [capacityEdit, setCapacityEdit] = useState('');
   const [savingCapacity, setSavingCapacity] = useState(false);
+  const [togglingSession, setTogglingSession] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -99,8 +100,30 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     }
   };
 
+  const handleToggleSession = async () => {
+    if (!session) {
+      alert('ยังไม่มี session สำหรับวันนี้');
+      return;
+    }
+    const newState = !session.is_active;
+    const msg = newState
+      ? 'เปิดรับจองวันนี้อีกครั้ง?'
+      : 'ปิดรับจองวันนี้ (ผู้ปกครองจะไม่สามารถจองวันนี้ได้)?';
+    if (!confirm(msg)) return;
+    setTogglingSession(true);
+    try {
+      await AdminService.toggleSessionActive(session.id, newState);
+      setSession({ ...session, is_active: newState });
+    } catch (err) {
+      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setTogglingSession(false);
+    }
+  };
+
   const bookedCount = session?.booked_count ?? attendance.length;
   const totalCapacity = session?.total_capacity ?? (parseInt(capacityEdit, 10) || CLASS_CONFIG.DEFAULT_CAPACITY);
+  const sessionIsActive = session?.is_active !== false;
 
   return {
     dailyDate,
@@ -120,9 +143,12 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     savingCapacity,
     bookedCount,
     totalCapacity,
+    sessionIsActive,
+    togglingSession,
     handleWalkin,
     handleCancel,
     handleSaveCapacity,
+    handleToggleSession,
     refreshData: loadData,
   };
 }

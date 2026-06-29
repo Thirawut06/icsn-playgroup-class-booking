@@ -15,6 +15,14 @@ export const BookingService = {
     return data || [];
   },
 
+  async getBlockoutDates(): Promise<string[]> {
+    const { data, error } = await supabase
+      .from('blockout_dates')
+      .select('block_date');
+    if (error) throw error;
+    return (data || []).map((d: any) => d.block_date);
+  },
+
   async getOrCreateSession(dateStr: string, timeLabel: string = CLASS_CONFIG.DEFAULT_TIME_LABEL): Promise<Session> {
     const { data: existing, error } = await supabase
       .from('sessions')
@@ -122,6 +130,31 @@ export const BookingService = {
       .order('created_at', { ascending: true });
     if (error) throw error;
 
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      session_date: row.session_date,
+      parent_name: row.parent?.name || '-',
+      parent_phone: row.parent?.phone || '-',
+      child_nickname: row.child?.nickname || '-',
+    }));
+  },
+
+  async getAllActiveBookings(): Promise<any[]> {
+    const today = new Date().toISOString().split('T')[0];
+    const { data, error } = await supabase
+      .from('bookings')
+      .select(`
+        id,
+        session_date,
+        child:children!inner(id, nickname),
+        parent:parents!inner(id, name, phone)
+      `)
+      .gte('session_date', today)
+      .eq('status', 'confirmed')
+      .order('session_date', { ascending: true });
+
+    if (error) throw error;
+    
     return (data || []).map((row: any) => ({
       id: row.id,
       session_date: row.session_date,

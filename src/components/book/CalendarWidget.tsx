@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
-import type { Session, Booking } from '@/types';
+import type { Session } from '@/types';
+import { useBookingContext } from './BookingContext';
 import { getThaiMonthName, checkIsBookableDate } from '@/utils/dateUtils';
 
 export interface DayObj {
@@ -12,22 +13,26 @@ export interface DayObj {
 interface CalendarWidgetProps {
   monthIndex: number;
   onMonthChange: (index: number) => void;
-  sessions: Session[];
-  myBookings: Booking[];
   selectedDate: string | null;
-  selectedChildId: string;
   onDateSelect: (dayObj: DayObj) => void;
 }
 
 export function CalendarWidget({
   monthIndex,
   onMonthChange,
-  sessions,
-  myBookings,
   selectedDate,
-  selectedChildId,
   onDateSelect,
 }: CalendarWidgetProps) {
+  const { 
+    sessions, 
+    myBookings, 
+    blockoutDates, 
+    settings, 
+    selectedChildId 
+  } = useBookingContext();
+  const cutoffHour = settings?.cutoff_hour ?? 7;
+
+  const [loadingDate, setLoadingDate] = useState<string | null>(null);
   const currentViewDate = new Date();
   currentViewDate.setMonth(currentViewDate.getMonth() + monthIndex);
   const monthName = getThaiMonthName(currentViewDate);
@@ -89,7 +94,7 @@ export function CalendarWidget({
         {getDaysInMonth().map((dayObj, i) => {
           if (!dayObj) return <div key={`empty-${i}`} className="py-2 text-transparent"></div>;
 
-          const isBookable = checkIsBookableDate(dayObj.dateStr);
+          const isBookable = checkIsBookableDate(dayObj.dateStr, blockoutDates || [], cutoffHour);
           const isSelected = selectedDate === dayObj.dateStr;
           const isBooked = myBookings.some(b => b.session_date === dayObj.dateStr && b.child_id === selectedChildId);
 
