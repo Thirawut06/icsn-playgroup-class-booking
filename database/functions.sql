@@ -13,11 +13,18 @@ DECLARE
   v_parent_id UUID;
   v_package_id UUID;
   v_booking_id UUID;
+  v_session_date DATE;
 BEGIN
   -- หา parent_id
   SELECT parent_id INTO v_parent_id FROM children WHERE id = p_child_id;
   IF v_parent_id IS NULL THEN
     RAISE EXCEPTION 'Child not found';
+  END IF;
+
+  -- ดึง session_date
+  SELECT session_date INTO v_session_date FROM sessions WHERE id = p_session_id;
+  IF v_session_date IS NULL THEN
+    RAISE EXCEPTION 'Session not found';
   END IF;
 
   -- เช็คจองซ้ำ
@@ -27,8 +34,8 @@ BEGIN
 
   IF p_is_free THEN
     -- ไม่หักเครดิต
-    INSERT INTO bookings (session_id, child_id, parent_id, status)
-    VALUES (p_session_id, p_child_id, v_parent_id, 'confirmed')
+    INSERT INTO bookings (session_id, session_date, child_id, parent_id, status)
+    VALUES (p_session_id, v_session_date, p_child_id, v_parent_id, 'confirmed')
     RETURNING id INTO v_booking_id;
     
     -- เก็บล็อก
@@ -43,8 +50,8 @@ BEGIN
 
     UPDATE packages SET credits_remaining = credits_remaining - 1 WHERE id = v_package_id;
     
-    INSERT INTO bookings (session_id, child_id, parent_id, status)
-    VALUES (p_session_id, p_child_id, v_parent_id, 'confirmed')
+    INSERT INTO bookings (session_id, session_date, child_id, parent_id, status)
+    VALUES (p_session_id, v_session_date, p_child_id, v_parent_id, 'confirmed')
     RETURNING id INTO v_booking_id;
     
     -- เก็บล็อก

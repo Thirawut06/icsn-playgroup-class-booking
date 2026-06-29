@@ -101,29 +101,29 @@ export function AdminDashboard({ onRefresh }: { onRefresh?: () => void }) {
                 type="date"
                 value={dailyDate}
                 onChange={e => setDailyDate(e.target.value)}
-                className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-icsn-teal focus:ring-1 focus:ring-icsn-teal outline-none bg-gray-50 text-gray-800 transition shadow-sm font-semibold"
+                className="block w-full px-4 h-[48px] border border-gray-200 rounded-xl focus:border-icsn-teal focus:ring-1 focus:ring-icsn-teal outline-none bg-white text-gray-800 transition shadow-sm font-semibold cursor-pointer"
               />
             </div>
 
             {/* Quick Actions */}
-            <div className="flex flex-wrap items-start gap-4 w-full lg:w-auto mt-4 lg:mt-0">
+            <div className="flex flex-wrap items-end gap-4 w-full lg:w-auto mt-4 lg:mt-0">
               
               {/* Capacity Control */}
               <div>
                 <AdminFieldLabel>ความจุ (ที่นั่ง)</AdminFieldLabel>
-                <div className="flex items-center gap-2">
+                <div className="flex border border-gray-200 rounded-xl overflow-hidden focus-within:ring-1 focus-within:ring-icsn-teal focus-within:border-icsn-teal transition bg-white h-[48px] shadow-sm">
                   <input
                     type="number"
                     min={1}
                     value={capacityEdit}
                     onChange={e => setCapacityEdit(e.target.value)}
-                    className="w-20 px-3 py-3 border border-gray-200 rounded-xl text-center font-bold focus:border-icsn-teal focus:ring-1 focus:ring-icsn-teal outline-none shadow-sm bg-white"
+                    className="w-16 px-2 text-center font-bold outline-none text-gray-800 border-none bg-transparent"
                     title="จำนวนที่นั่งสูงสุด"
                   />
                   <button 
                     onClick={handleSaveCapacity} 
                     disabled={savingCapacity}
-                    className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition cursor-pointer disabled:opacity-50"
+                    className="px-4 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold border-l border-gray-200 transition disabled:opacity-50 cursor-pointer text-sm"
                   >
                     บันทึก
                   </button>
@@ -136,8 +136,10 @@ export function AdminDashboard({ onRefresh }: { onRefresh?: () => void }) {
                 <button
                   onClick={handleToggleSession}
                   disabled={togglingSession}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition shadow-sm cursor-pointer disabled:opacity-50 ${
-                    sessionIsActive ? 'bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200' : 'bg-emerald-500 text-white hover:bg-emerald-600'
+                  className={`flex items-center justify-center gap-2 px-5 h-[48px] rounded-xl font-bold transition-all shadow-sm cursor-pointer disabled:opacity-50 border ${
+                    sessionIsActive 
+                      ? 'bg-rose-50 text-rose-600 hover:bg-rose-100 border-rose-200' 
+                      : 'bg-emerald-500 text-white hover:bg-emerald-600 border-transparent'
                   }`}
                 >
                   <Power className="w-4 h-4" />
@@ -148,7 +150,10 @@ export function AdminDashboard({ onRefresh }: { onRefresh?: () => void }) {
               {/* Print Action */}
               <div>
                 <AdminFieldLabel>ระบบเอกสาร</AdminFieldLabel>
-                <button onClick={() => window.print()} className="flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl font-semibold transition shadow-sm cursor-pointer">
+                <button 
+                  onClick={() => window.print()} 
+                  className="flex items-center justify-center gap-2 px-5 h-[48px] bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl font-bold transition shadow-sm cursor-pointer"
+                >
                   <Printer className="w-4 h-4 text-icsn-teal" /> พิมพ์
                 </button>
               </div>
@@ -174,10 +179,6 @@ export function AdminDashboard({ onRefresh }: { onRefresh?: () => void }) {
               <div className="flex-1 w-full">
                 <input type="text" required value={walkinName} onChange={e => setWalkinName(e.target.value)} placeholder="ชื่อเล่นน้อง" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-icsn-teal outline-none" />
               </div>
-              <label className="flex items-center gap-2 px-2 py-3 cursor-pointer shrink-0">
-                <input type="checkbox" checked={walkinFree} onChange={e => setWalkinFree(e.target.checked)} className="w-5 h-5 rounded text-icsn-teal focus:ring-icsn-teal" />
-                <span className="font-semibold text-gray-700">เข้าฟรี</span>
-              </label>
               <button type="submit" disabled={walkinLoading} className="w-full md:w-auto px-6 py-3 bg-icsn-navy hover:bg-icsn-navy/90 text-white rounded-xl font-bold shadow-sm transition disabled:opacity-50 cursor-pointer whitespace-nowrap">
                 + เพิ่มนักเรียน
               </button>

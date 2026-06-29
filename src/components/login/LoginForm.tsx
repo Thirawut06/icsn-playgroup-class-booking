@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Phone, AlertCircle, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { ParentService } from '@/lib/supabase';
+import { ParentService, supabase } from '@/lib/supabase';
 import { STORAGE_KEYS } from '@/config/constants';
 import { COPY } from '@/config/copy';
 
@@ -10,6 +10,9 @@ export function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isCompletingProfile, setIsCompletingProfile] = useState(false);
+  const [completeName, setCompleteName] = useState('');
+  const [completePhone, setCompletePhone] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
   const submitLogin = async (e: React.FormEvent) => {
@@ -18,6 +21,27 @@ export function LoginForm() {
     setErrorMessage('');
 
     try {
+      if (isCompletingProfile) {
+        const cleanPhone = completePhone.trim().replace(/\D/g, "");
+        if (cleanPhone.length < 9 || cleanPhone.length > 10) {
+          throw new Error("กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง (9-10 หลัก)");
+        }
+        if (!completeName.trim()) {
+          throw new Error("กรุณากรอกชื่อผู้ปกครอง");
+        }
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("ไม่พบข้อมูลผู้ใช้");
+
+        const parent = await ParentService.completeProfile(user.id, completeName.trim(), cleanPhone);
+        localStorage.setItem(STORAGE_KEYS.PARENT_ID, parent.id);
+        localStorage.setItem(STORAGE_KEYS.PARENT_NAME, parent.name);
+        localStorage.setItem(STORAGE_KEYS.PARENT_PHONE, parent.phone);
+        localStorage.setItem(STORAGE_KEYS.PARENT_EMAIL, email.trim());
+        
+        router.push('/apply');
+        return;
+      }
+
       if (!email.trim() || !password.trim()) {
         throw new Error("กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน");
       }
@@ -36,8 +60,13 @@ export function LoginForm() {
         router.push('/apply');
       }
     } catch (error: any) {
-      let msg = error.message || "เกิดข้อผิดพลาดในการเข้าสู่ระบบ";
-      setErrorMessage(msg);
+      if (error.message === 'PROFILE_MISSING') {
+        setIsCompletingProfile(true);
+        setErrorMessage('');
+      } else {
+        let msg = error.message || "เกิดข้อผิดพลาดในการเข้าสู่ระบบ";
+        setErrorMessage(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -46,45 +75,97 @@ export function LoginForm() {
   return (
     <form onSubmit={submitLogin} className="space-y-6">
       <div className="space-y-4">
-        <div>
-          <label className="block mb-1.5">
-            <span className="text-base font-bold text-gray-800">Email Address</span>
-            <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.EMAIL_LABEL}</span>
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
-              <Mail className="w-5 h-5" />
+        {isCompletingProfile ? (
+          <>
+            <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 mb-6">
+              <p className="text-amber-800 text-sm font-medium text-center">
+                พบบัญชีของคุณแล้ว แต่ข้อมูลยังไม่สมบูรณ์<br/>
+                กรุณากรอกชื่อและเบอร์โทรศัพท์เพื่อดำเนินการต่อ
+              </p>
             </div>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="parent@example.com"
-              className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-icsn-teal text-gray-800 bg-gray-50/50 transition-colors h-12 text-base"
-            />
-          </div>
-        </div>
+            <div>
+              <label className="block mb-1.5">
+                <span className="text-base font-bold text-gray-800">Parent's Full Name</span>
+                <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.NAME_LABEL}</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
+                  <User className="w-5 h-5" />
+                </div>
+                <input
+                  type="text"
+                  value={completeName}
+                  onChange={(e) => setCompleteName(e.target.value)}
+                  required
+                  placeholder="ชื่อ-นามสกุล ผู้ปกครอง"
+                  className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-icsn-teal text-gray-800 bg-gray-50/50 transition-colors h-12 text-base"
+                />
+              </div>
+            </div>
 
-        <div>
-          <label className="block mb-1.5">
-            <span className="text-base font-bold text-gray-800">Password</span>
-            <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.PASSWORD_LABEL}</span>
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
-              <Lock className="w-5 h-5" />
+            <div>
+              <label className="block mb-1.5">
+                <span className="text-base font-bold text-gray-800">Phone Number</span>
+                <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.PHONE_LABEL}</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
+                  <Phone className="w-5 h-5" />
+                </div>
+                <input
+                  type="tel"
+                  value={completePhone}
+                  onChange={(e) => setCompletePhone(e.target.value)}
+                  required
+                  placeholder="08XXXXXXXX"
+                  className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-icsn-teal text-gray-800 bg-gray-50/50 transition-colors h-12 text-base"
+                />
+              </div>
             </div>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-              className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-icsn-teal text-gray-800 bg-gray-50/50 transition-colors h-12 text-base"
-            />
-          </div>
-        </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <label className="block mb-1.5">
+                <span className="text-base font-bold text-gray-800">Email Address</span>
+                <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.EMAIL_LABEL}</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="parent@example.com"
+                  className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-icsn-teal text-gray-800 bg-gray-50/50 transition-colors h-12 text-base"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block mb-1.5">
+                <span className="text-base font-bold text-gray-800">Password</span>
+                <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.PASSWORD_LABEL}</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-icsn-teal text-gray-800 bg-gray-50/50 transition-colors h-12 text-base"
+                />
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {errorMessage && (
@@ -92,9 +173,11 @@ export function LoginForm() {
           <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
             <p className="font-medium">{errorMessage}</p>
-            <p className="text-xs text-red-600 mt-1">
-              ไม่สามารถเข้าสู่ระบบได้ กรุณาตรวจสอบข้อมูลหรือสมัครสมาชิกใหม่
-            </p>
+            {!isCompletingProfile && (
+              <p className="text-xs text-red-600 mt-1">
+                ไม่สามารถเข้าสู่ระบบได้ กรุณาตรวจสอบข้อมูลหรือสมัครสมาชิกใหม่
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -102,17 +185,12 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full mt-4 bg-icsn-teal hover:bg-icsn-teal/90 text-white py-3 px-4 rounded-full font-bold shadow-sm transition-all flex items-center justify-center cursor-pointer h-[52px] text-lg shrink-0 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-100"
+        className="w-full bg-icsn-navy hover:bg-icsn-navy/90 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-sm disabled:opacity-50 flex justify-center items-center h-12 text-base"
       >
-        {!loading ? (
-          <div className="flex items-center gap-2 justify-center w-full">
-            <span>{COPY.AUTH.SIGN_IN_BTN}</span>
-          </div>
+        {loading ? (
+          <Loader2 className="w-5 h-5 animate-spin" />
         ) : (
-          <div className="flex items-center gap-2">
-            <Loader2 className="animate-spin h-5 w-5 text-white" />
-            <span>{COPY.AUTH.SIGNING_IN}</span>
-          </div>
+          isCompletingProfile ? "บันทึกข้อมูล (Save)" : "เข้าสู่ระบบ (Sign In)"
         )}
       </button>
     </form>

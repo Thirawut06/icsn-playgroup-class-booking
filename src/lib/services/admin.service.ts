@@ -154,6 +154,94 @@ export const AdminService = {
 
 
 
+  async getAllUsersClassified(): Promise<any[]> {
+    const { data: parents, error } = await supabase
+      .from('parents')
+      .select(`
+        id,
+        name,
+        phone,
+        email,
+        created_at,
+        children(nickname),
+        packages(
+          credits_remaining,
+          type
+        ),
+        bookings(id)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return (parents || []).map((p: any) => {
+      const children = (p.children as any[]) || [];
+      const packages = (p.packages as any[]) || [];
+      const bookings = (p.bookings as any[]) || [];
+
+      const totalCredits = packages.reduce((sum, pkg) => sum + (pkg.credits_remaining || 0), 0);
+
+      let category: 'payment' | 'trial' | 'walk-in' | 'new' = 'new';
+
+      if (packages.length > 0) {
+        // Has packages
+        const hasTrial = packages.some(pkg => pkg.type === 'trial');
+        const hasNormal = packages.some(pkg => pkg.type !== 'trial');
+
+        if (hasNormal) category = 'payment';
+        else if (hasTrial) category = 'trial';
+        else category = 'payment'; // Fallback
+      } else if (bookings.length > 0) {
+        // No packages but has bookings -> Walk-in
+        category = 'walk-in';
+      }
+
+      return {
+        id: p.id,
+        name: p.name,
+        email: p.email,
+        phone: p.phone,
+        children_nicknames: children.map((c: any) => c.nickname).join(', '),
+        total_credits: totalCredits,
+        category,
+        raw_parent: p
+      };
+    });
+  },
+
+  async getUserFullDetails(parentId: string): Promise<any> {
+    const { data, error } = await supabase
+      .from('parents')
+      .select(`
+        *,
+        children(*),
+        packages(*),
+        bookings(
+          *,
+          sessions(*)
+        ),
+        credit_transactions(
+          *
+        ),
+        slip_uploads(
+          *
+        )
+      `)
+      .eq('id', parentId)
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async updateAdminNotes(parentId: string, notes: string): Promise<void> {
+    const { error } = await supabase
+      .from('parents')
+      .update({ admin_notes: notes })
+      .eq('id', parentId);
+    if (error) throw error;
+  },
+
   async getAllParentsWithCredits(): Promise<any[]> {
     const { data: parents, error } = await supabase
       .from('parents')

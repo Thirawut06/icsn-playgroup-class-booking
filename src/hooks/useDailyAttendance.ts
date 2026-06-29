@@ -4,6 +4,7 @@ import type { DailyAttendanceRow, Session } from '@/types';
 import { CLASS_CONFIG } from '@/config/constants';
 import toast from 'react-hot-toast';
 import { COPY } from '@/config/copy';
+import { getErrorMessage } from '@/lib/utils';
 interface UseDailyAttendanceOptions {
   onRefresh?: () => void;
 }
@@ -53,14 +54,14 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     try {
       const sess = await BookingService.getOrCreateSession(dailyDate);
       const { child_id } = await AdminService.adminAddWalkin(walkinPhone, walkinName);
-      await AdminService.adminBookClass(child_id, sess.id, walkinFree);
+      await AdminService.adminBookClass(child_id, sess.id, true);
       setWalkinPhone('');
       setWalkinName('');
       await loadData();
       onRefresh?.();
       toast.success(COPY.ALERTS.WALKIN_SUCCESS);
     } catch (err) {
-      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(getErrorMessage(err)));
     } finally {
       setWalkinLoading(false);
     }
@@ -75,7 +76,7 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
       await loadData();
       onRefresh?.();
     } catch (err) {
-      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(getErrorMessage(err)));
     }
   };
 
@@ -95,7 +96,7 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
       setSession(updated);
       toast.success(COPY.ALERTS.UPDATE_CAPACITY_SUCCESS);
     } catch (err) {
-      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(getErrorMessage(err)));
     } finally {
       setSavingCapacity(false);
     }
@@ -116,7 +117,7 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
       await AdminService.toggleSessionActive(session.id, newState);
       setSession({ ...session, is_active: newState });
     } catch (err) {
-      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(getErrorMessage(err)));
     } finally {
       setTogglingSession(false);
     }

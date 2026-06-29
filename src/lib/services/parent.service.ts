@@ -30,6 +30,17 @@ export const ParentService = {
   },
 
   async signUp(email: string, password: string, name: string, phone: string): Promise<Parent> {
+    // Check if phone exists first to prevent creating orphaned auth users
+    const { data: existingParent } = await supabase
+      .from('parents')
+      .select('id')
+      .eq('phone', phone)
+      .maybeSingle();
+
+    if (existingParent) {
+      throw new Error('เบอร์โทรศัพท์นี้ถูกใช้ลงทะเบียนแล้ว กรุณาไปที่หน้า "เข้าสู่ระบบ" หรือใช้เบอร์อื่น');
+    }
+
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) {
       const msg = error.message.toLowerCase();
@@ -45,10 +56,46 @@ export const ParentService = {
 
     const userId = data.user.id;
 
-    // Check if phone exists
-    const { data: existingParent } = await supabase
+    const { data: parentData, error: pError } = await supabase
+      .from('parents')
+      .insert([{ id: userId, phone, name, email }])
+      .select()
+      .single();
+
+    if (pError) throw pError;
+    return parentData;
+  },
+
+  async signIn(email: string, password: string): Promise<Parent> {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      if (error.message.includes('Invalid login credentials')) {
+        throw new Error('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+      }
+      throw error;
+    }
+    if (!data?.user) throw new Error('เข้าสู่ระบบล้มเหลว');
+
+    const { data: parent, error: pError } = await supabase
       .from('parents')
       .select('*')
+      .eq('id', data.user.id)
+      .maybeSingle();
+
+    if (pError) throw pError;
+    
+    if (!parent) {
+      throw new Error('PROFILE_MISSING');
+    }
+
+    return parent;
+  },
+
+  async completeProfile(userId: string, name: string, phone: string): Promise<Parent> {
+    // Ensure phone is unique
+    const { data: existingParent } = await supabase
+      .from('parents')
+      .select('id')
       .eq('phone', phone)
       .maybeSingle();
 
@@ -64,21 +111,6 @@ export const ParentService = {
 
     if (pError) throw pError;
     return parentData;
-  },
-
-  async signIn(email: string, password: string): Promise<Parent> {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    if (!data?.user) throw new Error('เข้าสู่ระบบล้มเหลว');
-
-    const { data: parent, error: pError } = await supabase
-      .from('parents')
-      .select('*')
-      .eq('id', data.user.id)
-      .single();
-
-    if (pError) throw pError;
-    return parent;
   },
 
   async getParentDetails(parentId: string): Promise<any> {
