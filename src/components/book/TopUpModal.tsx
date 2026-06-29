@@ -1,7 +1,10 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { X, Wallet, ChevronRight, UploadCloud, Loader2, CheckCircle2 } from 'lucide-react';
 import type { PackageOption } from '@/types';
 import { PackageService } from '@/lib/supabase';
+import { APP_CONFIG } from '@/config/appConfig';
+import { COPY } from '@/config/copy';
+import toast from 'react-hot-toast';
 
 interface TopUpModalProps {
   isOpen: boolean;
@@ -30,8 +33,8 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        alert("ขนาดไฟล์ต้องไม่เกิน 10MB");
+      if (file.size > APP_CONFIG.MAX_UPLOAD_SIZE_BYTES) {
+        toast.error(COPY.ALERTS.FILE_TOO_LARGE(APP_CONFIG.MAX_UPLOAD_SIZE_MB));
         e.target.value = "";
         return;
       }
@@ -50,7 +53,7 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
       await PackageService.submitTopUp(parentId, packageType, paymentSlipFile, true);
       setIsSuccess(true);
     } catch (e: any) {
-      alert(e.message);
+      toast.error(COPY.ALERTS.ERROR_GENERIC(e.message));
     } finally {
       setIsSubmitting(false);
     }
@@ -58,7 +61,7 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-icsn-navy/40 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-[420px] max-h-[90vh] overflow-y-auto rounded-[28px] p-5 relative shadow-2xl">
+      <div className="bg-white w-full max-w-[420px] max-h-[90vh] overflow-y-auto rounded-3xl p-5 relative shadow-2xl">
         {!isSuccess && (
           <button
             onClick={resetAndClose}
@@ -93,7 +96,7 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
               </div>
               <div className="text-left">
                 <h2 className="text-lg font-black text-icsn-navy leading-tight">Top Up Credits</h2>
-                <p className="text-xs text-gray-500 font-medium">เพิ่มสิทธิ์เพื่อจองคลาสเรียนเพลย์กรุ๊ป</p>
+                <p className="text-xs text-gray-500 font-medium">{COPY.APPLY_FLOW.TOPUP_TITLE}</p>
               </div>
             </div>
 
@@ -107,7 +110,7 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
                     className="w-full px-4 py-3 text-base font-bold border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-icsn-teal focus:outline-none appearance-none cursor-pointer text-icsn-navy"
                     required
                   >
-                    <option value="">-- เลือกแพ็กเกจ --</option>
+                    <option value="">{COPY.APPLY_FLOW.SELECT_PACKAGE}</option>
                     {paymentPackages.map(p => (
                       <option key={p.id} value={p.name}>{p.name} - {p.price} บาท ({p.credits} Credits)</option>
                     ))}
@@ -127,8 +130,8 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
                 <label className="flex items-center gap-3 p-3 border-2 border-dashed border-icsn-teal/30 bg-icsn-teal/5 rounded-xl cursor-pointer hover:bg-icsn-teal/10 transition">
                   <UploadCloud className="w-7 h-7 text-icsn-teal shrink-0" />
                   <div>
-                    <span className="text-sm font-bold text-icsn-teal block">อัปโหลดสลิปโอนเงิน</span>
-                    <span className="text-xs text-gray-500 font-medium">{paymentSlipFile ? paymentSlipFile.name : 'JPG, PNG, HEIC — ไม่เกิน 10MB'}</span>
+                    <span className="text-sm font-bold text-icsn-teal block">{COPY.APPLY_FLOW.UPLOAD_SLIP}</span>
+                    <span className="text-xs text-gray-500 font-medium">{paymentSlipFile ? paymentSlipFile.name : COPY.RULES.UPLOAD_LIMIT_HINT(APP_CONFIG.SUPPORTED_IMAGE_TYPES, APP_CONFIG.MAX_UPLOAD_SIZE_MB)}</span>
                   </div>
                   <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={handleFile} required />
                 </label>

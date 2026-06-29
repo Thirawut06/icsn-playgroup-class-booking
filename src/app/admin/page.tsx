@@ -5,15 +5,10 @@ import Image from 'next/image';
 import { LogOut } from 'lucide-react';
 import { AdminLoginGate } from '@/components/admin/AdminLoginGate';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
-import { DailyTab } from '@/components/admin/DailyTab';
-import { SlipsTab } from '@/components/admin/SlipsTab';
-import { CreditsTab } from '@/components/admin/CreditsTab';
-import { CancelTab } from '@/components/admin/CancelTab';
-import { ChildrenTab } from '@/components/admin/ChildrenTab';
-import { CalendarSettingsTab } from '@/components/admin/CalendarSettingsTab';
-import { PackageOptionsTab } from '@/components/admin/PackageOptionsTab';
-import { DashboardTab } from '@/components/admin/DashboardTab';
-import { SettingsTab } from '@/components/admin/SettingsTab';
+import { AdminDashboard } from '@/components/admin/views/AdminDashboard';
+import { AdminSlips } from '@/components/admin/views/AdminSlips';
+import { AdminUsers } from '@/components/admin/views/AdminUsers';
+import { AdminSettings } from '@/components/admin/views/AdminSettings';
 import { AdminService } from '@/lib/supabase';
 import type { AdminTab } from '@/components/admin/admin-types';
 
@@ -115,15 +110,10 @@ export default function AdminPage() {
         />
 
         <div className="flex-1 min-w-0">
-          {activeTab === 'dashboard' ? <DashboardTab /> : null}
-          {activeTab === 'daily' ? <DailyTab onRefresh={refreshPendingCount} /> : null}
-          {activeTab === 'calendar' ? <CalendarSettingsTab /> : null}
-          {activeTab === 'slips' ? <SlipsTab onRefresh={refreshPendingCount} /> : null}
-          {activeTab === 'credits' ? <CreditsTab /> : null}
-          {activeTab === 'children' ? <ChildrenTab /> : null}
-          {activeTab === 'cancel' ? <CancelTab /> : null}
-          {activeTab === 'packages' ? <PackageOptionsTab /> : null}
-          {activeTab === 'settings' ? <SettingsTab /> : null}
+          {activeTab === 'dashboard' ? <AdminDashboard onRefresh={refreshPendingCount} /> : null}
+          {activeTab === 'slips' ? <AdminSlips onRefresh={refreshPendingCount} /> : null}
+          {activeTab === 'users' ? <AdminUsers /> : null}
+          {activeTab === 'settings' ? <AdminSettings /> : null}
         </div>
       </main>
     </div>

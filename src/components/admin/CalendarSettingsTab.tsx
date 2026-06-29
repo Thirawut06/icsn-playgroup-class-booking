@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarCog, Plus, Trash2, Loader2 } from 'lucide-react';
 import { AdminService } from '@/lib/supabase';
-import {
-  AdminPanel,
-  AdminPanelHeader,
+import toast from 'react-hot-toast';
+import { COPY } from '@/config/copy';import {
+  
+  
   AdminFieldLabel,
 } from './admin-ui';
 
@@ -34,7 +35,7 @@ export function CalendarSettingsTab() {
       const data = await AdminService.getBlockoutDates();
       setBlockoutDates(data);
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -42,7 +43,7 @@ export function CalendarSettingsTab() {
 
   const handleAdd = async () => {
     if (!newDate) {
-      alert('กรุณาเลือกวันที่');
+      toast.error(COPY.ALERTS.SELECT_DATE_REQUIRED);
       return;
     }
     setAdding(true);
@@ -52,7 +53,7 @@ export function CalendarSettingsTab() {
       setNewReason('');
       await fetchBlockoutDates();
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setAdding(false);
     }
@@ -64,7 +65,7 @@ export function CalendarSettingsTab() {
       await AdminService.removeBlockoutDate(id);
       setBlockoutDates(curr => curr.filter(d => d.id !== id));
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     }
   };
 
@@ -84,11 +85,8 @@ export function CalendarSettingsTab() {
   const pastDates = blockoutDates.filter(d => d.block_date < today);
 
   return (
-    <AdminPanel className="no-print">
-      <AdminPanelHeader
-        icon={CalendarCog}
-        title="จัดการปฏิทิน & วันหยุด (Calendar & Rules)"
-      />
+    <div className="w-full">
+      
 
       <div className="space-y-6">
         {/* Add Blockout Date Form */}
@@ -131,7 +129,7 @@ export function CalendarSettingsTab() {
             วันหยุดที่กำลังจะมาถึง ({upcomingDates.length} วัน)
           </h3>
           {loading ? (
-            <div className="py-8 text-center text-gray-500 text-sm">กำลังโหลด...</div>
+            <div className="py-8 text-center text-gray-500 text-sm">{COPY.LOADING.SHORT}</div>
           ) : upcomingDates.length === 0 ? (
             <div className="py-8 text-center border-2 border-dashed border-gray-300 bg-gray-50/50 rounded text-gray-500 text-sm">
               ยังไม่มีวันหยุดที่ตั้งไว้
@@ -193,6 +191,6 @@ export function CalendarSettingsTab() {
           </details>
         )}
       </div>
-    </AdminPanel>
+    </div>
   );
 }

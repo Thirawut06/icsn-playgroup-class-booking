@@ -1,12 +1,7 @@
 export type AdminTab =
   | 'dashboard'
-  | 'daily'
-  | 'calendar'
   | 'slips'
-  | 'credits'
-  | 'children'
-  | 'cancel'
-  | 'packages'
+  | 'users'
   | 'settings';
 
 export interface AdminTabProps {

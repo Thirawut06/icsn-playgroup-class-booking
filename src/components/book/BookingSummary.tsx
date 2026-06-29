@@ -19,6 +19,7 @@ interface BookingSummaryProps {
 }
 
 import { getThaiMonthMin, formatThaiFullDate } from '@/utils/dateUtils';
+import { COPY } from '@/config/copy';
 
 export function BookingSummary({
   selectedDate,
@@ -51,7 +52,7 @@ export function BookingSummary({
       <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-icsn-card space-y-5">
         <h3 className="font-bold text-icsn-navy border-b border-gray-100 pb-3 flex items-center gap-1.5 text-base">
           <ReceiptText className="w-5 h-5 text-icsn-teal" />
-          <span>3. สรุปการจองสิทธิ์</span>
+          <span>{COPY.BOOKING_FLOW.STEP_3}</span>
         </h3>
 
         {!selectedDate ? (
@@ -59,8 +60,8 @@ export function BookingSummary({
             <div className="inline-flex p-4 bg-gray-50 text-icsn-teal/40 rounded-full mb-1">
               <Hand className="w-8 h-8" />
             </div>
-            <p className="text-sm font-bold text-gray-500">กรุณาแตะเลือกวันที่ในปฏิทิน</p>
-            <p className="text-xs">* ระบบแสดงรอบเรียนล่วงหน้า 2 เดือน</p>
+            <p className="text-sm font-bold text-gray-500">{COPY.BOOKING_FLOW.SELECT_DATE_HINT}</p>
+            <p className="text-xs">{COPY.BOOKING_FLOW.ADVANCE_NOTICE}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -69,21 +70,21 @@ export function BookingSummary({
               
               {/* Date */}
               <div className="flex items-center justify-between">
-                <span className="text-base font-medium text-gray-500">วันที่เรียน:</span>
+                <span className="text-base font-medium text-gray-500">{COPY.BOOKING_FLOW.DATE_LABEL}</span>
                 <span className="text-base font-bold text-icsn-teal">{selectedDayNum} {selectedThaiMonthMin}</span>
               </div>
 
               {/* Child */}
               {selectedChildObj && (
                 <div className="flex items-center justify-between">
-                  <span className="text-base font-medium text-gray-500">นักเรียน:</span>
+                  <span className="text-base font-medium text-gray-500">{COPY.BOOKING_FLOW.STUDENT_LABEL}</span>
                   <span className="text-base font-bold text-icsn-navy">{selectedChildObj.nickname}</span>
                 </div>
               )}
 
               {/* Status */}
               <div className="flex items-center justify-between">
-                <span className="text-base font-medium text-gray-500">สถานะ:</span>
+                <span className="text-base font-medium text-gray-500">{COPY.BOOKING_FLOW.STATUS_LABEL}</span>
                 <span className={`text-base font-bold inline-flex items-center gap-1.5 ${selectedDateAvailable ? 'text-icsn-teal' : 'text-rose-500'}`}>
                   <span className={`w-2 h-2 rounded-full shadow-sm ${selectedDateAvailable ? 'bg-icsn-teal' : 'bg-rose-500'}`}></span>
                   {selectedSessionStatus}
@@ -92,7 +93,7 @@ export function BookingSummary({
 
               {/* Time Slots */}
               <div className="pt-3.5 border-t border-gray-100">
-                <span className="text-base font-medium text-gray-500 block mb-2.5">เลือกรอบเวลา:</span>
+                <span className="text-base font-medium text-gray-500 block mb-2.5">{COPY.BOOKING_FLOW.SELECT_SESSION_LABEL}</span>
                 
                 {availableSessions.length > 0 ? (
                   <div className="flex flex-col gap-2">
@@ -106,7 +107,7 @@ export function BookingSummary({
                             : 'bg-white text-gray-600 border-gray-200 hover:border-icsn-teal/50'
                         }`}
                       >
-                        <span>{session.time_label || 'เช้า (09:00 - 12:00)'}</span>
+                        <span>{session.time_label || COPY.BOOKING_FLOW.SESSION_MORNING}</span>
                         <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${
                           selectedSession?.id === session.id 
                             ? 'bg-white/20 text-white' 
@@ -120,7 +121,7 @@ export function BookingSummary({
                 ) : (
                   <div className="flex flex-col gap-2">
                     <button className="w-full text-left px-4 py-3 rounded-xl font-bold text-base transition-all flex justify-between items-center bg-icsn-teal text-white border border-icsn-teal shadow-md ring-2 ring-icsn-teal/20">
-                      <span>เช้า (09:00 - 12:00)</span>
+                      <span>{COPY.BOOKING_FLOW.SESSION_MORNING}</span>
                       <span className="text-sm font-medium px-2 py-0.5 rounded-full bg-white/20 text-white">
                         ว่าง 15
                       </span>
@@ -147,7 +148,7 @@ export function BookingSummary({
                 className="w-full bg-icsn-teal hover:bg-icsn-teal/90 text-white py-4 rounded-xl font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none hover:-translate-y-0.5 active:translate-y-0"
               >
                 {!isSubmitting ? (
-                  <span>ยืนยันการจองสิทธิ์ (หัก 1 Credit)</span>
+                  <span>{COPY.BOOKING_FLOW.CONFIRM_BOOKING_BTN}</span>
                 ) : (
                   <span className="flex items-center gap-2">
                     <Loader2 className="animate-spin h-5 w-5 text-white" />

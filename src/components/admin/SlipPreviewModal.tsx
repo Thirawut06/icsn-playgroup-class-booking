@@ -19,12 +19,8 @@ export function SlipPreviewModal({
   onReject,
   isProcessing,
 }: SlipPreviewModalProps) {
-  const [credits, setCredits] = React.useState<number>(0);
-
   React.useEffect(() => {
-    if (slip) {
-      setCredits(slip.credits_to_add);
-    }
+    // No longer need to manage credits state locally
   }, [slip]);
 
   if (!isOpen || !slip) return null;
@@ -37,9 +33,6 @@ export function SlipPreviewModal({
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
           <div>
             <h3 className="text-lg font-bold text-gray-900">ตรวจสอบสลิปโอนเงิน</h3>
-            <p className="text-sm text-gray-500">
-              {slip.parent_name} ({slip.parent_phone}) — น้อง{slip.child_nickname}
-            </p>
           </div>
           <button
             onClick={onClose}
@@ -66,40 +59,47 @@ export function SlipPreviewModal({
           </div>
 
           {/* Action Panel (Right) */}
-          <div className="w-full md:w-80 bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-5 shrink-0">
-            <div>
-              <h4 className="font-bold text-gray-900 mb-1">ข้อมูลแพ็กเกจ</h4>
-              <p className="text-sm text-gray-600">{slip.package_id || 'Top-up / Custom'}</p>
-            </div>
+          <div className="w-full md:w-80 bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col shrink-0 text-sm">
+            <h4 className="font-bold text-icsn-navy text-base mb-3 border-b border-gray-100 pb-2">ข้อมูลการสั่งซื้อ</h4>
             
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1.5">
-                เครดิตที่ต้องการเพิ่มให้ผู้ปกครอง <span className="text-rose-500">*</span>
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min="1"
-                  value={credits}
-                  onChange={(e) => setCredits(parseInt(e.target.value) || 0)}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-icsn-teal focus:ring-1 focus:ring-icsn-teal outline-none transition font-bold text-lg text-center"
-                />
-                <span className="text-gray-500 font-bold shrink-0">สิทธิ์</span>
+            <div className="space-y-2.5 mb-5 flex-1">
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-gray-500 font-medium">ผู้ปกครอง:</span>
+                <span className="font-bold text-gray-950">{slip.parent_name}</span>
               </div>
-              <p className="text-xs text-gray-500 mt-1.5">
-                * ระบบคำนวณอัตโนมัติจากรูปสลิป คุณสามารถปรับแก้ได้ถ้าตัวเลขไม่ถูกต้อง
-              </p>
+
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-gray-500 font-medium">เบอร์โทร:</span>
+                <span className="font-bold text-gray-950">{slip.parent_phone}</span>
+              </div>
+
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-gray-500 font-medium">นักเรียน:</span>
+                <span className="font-bold text-gray-950">{slip.child_nickname}</span>
+              </div>
+
+              <div className="border-t border-gray-100 pt-2">
+                <div className="flex justify-between items-center gap-2">
+                  <span className="text-gray-500 font-medium">แพ็กเกจ:</span>
+                  <span className="font-bold text-gray-950">{slip.package_id || 'Custom Package'}</span>
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-gray-500 font-medium">เครดิต:</span>
+                <span className="text-lg font-black text-emerald-600">+{slip.credits_to_add} Credits</span>
+              </div>
             </div>
 
-            <div className="pt-2 space-y-3">
+            <div className="space-y-2 pt-3 border-t border-gray-100">
               <button
                 type="button"
-                onClick={() => onApprove(slip, credits)}
-                disabled={isProcessing || credits < 1}
-                className="w-full flex items-center justify-center gap-2 bg-icsn-teal hover:bg-icsn-teal/90 text-white py-3 rounded-xl font-bold transition disabled:opacity-50"
+                onClick={() => onApprove(slip, slip.credits_to_add)}
+                disabled={isProcessing || slip.credits_to_add < 1}
+                className="w-full flex items-center justify-center gap-2 bg-icsn-teal hover:bg-icsn-teal/90 text-white py-2.5 rounded-xl font-bold transition-all shadow-sm disabled:opacity-50"
               >
-                <Check className="w-5 h-5" />
-                อนุมัติสลิป (+{credits} สิทธิ์)
+                <Check className="w-4 h-4" />
+                อนุมัติ
               </button>
               
               <button
@@ -110,10 +110,10 @@ export function SlipPreviewModal({
                   }
                 }}
                 disabled={isProcessing}
-                className="w-full flex items-center justify-center gap-2 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 py-3 rounded-xl font-bold transition disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 bg-white border-2 border-rose-100 text-rose-600 hover:bg-rose-50 hover:border-rose-200 py-2.5 rounded-xl font-bold transition-all disabled:opacity-50"
               >
-                <X className="w-5 h-5" />
-                ปฏิเสธสลิป
+                <X className="w-4 h-4" />
+                ปฏิเสธ
               </button>
             </div>
           </div>

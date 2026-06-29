@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Save, Loader2, Info } from 'lucide-react';
 import { SettingsService, SystemSettings } from '@/lib/supabase';
+import toast from 'react-hot-toast';
+import { COPY } from '@/config/copy';
 import {
-  AdminPanel,
-  AdminPanelHeader,
+  
+  
   AdminFieldLabel,
 } from './admin-ui';
 
@@ -27,9 +29,11 @@ export function SettingsTab() {
     setLoading(true);
     try {
       const data = await SettingsService.getAllSettings();
-      setSettings(data);
+      if (data) {
+        setSettings(data);
+      }
     } catch (err) {
-      alert('Error fetching settings: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -43,7 +47,7 @@ export function SettingsTab() {
       setSuccessMsg('บันทึกการตั้งค่าระบบเรียบร้อยแล้ว');
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
-      alert('Error saving settings: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setSaving(false);
     }
@@ -51,19 +55,16 @@ export function SettingsTab() {
 
   if (loading) {
     return (
-      <AdminPanel className="flex justify-center items-center h-64">
+      <div className="w-full">
         <Loader2 className="w-8 h-8 animate-spin text-icsn-teal" />
-      </AdminPanel>
+      </div>
     );
   }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <AdminPanel className="bg-white shadow-sm border border-gray-200">
-        <AdminPanelHeader
-          icon={Settings}
-          title="ตั้งค่าระบบ (System Settings)"
-        />
+      <div className="w-full">
+        
 
         <div className="space-y-8 mt-6">
           {/* Section 1: Business Rules */}
@@ -102,14 +103,14 @@ export function SettingsTab() {
                     type="number"
                     min="1"
                     value={settings.default_capacity}
-                    onChange={(e) => setSettings({ ...settings, default_capacity: parseInt(e.target.value) || 15 })}
+                    onChange={(e) => setSettings({ ...settings, default_capacity: parseInt(e.target.value) || 12 })}
                     className="w-32 px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none font-mono"
                   />
                   <span className="text-sm text-gray-600">คน/วัน</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-2 flex items-start gap-1">
                   <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                  จำนวนเด็กที่รับได้สูงสุดต่อ 1 session (ค่าเริ่มต้น: 15)
+                  จำนวนเด็กที่รับได้สูงสุดต่อ 1 session (ค่าเริ่มต้น: 12)
                 </p>
               </div>
             </div>
@@ -153,7 +154,7 @@ export function SettingsTab() {
             </button>
           </div>
         </div>
-      </AdminPanel>
+      </div>
     </div>
   );
 }

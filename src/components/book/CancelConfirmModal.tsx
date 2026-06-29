@@ -15,7 +15,7 @@ export function CancelConfirmModal({ isOpen, isCancelling, cancelError, cancelSu
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm transition-opacity">
-      <div className="bg-white rounded-[24px] p-6 w-full max-w-[320px] shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
         
         {cancelSuccess ? (
           <>

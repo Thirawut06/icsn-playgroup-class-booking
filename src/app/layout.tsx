@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Sarabun, Outfit } from "next/font/google";
 import "../index.css"; // We have the CSS from Vite in src/index.css
-
+import { Toaster } from 'react-hot-toast';
 const sarabun = Sarabun({
   subsets: ["thai", "latin"],
   weight: ["300", "400", "500", "600", "700"],
@@ -26,7 +26,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="th">
-      <body className={`${sarabun.variable} ${outfit.variable} font-sans antialiased bg-[#f8fafc]`}>
+      <body className={`${sarabun.variable} ${outfit.variable} font-sans antialiased bg-icsn-bg`}>
+        <Toaster position="top-center" />
         {children}
       </body>
     </html>

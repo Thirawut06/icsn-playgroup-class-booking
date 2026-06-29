@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ParentService, PackageService } from '@/lib/supabase';
-import { STORAGE_KEYS } from '@/config/constants';
+import { STORAGE_KEYS, FILE_UPLOAD } from '@/config/constants';
 import { Ticket, Wallet, ChevronRight, Check, ArrowLeft, Loader2, UploadCloud, AlertCircle } from 'lucide-react';
 import type { PackageOption } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -110,9 +110,8 @@ export default function Apply() {
     setFileToast('');
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-        setFileToast(`ไฟล์มีขนาด ${sizeMB}MB — ขนาดไฟล์ต้องไม่เกิน 10MB`);
+      if (file.size > FILE_UPLOAD.MAX_SIZE_BYTES) {
+        setFileToast(`ไฟล์มีขนาดเกินกำหนด — ขนาดไฟล์ต้องไม่เกิน ${FILE_UPLOAD.MAX_SIZE_MB}MB`);
         e.target.value = "";
         return;
       }
@@ -174,7 +173,7 @@ export default function Apply() {
   };
 
   return (
-    <div className="bg-[#f8fafc] min-h-screen font-sarabun">
+    <div className="bg-icsn-bg min-h-screen font-sarabun">
       <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-sm flex flex-col relative overflow-hidden pb-10">
 
         {/* Floating Toast Notification */}

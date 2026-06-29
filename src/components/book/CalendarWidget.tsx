@@ -3,6 +3,7 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, AlertCircle } from
 import type { Session } from '@/types';
 import { useBookingContext } from './BookingContext';
 import { getThaiMonthName, checkIsBookableDate } from '@/utils/dateUtils';
+import { COPY } from '@/config/copy';
 
 export interface DayObj {
   day: number;
@@ -59,7 +60,7 @@ export function CalendarWidget({
       <div className="flex items-center justify-between border-b border-gray-100 pb-3">
         <h3 className="font-bold text-icsn-navy flex items-center gap-1.5 text-base">
           <CalendarIcon className="w-5 h-5 text-icsn-teal" />
-          <span>2. เลือกวันที่เรียน</span>
+          <span>{COPY.BOOKING_FLOW.STEP_2}</span>
         </h3>
 
         <div className="flex items-center gap-1">
@@ -164,7 +165,7 @@ export function CalendarWidget({
       <div className="bg-amber-50 border border-amber-200 text-amber-700 p-3 rounded-2xl flex items-start gap-2 mt-4">
         <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-amber-500" />
         <p className="text-xs font-bold leading-relaxed">
-          ระบบจะปิดรับจองและ<span className="text-red-500">ไม่อนุญาตให้ยกเลิกสิทธิ์</span> ในวันที่มีการเรียนการสอนเวลา 07:00 น. เป็นต้นไป
+          {COPY.RULES.NO_CANCEL_AFTER_7AM}
         </p>
       </div>
     </div>

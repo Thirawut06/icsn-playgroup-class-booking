@@ -3,6 +3,7 @@ import { CalendarHeart } from 'lucide-react';
 import type { Booking } from '@/types';
 
 import { useBookingContext } from './BookingContext';
+import { COPY } from '@/config/copy';
 
 interface UpcomingBookingsProps {
   onCancelRequest: (bookingId: string) => void;
@@ -18,7 +19,7 @@ export function UpcomingBookings({ onCancelRequest }: UpcomingBookingsProps) {
     <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-icsn-card space-y-4">
       <h3 className="font-bold text-icsn-navy border-b border-gray-100 pb-3 flex items-center gap-1.5 text-base">
         <CalendarHeart className="w-5 h-5 text-icsn-teal" />
-        <span>รอบที่จองไว้ (Upcoming Classes)</span>
+        <span>{COPY.BOOKING_FLOW.UPCOMING_CLASSES}</span>
       </h3>
       
       <div className="space-y-3">
@@ -45,18 +46,18 @@ export function UpcomingBookings({ onCancelRequest }: UpcomingBookingsProps) {
                   </div>
                   <div>
                     <p className="font-black text-icsn-navy text-base">น้อง {booking.child?.nickname}</p>
-                    <p className="text-sm font-bold text-icsn-teal">{booking.session?.time_label || 'เช้า (09:00 - 12:00)'}</p>
+                    <p className="text-sm font-bold text-icsn-teal">{booking.session?.time_label || COPY.BOOKING_FLOW.SESSION_MORNING}</p>
                   </div>
                 </div>
                 {canCancel ? (
                   <button 
                     onClick={() => onCancelRequest(booking.id)}
-                    className="text-sm font-bold text-rose-500 bg-white shadow-sm px-3.5 py-2 rounded-[10px] border border-rose-100 hover:bg-rose-50 active:scale-95 transition"
+                    className="text-sm font-bold text-rose-500 bg-white shadow-sm px-3.5 py-2 rounded-xl border border-rose-100 hover:bg-rose-50 active:scale-95 transition"
                   >
                     ยกเลิก
                   </button>
                 ) : (
-                  <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2.5 py-1.5 rounded-[10px]">ไม่อนุญาต</span>
+                  <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2.5 py-1.5 rounded-xl">{COPY.BOOKING_FLOW.NOT_ALLOWED}</span>
                 )}
               </div>
             </div>

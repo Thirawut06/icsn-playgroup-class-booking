@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Baby, Search, Loader2, Edit, X, Save } from 'lucide-react';
 import { AdminService } from '@/lib/supabase';
-import {
-  AdminPanel,
-  AdminPanelHeader,
+import toast from 'react-hot-toast';
+import { COPY } from '@/config/copy';import {
+  
+  
   AdminFieldLabel,
 } from './admin-ui';
 
@@ -48,9 +49,11 @@ export function ChildrenTab() {
     setLoading(true);
     try {
       const data = await AdminService.getAllChildren();
-      setChildren(data);
+      if (data) {
+        setChildren(data);
+      }
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -88,7 +91,7 @@ export function ChildrenTab() {
       await fetchChildren();
       setEditingChild(null);
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setSaving(false);
     }
@@ -101,24 +104,22 @@ export function ChildrenTab() {
 
   return (
     <div className="space-y-6">
-      <AdminPanel className="no-print">
-        <AdminPanelHeader
-          icon={Baby}
-          title="จัดการข้อมูลนักเรียน (Children Profiles)"
-          action={
-            <div className="relative w-full sm:w-64 mt-3 sm:mt-0">
+      <div className="w-full">
+        <div className="bg-white p-4 border border-gray-200 rounded shadow-sm flex flex-wrap items-end gap-4 mb-6">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 ml-1">ค้นหาข้อมูลนักเรียน:</label>
+            <div className="relative">
               <input
                 type="text"
                 placeholder="ค้นหาชื่อเด็ก, ชื่อผู้ปกครอง, เบอร์โทร..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                className="w-full pl-9 pr-4 py-2 bg-white border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-sm"
               />
               <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             </div>
-          }
-        />
-
+          </div>
+        </div>
         <div className="overflow-x-auto border border-gray-300 shadow-sm">
           <table className="w-full text-left text-xs sm:text-sm border-collapse bg-white whitespace-nowrap">
             <thead>
@@ -138,13 +139,13 @@ export function ChildrenTab() {
                 <tr>
                   <td colSpan={8} className="text-center py-8 text-gray-500 text-sm">
                     <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-                    กำลังโหลดข้อมูล...
+                    {COPY.LOADING.DEFAULT}
                   </td>
                 </tr>
               ) : filteredChildren.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="text-center py-8 text-gray-500 text-sm bg-gray-50/50">
-                    ไม่พบข้อมูลนักเรียน
+                    {COPY.EMPTY_STATES.NO_CHILDREN}
                   </td>
                 </tr>
               ) : (
@@ -193,7 +194,7 @@ export function ChildrenTab() {
             </tbody>
           </table>
         </div>
-      </AdminPanel>
+      </div>
 
       {/* Edit Child Modal */}
       {editingChild && (

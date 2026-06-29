@@ -1,0 +1,40 @@
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { AdminDashboard } from './AdminDashboard';
+import React from 'react';
+
+// Mock dependencies
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      lte: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+    })),
+  },
+  AdminService: {
+    getPendingSlips: vi.fn().mockResolvedValue([]),
+    getAllChildren: vi.fn().mockResolvedValue([]),
+    getAllParentsWithCredits: vi.fn().mockResolvedValue([]),
+    getDailyAttendance: vi.fn().mockResolvedValue([]),
+    getSessionForDate: vi.fn().mockResolvedValue(null),
+  },
+  BookingService: {
+    getSessions: vi.fn().mockResolvedValue([]),
+  },
+  SettingsService: {
+    getAllSettings: vi.fn().mockResolvedValue({ default_capacity: 12 }),
+  }
+}));
+
+describe('AdminDashboard Component', () => {
+  it('renders descriptions for stat cards', async () => {
+    render(<AdminDashboard />);
+    
+    // We expect descriptions for these stats to be present on the dashboard
+    expect(await screen.findByText(/ยอดนักเรียนรวมทั้งหมดในระบบ/i)).toBeInTheDocument();
+    expect(screen.getByText(/จำนวนครอบครัวทั้งหมดในระบบ/i)).toBeInTheDocument();
+  });
+});

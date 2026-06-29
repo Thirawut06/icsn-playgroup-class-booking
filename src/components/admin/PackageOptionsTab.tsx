@@ -4,11 +4,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Check, Package, Pencil, Plus, ToggleLeft, ToggleRight, Trash2, X } from 'lucide-react';
 import { PackageService, AdminService } from '@/lib/supabase';
 import type { PackageOption } from '@/types';
+import toast from 'react-hot-toast';
+import { COPY } from '@/config/copy';
 import {
   AdminEmptyState,
   AdminFieldLabel,
-  AdminPanel,
-  AdminPanelHeader,
+  
+  
 } from './admin-ui';
 
 export function PackageOptionsTab() {
@@ -47,7 +49,7 @@ export function PackageOptionsTab() {
     const priceNum = parseFloat(price);
     const creditsNum = parseInt(credits, 10);
     if (!name.trim() || !priceNum || !creditsNum) {
-      alert('กรุณากรอกข้อมูลให้ครบ');
+      toast.error(COPY.ALERTS.REQUIRE_ALL_FIELDS);
       return;
     }
     setAdding(true);
@@ -62,7 +64,7 @@ export function PackageOptionsTab() {
       setCredits('');
       await loadOptions();
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setAdding(false);
     }
@@ -76,7 +78,7 @@ export function PackageOptionsTab() {
       });
       await loadOptions();
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     }
   };
 
@@ -96,7 +98,7 @@ export function PackageOptionsTab() {
     const priceNum = parseFloat(editPrice);
     const creditsNum = parseInt(editCredits, 10);
     if (!editName.trim() || !priceNum || !creditsNum) {
-      alert('กรุณากรอกข้อมูลให้ครบ');
+      toast.error(COPY.ALERTS.REQUIRE_ALL_FIELDS);
       return;
     }
     setSaving(true);
@@ -110,7 +112,7 @@ export function PackageOptionsTab() {
       setEditingId(null);
       await loadOptions();
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setSaving(false);
     }
@@ -122,16 +124,13 @@ export function PackageOptionsTab() {
       await AdminService.invokeAdminAction('delete-package', { packageId: pkg.id });
       await loadOptions();
     } catch (err) {
-      alert('ลบไม่ได้: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.CANNOT_DELETE(err instanceof Error ? err.message : String(err)));
     }
   };
 
   return (
-    <AdminPanel className="no-print">
-      <AdminPanelHeader
-        icon={Package}
-        title="จัดการแพ็กเกจเติมเครดิต"
-      />
+    <div className="w-full">
+      
 
       <form
         onSubmit={handleAdd}
@@ -170,7 +169,7 @@ export function PackageOptionsTab() {
         <button
           type="submit"
           disabled={adding}
-          className="flex items-center gap-2 bg-icsn-navy hover:bg-[#1a1040] text-white px-6 py-3 rounded-xl text-sm font-bold h-12 cursor-pointer disabled:opacity-50 shadow-sm transition"
+          className="flex items-center gap-2 bg-icsn-navy hover:bg-icsn-navy/90 text-white px-6 py-3 rounded-xl text-sm font-bold h-12 cursor-pointer disabled:opacity-50 shadow-sm transition"
         >
           <Plus className="w-5 h-5" />
           {adding ? 'กำลังเพิ่ม...' : 'เพิ่มแพ็กเกจ'}
@@ -178,7 +177,7 @@ export function PackageOptionsTab() {
       </form>
 
       {loading ? (
-        <p className="text-center text-gray-500 py-10 text-base font-medium">กำลังโหลด...</p>
+        <p className="text-center text-gray-500 py-10 text-base font-medium">{COPY.LOADING.SHORT}</p>
       ) : options.length === 0 ? (
         <AdminEmptyState message="ยังไม่มีแพ็กเกจในระบบ" />
       ) : (
@@ -303,6 +302,6 @@ export function PackageOptionsTab() {
           })}
         </div>
       )}
-    </AdminPanel>
+    </div>
   );
 }

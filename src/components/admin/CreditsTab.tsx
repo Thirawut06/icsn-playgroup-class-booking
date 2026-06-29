@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Ticket, Search, Loader2, Edit, X, History } from 'lucide-react';
 import { AdminService } from '@/lib/supabase';
-import {
+import toast from 'react-hot-toast';
+import { COPY } from '@/config/copy';import {
   AdminPanel,
   AdminPanelHeader,
   AdminFieldLabel,
@@ -45,7 +46,7 @@ export function CreditsTab() {
       const data = await AdminService.getAllParentsWithCredits();
       setParents(data);
     } catch (err) {
-      alert('Error fetching parents: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -80,7 +81,7 @@ export function CreditsTab() {
       const logs = await AdminService.getCreditLogs(parent.id);
       setHistoryLogs(logs);
     } catch (err) {
-      alert('Error fetching history: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setLoadingHistory(false);
     }
@@ -96,12 +97,12 @@ export function CreditsTab() {
 
     const numOffset = typeof creditOffset === 'number' ? creditOffset : 0;
     if (numOffset !== 0 && !reason.trim()) {
-      alert('กรุณาระบุเหตุผลในการปรับเครดิต');
+      toast.error(COPY.ALERTS.REQUIRE_ADJUST_REASON);
       return;
     }
 
     if (!editName.trim() || !editPhone.trim()) {
-      alert('กรุณาระบุชื่อและเบอร์โทรศัพท์ให้ครบถ้วน');
+      toast.error(COPY.ALERTS.REQUIRE_NAME_PHONE);
       return;
     }
 
@@ -132,21 +133,17 @@ export function CreditsTab() {
           : p
       ));
       
-      alert('บันทึกข้อมูลเรียบร้อยแล้ว');
+      toast.success(COPY.ALERTS.SAVE_SUCCESS);
       closeEditModal();
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <AdminPanel className="no-print">
-      <AdminPanelHeader
-        icon={Ticket}
-        title="จัดการสิทธิ์เข้าเรียน (Manage Credits & Profiles)"
-      />
+    <div className="w-full">
 
       <div className="space-y-6">
         {/* Search Bar */}
@@ -184,13 +181,13 @@ export function CreditsTab() {
               {loading ? (
                 <tr>
                   <td colSpan={5} className="px-3 py-8 text-center text-gray-500">
-                    กำลังโหลดข้อมูล...
+                    {COPY.LOADING.DEFAULT}
                   </td>
                 </tr>
               ) : filteredParents.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-3 py-8 text-center text-gray-500">
-                    ไม่พบข้อมูลผู้ปกครอง
+                    {COPY.EMPTY_STATES.NO_PARENTS}
                   </td>
                 </tr>
               ) : (
@@ -336,7 +333,7 @@ export function CreditsTab() {
                     <tr>
                       <td colSpan={4} className="px-3 py-8 text-center text-gray-500">
                         <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-                        กำลังโหลด...
+                        {COPY.LOADING.SHORT}
                       </td>
                     </tr>
                   ) : historyLogs.length === 0 ? (
@@ -383,6 +380,6 @@ export function CreditsTab() {
           </div>
         </div>
       )}
-    </AdminPanel>
+    </div>
   );
 }

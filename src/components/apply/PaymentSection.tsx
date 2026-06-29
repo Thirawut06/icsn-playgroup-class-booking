@@ -1,5 +1,6 @@
 import React from 'react';
 import type { PackageOption } from '@/types';
+import { COPY } from '@/config/copy';
 
 interface PaymentSectionProps {
   path: 'trial' | 'payment' | null;
@@ -29,7 +30,7 @@ export function PaymentSection({
       {/* Section Header */}
       <div className="pt-4 border-t border-gray-100 mb-2">
         <h3 className="text-lg font-bold text-icsn-pink">Payment Confirmation</h3>
-        <p className="text-sm text-gray-500 leading-relaxed mt-0.5">กรุณาโอนเงินชำระไปยังบัญชีใดบัญชีหนึ่งของโรงเรียนและแนบหลักฐานการโอนด้านล่างนี้</p>
+        <p className="text-sm text-gray-500 leading-relaxed mt-0.5">{COPY.APPLY_FLOW.TRANSFER_INSTRUCTION}</p>
       </div>
 
       {/* Package Selection (Radio) */}
@@ -69,11 +70,11 @@ export function PaymentSection({
         <input
           type="file"
           accept="image/*,.heic,.heif"
-          onChange={(e) => handleFile(e, setPaymentSlipData, setPaymentSlipFile as any)}
+          onChange={(e) => handleFile(e, setPaymentSlipData as any, setPaymentSlipFile as any)}
           required
           className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-icsn-pink/10 file:text-icsn-pink hover:file:bg-icsn-pink/20 border border-gray-200 rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
         />
-        <span className="block text-xs text-gray-400 mb-2">อัปโหลดไฟล์ที่รองรับ 1 รายการ ขนาดสูงสุด 10 MB</span>
+        <span className="block text-xs text-gray-400 mb-2">{COPY.APPLY_FLOW.UPLOAD_LIMIT}</span>
         {paymentSlipData && (
           <div className="mt-2 w-32 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
             <img src={paymentSlipData} alt="Preview" className="w-full h-auto object-contain" />

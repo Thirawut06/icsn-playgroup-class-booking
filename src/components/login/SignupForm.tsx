@@ -3,6 +3,7 @@ import { Mail, Lock, User, Phone, AlertCircle, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ParentService } from '@/lib/supabase';
 import { STORAGE_KEYS } from '@/config/constants';
+import { COPY } from '@/config/copy';
 
 export function SignupForm() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export function SignupForm() {
         <div>
           <label className="block mb-1.5">
             <span className="text-base font-bold text-gray-800">Email Address</span>
-            <span className="text-sm text-gray-500 font-normal ml-1">อีเมล</span>
+            <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.EMAIL_LABEL}</span>
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
@@ -71,7 +72,7 @@ export function SignupForm() {
         <div>
           <label className="block mb-1.5">
             <span className="text-base font-bold text-gray-800">Password</span>
-            <span className="text-sm text-gray-500 font-normal ml-1">รหัสผ่าน</span>
+            <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.PASSWORD_LABEL}</span>
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
@@ -92,7 +93,7 @@ export function SignupForm() {
         <div>
           <label className="block mb-1.5">
             <span className="text-base font-bold text-gray-800">Parent's Full Name</span>
-            <span className="text-sm text-gray-500 font-normal ml-1">ชื่อ-นามสกุล</span>
+            <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.NAME_LABEL}</span>
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
@@ -112,7 +113,7 @@ export function SignupForm() {
         <div>
           <label className="block mb-1.5">
             <span className="text-base font-bold text-gray-800">Phone Number</span>
-            <span className="text-sm text-gray-500 font-normal ml-1">เบอร์โทรศัพท์</span>
+            <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.PHONE_LABEL}</span>
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
@@ -144,12 +145,12 @@ export function SignupForm() {
       >
         {!loading ? (
           <div className="flex items-center gap-2 justify-center w-full">
-            <span>Sign Up (ลงทะเบียนใหม่)</span>
+            <span>{COPY.AUTH.SIGN_UP_BTN}</span>
           </div>
         ) : (
           <div className="flex items-center gap-2">
             <Loader2 className="animate-spin h-5 w-5 text-white" />
-            <span>กำลังสร้างบัญชีผู้ใช้งาน...</span>
+            <span>{COPY.AUTH.SIGNING_UP}</span>
           </div>
         )}
       </button>

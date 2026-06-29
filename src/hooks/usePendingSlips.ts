@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { AdminService } from '@/lib/supabase';
 import type { PendingSlipRow } from '@/types';
-
+import toast from 'react-hot-toast';
+import { COPY } from '@/config/copy';
 interface UsePendingSlipsOptions {
   onRefresh?: () => void;
 }
@@ -40,9 +41,9 @@ export function usePendingSlips({ onRefresh }: UsePendingSlipsOptions = {}) {
       await loadSlips();
       onRefresh?.();
       setPreviewSlip(null);
-      alert(`อนุมัติสำเร็จ — เพิ่ม ${result.creditsAdded} เครดิตให้น้อง${result.childNickname}`);
+      toast.success(COPY.ALERTS.APPROVE_SLIP_SUCCESS(result.creditsAdded, result.childNickname));
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setIsProcessing(false);
     }
@@ -56,7 +57,7 @@ export function usePendingSlips({ onRefresh }: UsePendingSlipsOptions = {}) {
       onRefresh?.();
       setPreviewSlip(null);
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setIsProcessing(false);
     }

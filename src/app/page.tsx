@@ -1,9 +1,10 @@
-﻿"use client";
+"use client";
 
 import React from 'react';
 import Link from 'next/link';
 import { UserPlus, LogIn, ChevronRight, Lock } from 'lucide-react';
 import Image from 'next/image';
+import { ROUTES } from '@/config/routes';
 
 export default function HomePage() {
   return (
@@ -44,7 +45,7 @@ export default function HomePage() {
         <div className="space-y-4 px-1">
           {/* Option 1: New Parents */}
           <Link
-            href="/login?tab=signup"
+            href={ROUTES.LOGIN('signup')}
             className="group flex items-center justify-between w-full bg-white border border-gray-200 hover:border-icsn-teal hover:bg-icsn-teal/5 rounded-2xl p-4 sm:p-5 transition-all duration-300 shadow-sm active:scale-[0.98]"
           >
             <div className="flex items-center gap-4">
@@ -70,7 +71,7 @@ export default function HomePage() {
 
           {/* Option 2: Existing Parents */}
           <Link
-            href="/login?tab=login"
+            href={ROUTES.LOGIN('login')}
             className="group flex items-center justify-between w-full bg-white border border-gray-200 hover:border-icsn-navy hover:bg-icsn-navy/5 rounded-2xl p-4 sm:p-5 transition-all duration-300 shadow-sm active:scale-[0.98]"
           >
             <div className="flex items-center gap-4">
@@ -98,7 +99,7 @@ export default function HomePage() {
             © ICSN Panda Playgroup
           </div>
           <Link
-            href="/admin"
+            href={ROUTES.ADMIN}
             className="font-semibold text-gray-400 hover:text-icsn-pink transition-colors flex items-center gap-1 bg-gray-50 hover:bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-100"
           >
             <Lock className="w-3 h-3" />

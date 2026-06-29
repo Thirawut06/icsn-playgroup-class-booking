@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { DownloadCloud, FileSpreadsheet } from 'lucide-react';
 import { AdminService } from '@/lib/supabase';
-import type { ExportCSVRow } from '@/types';
+import toast from 'react-hot-toast';
+import { COPY } from '@/config/copy';import type { ExportCSVRow } from '@/types';
 import { AdminPanel, AdminPanelHeader } from './admin-ui';
 
 function downloadCSV(rows: ExportCSVRow[]) {
@@ -63,7 +64,7 @@ export function ExportTab() {
       setRowCount(rows.length);
       downloadCSV(rows);
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }

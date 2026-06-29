@@ -2,7 +2,8 @@ import { useState, useCallback, useEffect, FormEvent } from 'react';
 import { AdminService, BookingService } from '@/lib/supabase';
 import type { DailyAttendanceRow, Session } from '@/types';
 import { CLASS_CONFIG } from '@/config/constants';
-
+import toast from 'react-hot-toast';
+import { COPY } from '@/config/copy';
 interface UseDailyAttendanceOptions {
   onRefresh?: () => void;
 }
@@ -57,9 +58,9 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
       setWalkinName('');
       await loadData();
       onRefresh?.();
-      alert('บันทึก Walk-in สำเร็จ!');
+      toast.success(COPY.ALERTS.WALKIN_SUCCESS);
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setWalkinLoading(false);
     }
@@ -74,27 +75,27 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
       await loadData();
       onRefresh?.();
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     }
   };
 
   const handleSaveCapacity = async () => {
     if (!session) {
-      alert('ยังไม่มี session สำหรับวันนี้ — สร้างเมื่อมีการจองหรือ walk-in');
+      toast.error(COPY.ALERTS.NO_SESSION_YET);
       return;
     }
     const cap = parseInt(capacityEdit, 10);
     if (!cap || cap < 1) {
-      alert('กรุณาระบุจำนวนที่นั่งที่ถูกต้อง');
+      toast.error(COPY.ALERTS.INVALID_CAPACITY);
       return;
     }
     setSavingCapacity(true);
     try {
       const updated = await AdminService.updateSessionCapacity(session.id, cap);
       setSession(updated);
-      alert('อัปเดตจำนวนที่นั่งสำเร็จ');
+      toast.success(COPY.ALERTS.UPDATE_CAPACITY_SUCCESS);
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setSavingCapacity(false);
     }
@@ -102,7 +103,7 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
 
   const handleToggleSession = async () => {
     if (!session) {
-      alert('ยังไม่มี session สำหรับวันนี้');
+      toast.error(COPY.ALERTS.NO_SESSION_FOUND);
       return;
     }
     const newState = !session.is_active;
@@ -115,7 +116,7 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
       await AdminService.toggleSessionActive(session.id, newState);
       setSession({ ...session, is_active: newState });
     } catch (err) {
-      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
       setTogglingSession(false);
     }

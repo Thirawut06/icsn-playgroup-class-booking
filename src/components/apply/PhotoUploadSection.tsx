@@ -1,4 +1,5 @@
 import React from 'react';
+import { COPY } from '@/config/copy';
 
 interface PhotoUploadSectionProps {
   path: 'trial' | 'payment' | null;
@@ -27,13 +28,13 @@ export function PhotoUploadSection({
     <>
       <div className="border-b border-gray-100 pb-3 mt-8">
         <h3 className="text-lg font-bold text-icsn-navy">Photos (Trial Only)</h3>
-        <p className="text-sm text-gray-500 font-medium">รูปถ่ายสำหรับการทดลองเรียน</p>
+        <p className="text-sm text-gray-500 font-medium">{COPY.APPLY_FLOW.PHOTO_TITLE}</p>
       </div>
 
       <div>
         <label className="block mb-1.5">
           <span className="text-base font-bold text-gray-800">Individual Parent&apos;s Photo <span className="text-red-500">*</span></span>
-          <span className="block text-sm text-gray-500 -mt-0.5">รูปถ่ายผู้ปกครองเดี่ยวชัดเจน</span>
+          <span className="block text-sm text-gray-500 -mt-0.5">{COPY.APPLY_FLOW.PHOTO_PARENT_HINT}</span>
         </label>
         <input
           type="file"
@@ -42,7 +43,7 @@ export function PhotoUploadSection({
           required
           className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-icsn-teal/10 file:text-icsn-teal hover:file:bg-icsn-teal/20 border border-gray-200 rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
         />
-        <span className="block text-xs text-gray-400">อัปโหลดไฟล์ที่รองรับ 1 รายการ ขนาดสูงสุด 10 MB</span>
+        <span className="block text-xs text-gray-400">{COPY.APPLY_FLOW.UPLOAD_LIMIT}</span>
         {parentPhotoData && (
           <div className="mt-2 w-28 h-28 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
             <img src={parentPhotoData} alt="Preview" className="w-full h-full object-cover" />
@@ -53,7 +54,7 @@ export function PhotoUploadSection({
       <div>
         <label className="block mb-1.5">
           <span className="text-base font-bold text-gray-800">Individual Child&apos;s Photo <span className="text-red-500">*</span></span>
-          <span className="block text-sm text-gray-500 -mt-0.5">รูปถ่ายบุตรหลานเดี่ยวชัดเจน (ไม่ใส่แว่นกันแดดหรือหมวก)</span>
+          <span className="block text-sm text-gray-500 -mt-0.5">{COPY.APPLY_FLOW.PHOTO_CHILD_HINT}</span>
         </label>
         <input
           type="file"
@@ -62,7 +63,7 @@ export function PhotoUploadSection({
           required
           className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-icsn-teal/10 file:text-icsn-teal hover:file:bg-icsn-teal/20 border border-gray-200 rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
         />
-        <span className="block text-xs text-gray-400">อัปโหลดไฟล์ที่รองรับ 1 รายการ ขนาดสูงสุด 10 MB</span>
+        <span className="block text-xs text-gray-400">{COPY.APPLY_FLOW.UPLOAD_LIMIT}</span>
         {childPhotoData && (
           <div className="mt-2 w-28 h-28 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
             <img src={childPhotoData} alt="Preview" className="w-full h-full object-cover" />
