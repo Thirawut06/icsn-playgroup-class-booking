@@ -4,11 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { CalendarCog, Plus, Trash2, Loader2 } from 'lucide-react';
 import { AdminService } from '@/lib/supabase';
 import toast from 'react-hot-toast';
-import { COPY } from '@/config/copy';import {
-  
-  
-  AdminFieldLabel,
-} from './admin-ui';
+import { COPY } from '@/config/copy';
+import { AdminFieldLabel } from './admin-ui';
+import { TimeSlotManagerModal } from './TimeSlotManagerModal';
+import { Clock } from 'lucide-react';
 
 interface BlockoutDate {
   id: string;
@@ -24,6 +23,9 @@ export function CalendarSettingsTab() {
   const [newDate, setNewDate] = useState('');
   const [newReason, setNewReason] = useState('');
   const [adding, setAdding] = useState(false);
+
+  // Time Slot Modal State
+  const [isTimeSlotModalOpen, setIsTimeSlotModalOpen] = useState(false);
 
   useEffect(() => {
     fetchBlockoutDates();
@@ -86,9 +88,23 @@ export function CalendarSettingsTab() {
 
   return (
     <div className="w-full">
-      
-
       <div className="space-y-6">
+        
+        {/* Manage Session Templates Button */}
+        <div className="flex justify-between items-center bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+          <div>
+            <h3 className="font-bold text-blue-900 text-sm">รอบเวลาพื้นฐาน (Session Templates)</h3>
+            <p className="text-xs text-blue-700/70 mt-0.5">จัดการรอบเวลาที่จะถูกใช้เป็นค่าเริ่มต้นเมื่อสร้างคลาสในวันใหม่</p>
+          </div>
+          <button 
+            onClick={() => setIsTimeSlotModalOpen(true)}
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-sm"
+          >
+            <Clock className="w-4 h-4" />
+            จัดการรอบเวลา
+          </button>
+        </div>
+
         {/* Add Blockout Date Form */}
         <div className="bg-white p-4 border border-gray-200 rounded shadow-sm">
           <h3 className="text-sm font-bold text-gray-700 mb-3">เพิ่มวันหยุด / ปิดรับจองล่วงหน้า</h3>
@@ -191,6 +207,11 @@ export function CalendarSettingsTab() {
           </details>
         )}
       </div>
+
+      <TimeSlotManagerModal 
+        isOpen={isTimeSlotModalOpen} 
+        onClose={() => setIsTimeSlotModalOpen(false)} 
+      />
     </div>
   );
 }

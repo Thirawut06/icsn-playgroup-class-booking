@@ -328,6 +328,40 @@ export const AdminService = {
     if (error) throw error;
   },
 
+  // ===== Session Templates =====
+  
+  async getSessionTemplates() {
+    const { data, error } = await supabase
+      .from('session_templates')
+      .select('*')
+      .order('time_label', { ascending: true });
+    if (error) throw error;
+    return data;
+  },
+
+  async addSessionTemplate(timeLabel: string, capacity: number): Promise<void> {
+    const { error } = await supabase
+      .from('session_templates')
+      .insert([{ time_label: timeLabel, capacity, is_active: true }]);
+    if (error) throw error;
+  },
+
+  async updateSessionTemplate(id: string, updates: { time_label?: string; capacity?: number; is_active?: boolean; }): Promise<void> {
+    const { error } = await supabase
+      .from('session_templates')
+      .update(updates)
+      .eq('id', id);
+    if (error) throw error;
+  },
+
+  async deleteSessionTemplate(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('session_templates')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+  },
+
   // ===== Phase 2: User Management =====
 
   async getAllChildren(): Promise<any[]> {
