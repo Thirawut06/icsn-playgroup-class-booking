@@ -16,8 +16,8 @@ export function UpcomingBookings({ onCancelRequest }: UpcomingBookingsProps) {
   if (filtered.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-icsn-card space-y-4">
-      <h3 className="font-bold text-icsn-navy border-b border-gray-100 pb-3 flex items-center gap-1.5 text-base">
+    <div className="bg-white rounded-2xl border border-border p-4 shadow-icsn-card space-y-4">
+      <h3 className="font-bold text-icsn-navy border-b border-border pb-3 flex items-center gap-1.5 text-base">
         <CalendarHeart className="w-5 h-5 text-icsn-teal" />
         <span>{COPY.BOOKING_FLOW.UPCOMING_CLASSES}</span>
       </h3>
@@ -52,12 +52,12 @@ export function UpcomingBookings({ onCancelRequest }: UpcomingBookingsProps) {
                 {canCancel ? (
                   <button 
                     onClick={() => onCancelRequest(booking.id)}
-                    className="text-sm font-bold text-rose-500 bg-white shadow-sm px-3.5 py-2 rounded-xl border border-rose-100 hover:bg-rose-50 active:scale-95 transition"
+                    className="text-sm font-bold text-error bg-white shadow-sm px-3.5 py-2 rounded-xl border border-error/20 hover:bg-error/10 active:scale-95 transition"
                   >
                     ยกเลิก
                   </button>
                 ) : (
-                  <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2.5 py-1.5 rounded-xl">{COPY.BOOKING_FLOW.NOT_ALLOWED}</span>
+                  <span className="text-xs font-bold text-muted-foreground/70 bg-muted px-2.5 py-1.5 rounded-xl">{COPY.BOOKING_FLOW.NOT_ALLOWED}</span>
                 )}
               </div>
             </div>

@@ -33,10 +33,9 @@ export function useBookingActions({
     setBookingError('');
     
     try {
-      let finalSessionId = selectedSession?.id;
+      const finalSessionId = selectedSession?.id;
       if (!finalSessionId) {
-        const newSess = await BookingService.getOrCreateSession(selectedDate);
-        finalSessionId = newSess.id;
+        throw new Error("กรุณาเลือกรอบเวลาที่ต้องการจอง");
       }
       
       const hasDuplicate = await BookingService.hasDuplicateBooking(selectedChildId, finalSessionId);

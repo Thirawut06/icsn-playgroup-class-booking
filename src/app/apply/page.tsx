@@ -179,7 +179,7 @@ export default function Apply() {
         {/* Floating Toast Notification */}
         {fileToast && (
           <div className="fixed top-6 left-1/2 z-[200] max-w-[400px] w-[calc(100%-48px)]" style={{ transform: 'translateX(-50%)', animation: 'toastIn 0.25s ease-out' }}>
-            <div className="bg-rose-600 text-white px-5 py-4 rounded-2xl shadow-2xl flex items-start gap-3">
+            <div className="bg-error text-white px-5 py-4 rounded-2xl shadow-2xl flex items-start gap-3">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
               <p className="font-bold text-sm leading-snug flex-1">{fileToast}</p>
               <button onClick={() => setFileToast('')} className="text-white/70 hover:text-white shrink-0">
@@ -205,7 +205,7 @@ export default function Apply() {
         {/* Form */}
         {path && !showSuccess && (
           <div className="px-6 pb-10 mt-6 relative z-10">
-            <div className="flex items-center justify-center pb-6 mb-6 border-b border-gray-100">
+            <div className="flex items-center justify-center pb-6 mb-6 border-b border-border">
               <h2 className="text-lg font-bold text-icsn-navy text-center">
                 {path === 'trial' ? 'แบบฟอร์มลงทะเบียนทดลองเรียน (Trial)' : 'แบบฟอร์มซื้อแพ็กเกจ (Payment)'}
               </h2>
@@ -272,7 +272,7 @@ export default function Apply() {
 
               {/* Error Message */}
               {errorMessage && (
-                <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-base font-medium flex items-start gap-2.5">
+                <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl text-base font-medium flex items-start gap-2.5">
                   <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                   <p>{errorMessage}</p>
                 </div>
@@ -283,7 +283,7 @@ export default function Apply() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-icsn-teal hover:bg-icsn-teal/90 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3.5 px-4 rounded-full font-bold shadow-md h-[52px] flex items-center justify-center gap-2 cursor-pointer text-lg"
+                  className="w-full bg-icsn-teal hover:bg-icsn-teal/90 disabled:bg-foreground/10 disabled:cursor-not-allowed text-white py-3.5 px-4 rounded-full font-bold shadow-md h-[52px] flex items-center justify-center gap-2 cursor-pointer text-lg"
                 >
                   {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
                   {isSubmitting ? 'Submitting (กำลังดำเนินการ...)' : 'Submit Registration (ส่งข้อมูลลงทะเบียน)'}

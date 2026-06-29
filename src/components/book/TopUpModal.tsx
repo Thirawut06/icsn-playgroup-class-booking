@@ -65,7 +65,7 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
         {!isSuccess && (
           <button
             onClick={resetAndClose}
-            className="absolute top-4 right-4 p-2 bg-gray-50 text-gray-400 hover:text-icsn-navy hover:bg-gray-100 rounded-full transition z-10"
+            className="absolute top-4 right-4 p-2 bg-muted text-muted-foreground/70 hover:text-icsn-navy hover:bg-muted/80 rounded-full transition z-10"
           >
             <X className="w-5 h-5" />
           </button>
@@ -73,11 +73,11 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
 
         {isSuccess ? (
           <div className="text-center py-6">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-              <CheckCircle2 className="w-8 h-8 text-green-600" />
+            <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+              <CheckCircle2 className="w-8 h-8 text-success" />
             </div>
             <h2 className="text-2xl font-black text-icsn-navy mb-2">Submitted!</h2>
-            <p className="text-base text-gray-500 font-medium mb-6 leading-relaxed">
+            <p className="text-base text-muted-foreground font-medium mb-6 leading-relaxed">
               ส่งหลักฐานการชำระเงินเรียบร้อยแล้ว<br />
               กรุณารอเจ้าหน้าที่ตรวจสอบและอัปเดตเครดิต<br />
             </p>
@@ -96,7 +96,7 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
               </div>
               <div className="text-left">
                 <h2 className="text-lg font-black text-icsn-navy leading-tight">Top Up Credits</h2>
-                <p className="text-xs text-gray-500 font-medium">{COPY.APPLY_FLOW.TOPUP_TITLE}</p>
+                <p className="text-xs text-muted-foreground font-medium">{COPY.APPLY_FLOW.TOPUP_TITLE}</p>
               </div>
             </div>
 
@@ -107,7 +107,7 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
                   <select
                     value={packageType}
                     onChange={e => setPackageType(e.target.value)}
-                    className="w-full px-4 py-3 text-base font-bold border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-icsn-teal focus:outline-none appearance-none cursor-pointer text-icsn-navy"
+                    className="w-full px-4 py-3 text-base font-bold border border-border rounded-xl bg-muted focus:ring-2 focus:ring-icsn-teal focus:outline-none appearance-none cursor-pointer text-icsn-navy"
                     required
                   >
                     <option value="">{COPY.APPLY_FLOW.SELECT_PACKAGE}</option>
@@ -115,7 +115,7 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
                       <option key={p.id} value={p.name}>{p.name} - {p.price} บาท ({p.credits} Credits)</option>
                     ))}
                   </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+                  <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-muted-foreground/70">
                     <ChevronRight className="w-4 h-4 rotate-90" />
                   </div>
                 </div>
@@ -123,7 +123,7 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
 
               <div>
                 <label className="block text-sm font-bold text-icsn-navy mb-1.5">Payment Method</label>
-                <div className="mb-2 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                <div className="mb-2 rounded-xl overflow-hidden border border-border shadow-sm">
                   <img src="/payment-method.jpg" alt="Payment Method" className="w-full h-auto" />
                 </div>
 
@@ -131,16 +131,16 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
                   <UploadCloud className="w-7 h-7 text-icsn-teal shrink-0" />
                   <div>
                     <span className="text-sm font-bold text-icsn-teal block">{COPY.APPLY_FLOW.UPLOAD_SLIP}</span>
-                    <span className="text-xs text-gray-500 font-medium">{paymentSlipFile ? paymentSlipFile.name : COPY.RULES.UPLOAD_LIMIT_HINT(APP_CONFIG.SUPPORTED_IMAGE_TYPES, APP_CONFIG.MAX_UPLOAD_SIZE_MB)}</span>
+                    <span className="text-xs text-muted-foreground font-medium">{paymentSlipFile ? paymentSlipFile.name : COPY.RULES.UPLOAD_LIMIT_HINT(APP_CONFIG.SUPPORTED_IMAGE_TYPES, APP_CONFIG.MAX_UPLOAD_SIZE_MB)}</span>
                   </div>
                   <input type="file" accept="image/*,.heic,.heif" className="hidden" onChange={handleFile} required />
                 </label>
 
                 {paymentSlipData && (
-                  <div className="mt-2 flex items-center gap-2 p-2 border border-gray-100 rounded-xl bg-white">
-                    <img src={paymentSlipData} alt="Slip" className="h-10 w-10 rounded-lg object-cover bg-gray-50 shrink-0" />
-                    <span className="text-sm text-gray-600 flex-1 truncate">{paymentSlipFile?.name}</span>
-                    <button type="button" onClick={() => { setPaymentSlipData(''); setPaymentSlipFile(null); }} className="bg-rose-500 text-white p-1 rounded-full hover:bg-rose-600 transition shrink-0">
+                  <div className="mt-2 flex items-center gap-2 p-2 border border-border rounded-xl bg-white">
+                    <img src={paymentSlipData} alt="Slip" className="h-10 w-10 rounded-lg object-cover bg-muted shrink-0" />
+                    <span className="text-sm text-muted-foreground flex-1 truncate">{paymentSlipFile?.name}</span>
+                    <button type="button" onClick={() => { setPaymentSlipData(''); setPaymentSlipFile(null); }} className="bg-error text-white p-1 rounded-full hover:bg-error transition shrink-0">
                       <X className="w-3 h-3" />
                     </button>
                   </div>

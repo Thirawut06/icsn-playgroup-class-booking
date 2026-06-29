@@ -1,8 +1,10 @@
 export type AdminTab =
   | 'dashboard'
+  | 'daily_ops'
   | 'slips'
   | 'users'
-  | 'settings';
+  | 'settings'
+  | 'timeslot';
 
 export interface AdminTabProps {
   onRefresh?: () => void;

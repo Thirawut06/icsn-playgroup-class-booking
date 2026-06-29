@@ -19,13 +19,13 @@ export function SuccessScreen({ path }: SuccessScreenProps) {
       <h2 className="text-2xl font-bold text-icsn-navy mb-2">{COPY.APPLY_FLOW.SUCCESS_TITLE}</h2>
       
       {path === 'trial' && (
-        <p className="text-gray-600 text-lg leading-relaxed mb-8">
+        <p className="text-muted-foreground text-lg leading-relaxed mb-8">
           ระบบได้บันทึกข้อมูลของท่านเรียบร้อยแล้ว<br/>
           สามารถเลือกวันเรียนทดลองได้ที่ปฏิทินจองคลาส
         </p>
       )}
       {path === 'payment' && (
-        <p className="text-gray-600 text-lg leading-relaxed mb-8">
+        <p className="text-muted-foreground text-lg leading-relaxed mb-8">
           สลิปของท่านจะได้รับการตรวจสอบภายใน 24 ชม.<br/>
           เมื่ออนุมัติแล้วท่านจะสามารถจองคลาสได้ทันที
         </p>

@@ -1,13 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { CalendarCog, Plus, Trash2, Loader2 } from 'lucide-react';
+import { CalendarCog, Plus, Trash2, Loader2, CalendarX, Info } from 'lucide-react';
 import { AdminService } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { COPY } from '@/config/copy';
 import { AdminFieldLabel } from './admin-ui';
-import { TimeSlotManagerModal } from './TimeSlotManagerModal';
-import { Clock } from 'lucide-react';
 
 interface BlockoutDate {
   id: string;
@@ -23,9 +21,6 @@ export function CalendarSettingsTab() {
   const [newDate, setNewDate] = useState('');
   const [newReason, setNewReason] = useState('');
   const [adding, setAdding] = useState(false);
-
-  // Time Slot Modal State
-  const [isTimeSlotModalOpen, setIsTimeSlotModalOpen] = useState(false);
 
   useEffect(() => {
     fetchBlockoutDates();
@@ -74,7 +69,7 @@ export function CalendarSettingsTab() {
   const formatDisplayDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return d.toLocaleDateString('th-TH', {
-      weekday: 'short',
+      weekday: 'long',
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -87,131 +82,126 @@ export function CalendarSettingsTab() {
   const pastDates = blockoutDates.filter(d => d.block_date < today);
 
   return (
-    <div className="w-full">
-      <div className="space-y-6">
+    <div className="w-full max-w-5xl mx-auto animate-in fade-in duration-500">
+      <div className="space-y-8 mt-4">
         
-        {/* Manage Session Templates Button */}
-        <div className="flex justify-between items-center bg-blue-50/50 p-4 rounded-xl border border-blue-100">
-          <div>
-            <h3 className="font-bold text-blue-900 text-sm">รอบเวลาพื้นฐาน (Session Templates)</h3>
-            <p className="text-xs text-blue-700/70 mt-0.5">จัดการรอบเวลาที่จะถูกใช้เป็นค่าเริ่มต้นเมื่อสร้างคลาสในวันใหม่</p>
-          </div>
-          <button 
-            onClick={() => setIsTimeSlotModalOpen(true)}
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-sm"
-          >
-            <Clock className="w-4 h-4" />
-            จัดการรอบเวลา
-          </button>
-        </div>
-
         {/* Add Blockout Date Form */}
-        <div className="bg-white p-4 border border-gray-200 rounded shadow-sm">
-          <h3 className="text-sm font-bold text-gray-700 mb-3">เพิ่มวันหยุด / ปิดรับจองล่วงหน้า</h3>
-          <div className="flex flex-col sm:flex-row gap-3 items-end">
-            <div className="flex-1 min-w-[160px]">
-              <AdminFieldLabel>วันที่</AdminFieldLabel>
+        <section className="bg-white p-6 sm:p-8 border border-border rounded-2xl shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-error/10 p-2.5 rounded-xl text-error">
+              <CalendarX className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-icsn-navy">เพิ่มวันหยุด / ปิดรับจอง</h3>
+              <p className="text-sm text-muted-foreground mt-0.5">ระบบจะปิดรับจองในวันที่ถูกเลือกโดยอัตโนมัติ</p>
+            </div>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-4 items-end bg-muted/20 p-5 rounded-xl border border-border/50">
+            <div className="flex-1 w-full">
+              <AdminFieldLabel>วันที่ต้องการปิดรับจอง</AdminFieldLabel>
               <input
                 type="date"
                 value={newDate}
                 onChange={e => setNewDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm h-10 focus:ring-1 focus:ring-blue-500 outline-none"
+                className="w-full px-4 py-2.5 mt-2 bg-white border border-border rounded-xl focus:ring-2 focus:ring-icsn-teal/30 focus:border-icsn-teal/50 outline-none transition-all text-icsn-navy font-medium"
               />
             </div>
-            <div className="flex-[2] min-w-[200px]">
-              <AdminFieldLabel>สาเหตุ (ไม่จำเป็น)</AdminFieldLabel>
+            <div className="flex-[2] w-full">
+              <AdminFieldLabel>สาเหตุ / ชื่อวันหยุด (แสดงให้ผู้ปกครองเห็น)</AdminFieldLabel>
               <input
                 type="text"
                 value={newReason}
                 onChange={e => setNewReason(e.target.value)}
-                placeholder="เช่น วันหยุดสงกรานต์, ครูลา..."
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm h-10 focus:ring-1 focus:ring-blue-500 outline-none"
+                placeholder="เช่น วันหยุดสงกรานต์, ครูลากิจ..."
+                className="w-full px-4 py-2.5 mt-2 bg-white border border-border rounded-xl focus:ring-2 focus:ring-icsn-teal/30 focus:border-icsn-teal/50 outline-none transition-all text-icsn-navy"
               />
             </div>
             <button
               onClick={handleAdd}
               disabled={adding || !newDate}
-              className="inline-flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded text-sm h-10 shadow-sm transition disabled:opacity-50"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-icsn-navy hover:bg-icsn-navy/90 text-white font-bold rounded-xl shadow-md transition disabled:opacity-50 h-[46px] hover:-translate-y-0.5 active:translate-y-0 whitespace-nowrap"
             >
               {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              เพิ่มวันหยุด
+              {adding ? 'กำลังเพิ่ม...' : 'เพิ่มวันหยุด'}
             </button>
           </div>
-        </div>
+        </section>
 
         {/* Upcoming Blockout Dates */}
-        <div>
-          <h3 className="text-sm font-bold text-gray-700 mb-2">
-            วันหยุดที่กำลังจะมาถึง ({upcomingDates.length} วัน)
-          </h3>
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="text-lg font-bold text-icsn-navy">
+              วันหยุดที่กำลังจะมาถึง
+            </h3>
+            <span className="bg-icsn-teal/10 text-icsn-teal px-2.5 py-0.5 rounded-full text-xs font-bold">
+              {upcomingDates.length} วัน
+            </span>
+          </div>
+
           {loading ? (
-            <div className="py-8 text-center text-gray-500 text-sm">{COPY.LOADING.SHORT}</div>
+            <div className="py-12 flex justify-center items-center">
+              <Loader2 className="w-8 h-8 animate-spin text-icsn-teal/50" />
+            </div>
           ) : upcomingDates.length === 0 ? (
-            <div className="py-8 text-center border-2 border-dashed border-gray-300 bg-gray-50/50 rounded text-gray-500 text-sm">
-              ยังไม่มีวันหยุดที่ตั้งไว้
+            <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-border bg-muted/30 rounded-2xl">
+              <CalendarCog className="w-10 h-10 text-muted-foreground/30 mb-3" />
+              <p className="text-muted-foreground text-sm font-medium">ยังไม่มีวันหยุดที่ตั้งไว้ในอนาคต</p>
             </div>
           ) : (
-            <div className="overflow-x-auto border border-gray-300 shadow-sm">
-              <table className="w-full text-left text-xs sm:text-sm border-collapse bg-white">
-                <thead>
-                  <tr className="bg-gray-100 text-gray-700 font-bold border-b border-gray-300">
-                    <th className="border border-gray-300 px-3 py-2">วันที่</th>
-                    <th className="border border-gray-300 px-3 py-2">สาเหตุ</th>
-                    <th className="border border-gray-300 px-3 py-2 text-center w-20">ลบ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {upcomingDates.map(d => (
-                    <tr key={d.id} className="hover:bg-blue-50/50 transition">
-                      <td className="border border-gray-300 px-3 py-1.5 font-bold text-gray-900">
-                        {formatDisplayDate(d.block_date)}
-                      </td>
-                      <td className="border border-gray-300 px-3 py-1.5 text-gray-600">
-                        {d.reason || '-'}
-                      </td>
-                      <td className="border border-gray-300 px-3 py-1.5 text-center">
-                        <button
-                          onClick={() => handleRemove(d.id)}
-                          className="text-rose-500 hover:text-white hover:bg-rose-500 p-1.5 rounded transition"
-                          title="ลบวันหยุดนี้"
-                        >
-                          <Trash2 className="w-4 h-4 mx-auto" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {upcomingDates.map(d => (
+                <div key={d.id} className="bg-white border border-border rounded-xl p-4 flex items-center justify-between group hover:shadow-md transition-all hover:border-icsn-teal/30">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-error/5 w-12 h-12 rounded-lg flex flex-col items-center justify-center text-error border border-error/10 shrink-0">
+                      <span className="text-xs font-bold uppercase">{new Date(d.block_date).toLocaleDateString('en-US', { month: 'short' })}</span>
+                      <span className="text-lg font-black leading-none">{new Date(d.block_date).getDate()}</span>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-icsn-navy">{formatDisplayDate(d.block_date)}</h4>
+                      <p className="text-sm text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                        <Info className="w-3.5 h-3.5" />
+                        {d.reason || 'ไม่ระบุสาเหตุ'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleRemove(d.id)}
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-error hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+                    title="ลบวันหยุดนี้"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Past Blockout Dates (collapsed) */}
+        {/* Past Blockout Dates */}
         {pastDates.length > 0 && (
-          <details className="text-sm">
-            <summary className="cursor-pointer text-gray-500 font-medium hover:text-gray-700">
-              วันหยุดที่ผ่านมาแล้ว ({pastDates.length} วัน)
-            </summary>
-            <div className="mt-2 overflow-x-auto border border-gray-200 rounded">
-              <table className="w-full text-left text-xs border-collapse bg-white">
-                <tbody>
-                  {pastDates.map(d => (
-                    <tr key={d.id} className="border-b border-gray-100 text-gray-400">
-                      <td className="px-3 py-1.5">{formatDisplayDate(d.block_date)}</td>
-                      <td className="px-3 py-1.5">{d.reason || '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </details>
+          <section className="pt-6 border-t border-border">
+            <details className="group">
+              <summary className="cursor-pointer flex items-center gap-2 text-muted-foreground font-medium hover:text-icsn-navy transition-colors list-none">
+                <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center group-open:bg-icsn-navy group-open:text-white transition-colors">
+                  <svg className="w-3 h-3 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <span>ประวัติวันหยุดที่ผ่านมาแล้ว ({pastDates.length} วัน)</span>
+              </summary>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pl-8">
+                {pastDates.map(d => (
+                  <div key={d.id} className="bg-muted/30 border border-border/50 rounded-lg p-3 opacity-60 grayscale">
+                    <p className="text-xs font-bold text-icsn-navy">{formatDisplayDate(d.block_date)}</p>
+                    <p className="text-xs text-muted-foreground mt-1 truncate">{d.reason || '-'}</p>
+                  </div>
+                ))}
+              </div>
+            </details>
+          </section>
         )}
       </div>
-
-      <TimeSlotManagerModal 
-        isOpen={isTimeSlotModalOpen} 
-        onClose={() => setIsTimeSlotModalOpen(false)} 
-      />
     </div>
   );
 }

@@ -1,19 +1,8 @@
 "use client";
 
-import React from 'react';
-import {
-  Calendar,
-  CalendarCog,
-  ReceiptText,
-  Ticket,
-  Baby,
-  CalendarX,
-  DownloadCloud,
-  Package,
-  Settings,
-  LayoutDashboard,
-  LogOut,
-} from 'lucide-react';
+import { ADMIN_NAV_SCHEMA } from '@/config/navigation';
+import { TOKENS } from '@/config/theme/tokens';
+import { cn } from '@/lib/utils';
 import type { AdminTab } from './admin-types';
 
 interface AdminSidebarProps {
@@ -22,11 +11,11 @@ interface AdminSidebarProps {
   pendingSlipCount: number;
 }
 
-import { ADMIN_NAV_SCHEMA } from '@/config/navigation';
-
 export function AdminSidebar({ activeTab, onTabChange, pendingSlipCount }: AdminSidebarProps) {
+  const nav = TOKENS.COMPONENTS.ADMIN_NAV;
+
   return (
-    <nav className="md:w-60 shrink-0 space-y-2 no-print">
+    <nav className={nav.LIST} aria-label="Admin sections">
       {ADMIN_NAV_SCHEMA.map(tab => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
@@ -36,23 +25,23 @@ export function AdminSidebar({ activeTab, onTabChange, pendingSlipCount }: Admin
             key={tab.id}
             type="button"
             onClick={() => onTabChange(tab.id)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold transition cursor-pointer ${
-              tab.id === 'slips' ? 'justify-between' : ''
-            } ${
-              isActive
-                ? 'bg-icsn-teal text-white shadow-sm'
-                : 'bg-white text-gray-600 hover:bg-gray-50 border border-transparent hover:border-gray-200'
-            }`}
+            aria-pressed={isActive}
+            className={cn(
+              nav.ITEM,
+              tab.id === 'slips' && 'justify-between',
+              isActive ? nav.ITEM_ACTIVE : nav.ITEM_INACTIVE
+            )}
           >
-            <span className={`flex items-center gap-3 ${tab.id === 'slips' ? '' : ''}`}>
-              <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={2} />
-              <span className="text-left">
+            <span className="flex min-w-0 items-center gap-3">
+              <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={2} aria-hidden="true" />
+              <span className="min-w-0">
                 {tab.label}
                 <br />
                 <span
-                  className={`font-normal opacity-80 mt-0.5 hidden md:block ${
-                    isActive ? 'text-white/80' : 'text-gray-400'
-                  }`}
+                  className={cn(
+                    nav.DESCRIPTION,
+                    isActive ? nav.DESCRIPTION_ACTIVE : nav.DESCRIPTION_INACTIVE
+                  )}
                 >
                   {tab.description}
                 </span>
@@ -60,9 +49,7 @@ export function AdminSidebar({ activeTab, onTabChange, pendingSlipCount }: Admin
             </span>
             {tab.id === 'slips' && pendingSlipCount > 0 ? (
               <span
-                className={`px-2 py-0.5 rounded-full text-xs font-bold shrink-0 ${
-                  isActive ? 'bg-white text-emerald-600' : 'bg-rose-500 text-white'
-                }`}
+                className={cn(nav.BADGE, isActive ? nav.BADGE_ACTIVE : nav.BADGE_INACTIVE)}
               >
                 {pendingSlipCount}
               </span>

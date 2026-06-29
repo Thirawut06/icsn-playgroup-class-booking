@@ -15,42 +15,54 @@ export function AdminSettings() {
       <AdminPanel className="no-print">
         <AdminPanelHeader icon={Settings} title="ตั้งค่าระบบ (System Configurations)" />
 
-        <div className="p-6 space-y-6">
-          {/* Segmented Control */}
-          <div className="flex p-1 bg-gray-100 rounded-xl w-full max-w-2xl mx-auto flex-col sm:flex-row gap-1">
-            <button
-              onClick={() => setActiveSubTab('system')}
-              className={`flex-1 flex justify-center items-center gap-2 py-3 rounded-lg font-bold text-sm transition ${
-                activeSubTab === 'system' ? 'bg-white text-icsn-teal shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-              การตั้งค่าทั่วไป
-            </button>
-            <button
-              onClick={() => setActiveSubTab('calendar')}
-              className={`flex-1 flex justify-center items-center gap-2 py-3 rounded-lg font-bold text-sm transition ${
-                activeSubTab === 'calendar' ? 'bg-white text-icsn-teal shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <CalendarCog className="w-4 h-4" />
-              ปฏิทิน & วันหยุด
-            </button>
-            <button
-              onClick={() => setActiveSubTab('packages')}
-              className={`flex-1 flex justify-center items-center gap-2 py-3 rounded-lg font-bold text-sm transition ${
-                activeSubTab === 'packages' ? 'bg-white text-icsn-teal shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Package className="w-4 h-4" />
-              จัดการแพ็กเกจ
-            </button>
+        <div className="p-0 sm:p-6 space-y-6">
+          {/* Premium Horizontal Tabs */}
+          <div className="px-6 sm:px-0 border-b border-border">
+            <div className="flex space-x-8 overflow-x-auto no-scrollbar">
+              <button
+                onClick={() => setActiveSubTab('system')}
+                className={`flex items-center gap-2 py-4 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${
+                  activeSubTab === 'system'
+                    ? 'border-icsn-teal text-icsn-teal'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                }`}
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                การตั้งค่าทั่วไป
+              </button>
+              
+              <button
+                onClick={() => setActiveSubTab('calendar')}
+                className={`flex items-center gap-2 py-4 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${
+                  activeSubTab === 'calendar'
+                    ? 'border-icsn-teal text-icsn-teal'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                }`}
+              >
+                <CalendarCog className="w-4 h-4" />
+                ปฏิทิน & วันหยุด
+              </button>
+              
+              <button
+                onClick={() => setActiveSubTab('packages')}
+                className={`flex items-center gap-2 py-4 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${
+                  activeSubTab === 'packages'
+                    ? 'border-icsn-teal text-icsn-teal'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                }`}
+              >
+                <Package className="w-4 h-4" />
+                แพ็กเกจราคา
+              </button>
+            </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden p-6">
-             {activeSubTab === 'system' ? <SettingsTab /> : null}
-             {activeSubTab === 'calendar' ? <CalendarSettingsTab /> : null}
-             {activeSubTab === 'packages' ? <PackageOptionsTab /> : null}
+          <div className="px-6 sm:px-0 pb-6 sm:pb-0">
+            <div className="bg-white border border-border/50 sm:border-border rounded-2xl shadow-sm sm:shadow-md overflow-hidden p-6 transition-all">
+               {activeSubTab === 'system' ? <SettingsTab /> : null}
+               {activeSubTab === 'calendar' ? <CalendarSettingsTab /> : null}
+               {activeSubTab === 'packages' ? <PackageOptionsTab /> : null}
+            </div>
           </div>
         </div>
       </AdminPanel>

@@ -78,8 +78,8 @@ export function ExportTab() {
       />
 
       <div className="space-y-4">
-        <div className="p-5 bg-gray-50 rounded-2xl border border-gray-200 text-xs text-gray-500 leading-relaxed">
-          <p className="font-bold text-gray-700 mb-1">💡 รูปแบบรายงานสารสนเทศ:</p>
+        <div className="p-5 bg-muted rounded-2xl border border-border text-xs text-muted-foreground leading-relaxed">
+          <p className="font-bold text-foreground mb-1">💡 รูปแบบรายงานสารสนเทศ:</p>
           <p>
             ระบบจะสร้างไฟล์ Excel CSV ที่ประกอบไปด้วยรายชื่อคุณพ่อคุณแม่ทั้งหมด, รายชื่อน้อง,
             ประวัติอาหารแพ้, จำนวนโควตาสิทธิ์ที่เหลืออยู่, รายการวันที่จองไปแล้วทั้งหมด

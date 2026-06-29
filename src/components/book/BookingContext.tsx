@@ -22,6 +22,7 @@ interface BookingContextValue {
   selectedChildId: string;
   setSelectedChildId: (id: string) => void;
   refreshData: () => Promise<void>;
+  mergeSessionsForDate: (dateStr: string, updatedSessions: Session[]) => void;
 }
 
 const BookingContext = createContext<BookingContextValue | undefined>(undefined);
@@ -109,7 +110,13 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
         loading,
         selectedChildId,
         setSelectedChildId,
-        refreshData: () => loadData(parentId),
+  refreshData: () => loadData(parentId),
+  mergeSessionsForDate: (dateStr: string, updatedSessions: Session[]) => {
+    setSessions(prev => [
+      ...prev.filter(s => s.session_date !== dateStr),
+      ...updatedSessions,
+    ]);
+  },
       }}
     >
       {reactChildren}

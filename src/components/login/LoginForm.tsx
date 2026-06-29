@@ -77,19 +77,19 @@ export function LoginForm() {
       <div className="space-y-4">
         {isCompletingProfile ? (
           <>
-            <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 mb-6">
-              <p className="text-amber-800 text-sm font-medium text-center">
+            <div className="bg-warning/10 p-4 rounded-xl border border-warning/30 mb-6">
+              <p className="text-warning text-sm font-medium text-center">
                 พบบัญชีของคุณแล้ว แต่ข้อมูลยังไม่สมบูรณ์<br/>
                 กรุณากรอกชื่อและเบอร์โทรศัพท์เพื่อดำเนินการต่อ
               </p>
             </div>
             <div>
               <label className="block mb-1.5">
-                <span className="text-base font-bold text-gray-800">Parent's Full Name</span>
-                <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.NAME_LABEL}</span>
+                <span className="text-base font-bold text-foreground">Parent's Full Name</span>
+                <span className="text-sm text-muted-foreground font-normal ml-1">{COPY.AUTH.NAME_LABEL}</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground/70 z-10">
                   <User className="w-5 h-5" />
                 </div>
                 <input
@@ -98,18 +98,18 @@ export function LoginForm() {
                   onChange={(e) => setCompleteName(e.target.value)}
                   required
                   placeholder="ชื่อ-นามสกุล ผู้ปกครอง"
-                  className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-icsn-teal text-gray-800 bg-gray-50/50 transition-colors h-12 text-base"
+                  className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
                 />
               </div>
             </div>
 
             <div>
               <label className="block mb-1.5">
-                <span className="text-base font-bold text-gray-800">Phone Number</span>
-                <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.PHONE_LABEL}</span>
+                <span className="text-base font-bold text-foreground">Phone Number</span>
+                <span className="text-sm text-muted-foreground font-normal ml-1">{COPY.AUTH.PHONE_LABEL}</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground/70 z-10">
                   <Phone className="w-5 h-5" />
                 </div>
                 <input
@@ -118,7 +118,7 @@ export function LoginForm() {
                   onChange={(e) => setCompletePhone(e.target.value)}
                   required
                   placeholder="08XXXXXXXX"
-                  className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-icsn-teal text-gray-800 bg-gray-50/50 transition-colors h-12 text-base"
+                  className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
                 />
               </div>
             </div>
@@ -127,11 +127,11 @@ export function LoginForm() {
           <>
             <div>
               <label className="block mb-1.5">
-                <span className="text-base font-bold text-gray-800">Email Address</span>
-                <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.EMAIL_LABEL}</span>
+                <span className="text-base font-bold text-foreground">Email Address</span>
+                <span className="text-sm text-muted-foreground font-normal ml-1">{COPY.AUTH.EMAIL_LABEL}</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground/70 z-10">
                   <Mail className="w-5 h-5" />
                 </div>
                 <input
@@ -140,18 +140,18 @@ export function LoginForm() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="parent@example.com"
-                  className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-icsn-teal text-gray-800 bg-gray-50/50 transition-colors h-12 text-base"
+                  className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
                 />
               </div>
             </div>
 
             <div>
               <label className="block mb-1.5">
-                <span className="text-base font-bold text-gray-800">Password</span>
-                <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.PASSWORD_LABEL}</span>
+                <span className="text-base font-bold text-foreground">Password</span>
+                <span className="text-sm text-muted-foreground font-normal ml-1">{COPY.AUTH.PASSWORD_LABEL}</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground/70 z-10">
                   <Lock className="w-5 h-5" />
                 </div>
                 <input
@@ -160,7 +160,7 @@ export function LoginForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-icsn-teal text-gray-800 bg-gray-50/50 transition-colors h-12 text-base"
+                  className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
                 />
               </div>
             </div>
@@ -169,12 +169,12 @@ export function LoginForm() {
       </div>
 
       {errorMessage && (
-        <div className="bg-red-50 text-red-700 p-4 rounded-xl text-sm border border-red-100 flex items-start gap-2">
+        <div className="bg-error/10 text-error p-4 rounded-xl text-sm border border-error/20 flex items-start gap-2">
           <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
             <p className="font-medium">{errorMessage}</p>
             {!isCompletingProfile && (
-              <p className="text-xs text-red-600 mt-1">
+              <p className="text-xs text-error mt-1">
                 ไม่สามารถเข้าสู่ระบบได้ กรุณาตรวจสอบข้อมูลหรือสมัครสมาชิกใหม่
               </p>
             )}

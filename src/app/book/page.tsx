@@ -1,6 +1,7 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import type { Session } from '@/types';
 import { BookHeader } from '@/components/book/BookHeader';
 import { TopUpModal } from '@/components/book/TopUpModal';
@@ -14,6 +15,7 @@ import { BookingConfirmModal } from '@/components/book/BookingConfirmModal';
 import { BookingProvider, useBookingContext } from '@/components/book/BookingContext';
 import { useBookingActions } from '@/hooks/useBookingActions';
 import { checkIsBookableDate } from '@/utils/dateUtils';
+import { BookingService } from '@/lib/supabase';
 
 export default function Book() {
   return (
@@ -41,7 +43,8 @@ function BookPageContent() {
     loading,
     selectedChildId,
     setSelectedChildId,
-    refreshData
+    refreshData,
+    mergeSessionsForDate
   } = useBookingContext();
 
   const [monthIndex, setMonthIndex] = useState(0); // 0 = current, 1 = next
@@ -99,8 +102,21 @@ function BookPageContent() {
     setBookingError('');
     setSelectedDate(dayObj.dateStr);
 
+    let currentSessions = dayObj.sessions || [];
+
+    // Always fetch/create sessions for this date to ensure templates are synced
+    try {
+      const newSessions = await BookingService.getOrCreateSessionsForDate(dayObj.dateStr);
+      if (newSessions.length > 0) {
+        mergeSessionsForDate(dayObj.dateStr, newSessions);
+        currentSessions = newSessions;
+      }
+    } catch (err) {
+      console.error("Failed to fetch sessions for date", err);
+    }
+
     // Auto-select first available session
-    const firstSession = dayObj.sessions?.[0] || null;
+    const firstSession = currentSessions?.[0] || null;
     setSelectedSession(firstSession);
   };
 
@@ -175,7 +191,16 @@ function BookPageContent() {
             selectedChildObj={selectedChildObj}
             creditsRemaining={creditsRemaining}
             selectedChildId={selectedChildId}
-            availableSessions={sessions.filter(s => s.session_date === selectedDate)}
+            availableSessions={sessions
+              .filter(s => s.session_date === selectedDate)
+              .sort((a, b) => {
+                // Parse leading hour from time_label (e.g. "9.00 - 10.30" -> 9, "13.15 - 14.45" -> 13)
+                const parseHour = (label: string) => {
+                  const m = label.match(/(\d{1,2})[.:]/);
+                  return m ? parseInt(m[1], 10) : 0;
+                };
+                return parseHour(a.time_label || '') - parseHour(b.time_label || '');
+              })}
             selectedSession={selectedSession}
             onSelectSession={setSelectedSession}
             isSubmitting={isSubmitting}

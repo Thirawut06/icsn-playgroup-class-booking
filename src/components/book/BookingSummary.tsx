@@ -104,14 +104,14 @@ export function BookingSummary({
                         className={`w-full text-left px-4 py-3 rounded-xl border font-bold text-base transition-all flex justify-between items-center ${
                           selectedSession?.id === session.id
                             ? 'bg-icsn-teal text-white border-icsn-teal shadow-md ring-2 ring-icsn-teal/20'
-                            : 'bg-white text-gray-600 border-gray-200 hover:border-icsn-teal/50'
+                            : 'bg-white text-icsn-navy border-icsn-teal/30 hover:border-icsn-teal/60 hover:bg-icsn-teal/5'
                         }`}
                       >
                         <span>{session.time_label || COPY.BOOKING_FLOW.SESSION_MORNING}</span>
                         <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${
                           selectedSession?.id === session.id 
                             ? 'bg-white/20 text-white' 
-                            : 'bg-gray-100 text-gray-500'
+                            : 'bg-icsn-teal/10 text-icsn-teal'
                         }`}>
                           ว่าง {Math.max(0, session.total_capacity - (session.booked_count || 0))}
                         </span>
@@ -119,13 +119,9 @@ export function BookingSummary({
                     ))}
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2">
-                    <button className="w-full text-left px-4 py-3 rounded-xl font-bold text-base transition-all flex justify-between items-center bg-icsn-teal text-white border border-icsn-teal shadow-md ring-2 ring-icsn-teal/20">
-                      <span>{COPY.BOOKING_FLOW.SESSION_MORNING}</span>
-                      <span className="text-sm font-medium px-2 py-0.5 rounded-full bg-white/20 text-white">
-                        ว่าง 15
-                      </span>
-                    </button>
+                  <div className="text-center py-4 text-muted-foreground text-sm border border-dashed border-border rounded-xl">
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-icsn-teal/50" />
+                    <p>กำลังโหลดข้อมูล หรือไม่มีรอบเรียนเปิดให้บริการ</p>
                   </div>
                 )}
               </div>
@@ -144,7 +140,7 @@ export function BookingSummary({
             <div className="pt-2">
               <button
                 onClick={onBookClass}
-                disabled={isSubmitting || bookingSuccess || !selectedDateAvailable || creditsRemaining <= 0 || !selectedChildId}
+                disabled={isSubmitting || bookingSuccess || !selectedDateAvailable || creditsRemaining <= 0 || !selectedChildId || !selectedSession}
                 className="w-full bg-icsn-teal hover:bg-icsn-teal/90 text-white py-4 rounded-xl font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none hover:-translate-y-0.5 active:translate-y-0"
               >
                 {!isSubmitting ? (
@@ -160,6 +156,16 @@ export function BookingSummary({
           </div>
         )}
       </div>
+
+      {/* Warning Rule Note */}
+      {selectedDate && (
+        <div className="bg-warning/10 border border-warning/30 text-warning p-3 rounded-2xl flex items-start gap-2 mt-4">
+          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-warning" />
+          <p className="text-xs font-bold leading-relaxed">
+            {COPY.RULES.NO_CANCEL_AFTER_7AM}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

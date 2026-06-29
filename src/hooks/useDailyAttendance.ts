@@ -52,7 +52,9 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     if (!walkinPhone || !walkinName) return;
     setWalkinLoading(true);
     try {
-      const sess = await BookingService.getOrCreateSession(dailyDate);
+      const sessions = await BookingService.getOrCreateSessionsForDate(dailyDate);
+      if (!sessions || sessions.length === 0) throw new Error("ไม่พบรอบเรียนสำหรับวันนี้");
+      const sess = sessions[0]; // TODO: Allow selecting specific session for walk-ins
       const { child_id } = await AdminService.adminAddWalkin(walkinPhone, walkinName);
       await AdminService.adminBookClass(child_id, sess.id, true);
       setWalkinPhone('');

@@ -25,8 +25,8 @@ export function AdminPanelHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
-      <h2 className="text-lg md:text-xl font-bold text-gray-800 flex items-center gap-3">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+      <h2 className="text-lg md:text-xl font-bold text-foreground flex items-center gap-3">
         <Icon className="text-icsn-teal w-6 h-6 shrink-0" strokeWidth={2} />
         <span>{title}</span>
       </h2>
@@ -38,25 +38,28 @@ export function AdminPanelHeader({
 export function AdminEmptyState({
   message,
   icon: Icon,
+  action,
 }: {
   message: string;
   icon?: LucideIcon;
+  action?: React.ReactNode;
 }) {
   return (
-    <div className="text-center py-12 sm:py-16 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 space-y-4">
+    <div className="text-center py-12 sm:py-16 border-2 border-dashed border rounded-2xl text-muted-foreground/70 space-y-4">
       {Icon ? (
-        <div className="inline-flex p-4 bg-gray-50 text-gray-300 rounded-full">
+        <div className="inline-flex p-4 bg-muted text-muted-foreground/70 rounded-full">
           <Icon className="w-8 h-8" />
         </div>
       ) : null}
       <p className="text-base font-medium">{message}</p>
+      {action && <div className="mt-4 flex justify-center">{action}</div>}
     </div>
   );
 }
 
 export function AdminFieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block text-sm font-semibold text-gray-700 mb-2">{children}</label>
+    <label className="block text-sm font-semibold text-foreground mb-2">{children}</label>
   );
 }
 
@@ -68,10 +71,133 @@ export function AdminPrimaryButton({
   return (
     <button
       type="button"
-      className={`bg-icsn-teal hover:bg-icsn-teal/90 text-white py-3 px-6 rounded-xl text-sm font-bold h-12 transition disabled:opacity-50 cursor-pointer shadow-sm ${className}`}
+      className={`bg-icsn-teal hover:bg-icsn-teal/90 text-white py-3 px-6 rounded-xl text-sm font-bold h-12 transition disabled:opacity-50 cursor-pointer shadow-sm flex items-center justify-center ${className}`}
       {...props}
     >
       {children}
     </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 🌍 World-Class Component Library Extensions
+// ---------------------------------------------------------------------------
+
+export function AdminInfoBox({
+  title,
+  description,
+  icon: Icon,
+  action,
+}: {
+  title: string;
+  description: React.ReactNode;
+  icon: LucideIcon;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+      <div className="flex gap-3">
+        <div className="mt-0.5">
+          <Icon className="w-5 h-5 text-blue-600" />
+        </div>
+        <div className="text-sm">
+          <p className="font-bold text-blue-900">{title}</p>
+          <div className="text-blue-700/80 mt-1">{description}</div>
+        </div>
+      </div>
+      {action && <div>{action}</div>}
+    </div>
+  );
+}
+
+export function AdminToggle({
+  isActive,
+  onClick,
+  disabled,
+}: {
+  isActive: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:ring-offset-2 disabled:opacity-50 transition-colors ${
+        isActive ? 'bg-icsn-teal' : 'bg-gray-200'
+      }`}
+      title={isActive ? 'กดเพื่อปิดใช้งาน' : 'กดเพื่อเปิดใช้งาน'}
+    >
+      <span className="sr-only">Toggle</span>
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none absolute left-0 inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+          isActive ? 'translate-x-4' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  );
+}
+
+export function AdminIconButton({
+  icon: Icon,
+  variant = 'default',
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  icon: LucideIcon;
+  variant?: 'default' | 'primary' | 'danger';
+}) {
+  const baseClasses = "p-2 rounded-lg transition disabled:opacity-50 flex items-center justify-center";
+  let variantClasses = "";
+
+  switch (variant) {
+    case 'primary':
+      variantClasses = "text-blue-600 hover:bg-blue-50";
+      break;
+    case 'danger':
+      variantClasses = "text-red-600 hover:bg-red-50";
+      break;
+    default:
+      variantClasses = "text-gray-500 hover:bg-gray-200";
+      break;
+  }
+
+  return (
+    <button type="button" className={`${baseClasses} ${variantClasses} ${props.className || ''}`} {...props}>
+      <Icon className="w-4 h-4" />
+    </button>
+  );
+}
+
+export function AdminDataTable({
+  headers,
+  children,
+}: {
+  headers: { label: string; align?: 'left' | 'center' | 'right' }[];
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+      <table className="w-full text-left border-collapse min-w-[600px]">
+        <thead>
+          <tr className="bg-gray-50/80 border-b border-gray-100 text-sm">
+            {headers.map((h, i) => (
+              <th
+                key={i}
+                className={`px-6 py-4 font-bold text-gray-600 ${
+                  h.align === 'center' ? 'text-center' : h.align === 'right' ? 'text-right' : 'text-left'
+                }`}
+              >
+                {h.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {children}
+        </tbody>
+      </table>
+    </div>
   );
 }

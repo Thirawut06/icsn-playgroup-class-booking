@@ -72,7 +72,7 @@ export function AdminUsers() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             
             {/* Segmented Control */}
-            <div className="flex p-1 bg-gray-100 rounded-xl w-full md:w-auto overflow-x-auto custom-scrollbar">
+            <div className="flex p-1 bg-muted rounded-xl w-full md:w-auto overflow-x-auto custom-scrollbar">
               {[
                 { id: 'all', label: 'ทั้งหมด (All)' },
                 { id: 'payment', label: 'สมาชิกปกติ (Payment)' },
@@ -83,7 +83,7 @@ export function AdminUsers() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as Category)}
                   className={`flex-1 md:flex-none whitespace-nowrap px-4 py-2 rounded-lg font-bold text-sm transition ${
-                    activeTab === tab.id ? 'bg-white text-icsn-teal shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    activeTab === tab.id ? 'bg-white text-icsn-teal shadow-sm' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {tab.label}
@@ -93,7 +93,7 @@ export function AdminUsers() {
 
             {/* Search */}
             <div className="relative w-full md:w-64">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground/70">
                 <Search className="w-5 h-5" />
               </div>
               <input
@@ -101,56 +101,56 @@ export function AdminUsers() {
                 placeholder="ค้นหาชื่อ, เบอร์, ชื่อเล่นลูก..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-icsn-teal text-sm bg-gray-50/50"
+                className="block w-full pl-10 pr-4 py-2.5 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-sm bg-muted/50"
               />
             </div>
           </div>
 
           {/* Table */}
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-white border border-border rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-gray-50/80 border-b border-gray-100 text-sm">
-                    <th className="px-6 py-4 font-bold text-gray-600">ผู้ปกครอง</th>
-                    <th className="px-6 py-4 font-bold text-gray-600">ชื่อนักเรียน</th>
-                    <th className="px-6 py-4 font-bold text-gray-600 text-center">เครดิตคงเหลือ</th>
-                    <th className="px-6 py-4 font-bold text-gray-600 text-center">จัดการ</th>
+                  <tr className="bg-muted/80 border-b border-border text-sm">
+                    <th className="px-6 py-4 font-bold text-muted-foreground">ผู้ปกครอง</th>
+                    <th className="px-6 py-4 font-bold text-muted-foreground">ชื่อนักเรียน</th>
+                    <th className="px-6 py-4 font-bold text-muted-foreground text-center">เครดิตคงเหลือ</th>
+                    <th className="px-6 py-4 font-bold text-muted-foreground text-center">จัดการ</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {loading ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                      <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
                         <Loader2 className="w-6 h-6 animate-spin mx-auto text-icsn-teal" />
                       </td>
                     </tr>
                   ) : filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                      <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
                         ไม่พบข้อมูล
                       </td>
                     </tr>
                   ) : (
                     filteredUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
+                      <tr key={user.id} className="hover:bg-muted/80/50 transition-colors">
                         <td className="px-6 py-4">
-                          <p className="font-bold text-gray-800">{user.name}</p>
-                          <p className="text-sm text-gray-500">{user.phone} • {user.email || '-'}</p>
+                          <p className="font-bold text-foreground">{user.name}</p>
+                          <p className="text-sm text-muted-foreground">{user.phone} • {user.email || '-'}</p>
                           <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${
-                            user.category === 'payment' ? 'bg-blue-100 text-blue-700' :
-                            user.category === 'trial' ? 'bg-amber-100 text-amber-700' :
-                            user.category === 'walk-in' ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-gray-600'
+                            user.category === 'payment' ? 'bg-info/10 text-info' :
+                            user.category === 'trial' ? 'bg-warning/10 text-warning' :
+                            user.category === 'walk-in' ? 'bg-muted text-foreground' : 'bg-muted text-muted-foreground'
                           }`}>
                             {user.category.toUpperCase()}
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <p className="font-medium text-gray-800">{user.children_nicknames || '-'}</p>
+                          <p className="font-medium text-foreground">{user.children_nicknames || '-'}</p>
                         </td>
                         <td className="px-6 py-4 text-center">
                           <div className={`inline-flex items-center justify-center min-w-[3rem] h-8 rounded-full font-bold text-sm ${
-                            user.total_credits > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                            user.total_credits > 0 ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'
                           }`}>
                             {user.total_credits}
                           </div>
@@ -158,7 +158,7 @@ export function AdminUsers() {
                         <td className="px-6 py-4 text-center">
                           <button
                             onClick={() => openDrawer(user.id)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-muted hover:bg-muted/80 text-foreground rounded-lg text-sm font-medium transition-colors"
                           >
                             <Info className="w-4 h-4" />
                             ดูรายละเอียด

@@ -45,18 +45,18 @@ function LoginFormContent() {
       {/* Form Container */}
       <div className="p-8 sm:p-10 flex-1">
         {/* Tab Selector Switch */}
-        <div className="grid grid-cols-2 p-1.5 bg-gray-100 rounded-2xl mb-8">
+        <div className="grid grid-cols-2 p-1.5 bg-muted rounded-2xl mb-8">
           <button
             type="button"
             onClick={() => handleTabSwitch('login')}
-            className={`py-2.5 text-base font-bold rounded-xl transition-all cursor-pointer ${tab === 'login' ? 'bg-white text-icsn-teal shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+            className={`py-2.5 text-base font-bold rounded-xl transition-all cursor-pointer ${tab === 'login' ? 'bg-white text-icsn-teal shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
           >
             Sign In (เข้าสู่ระบบ)
           </button>
           <button
             type="button"
             onClick={() => handleTabSwitch('signup')}
-            className={`py-2.5 text-base font-bold rounded-xl transition-all cursor-pointer ${tab === 'signup' ? 'bg-white text-icsn-teal shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+            className={`py-2.5 text-base font-bold rounded-xl transition-all cursor-pointer ${tab === 'signup' ? 'bg-white text-icsn-teal shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
           >
             Sign Up (สมัครสมาชิก)
           </button>

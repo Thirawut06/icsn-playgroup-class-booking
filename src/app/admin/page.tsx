@@ -6,9 +6,11 @@ import { LogOut } from 'lucide-react';
 import { AdminLoginGate } from '@/components/admin/AdminLoginGate';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminDashboard } from '@/components/admin/views/AdminDashboard';
+import { AdminDailyOps } from '@/components/admin/views/AdminDailyOps';
 import { AdminSlips } from '@/components/admin/views/AdminSlips';
 import { AdminUsers } from '@/components/admin/views/AdminUsers';
 import { AdminSettings } from '@/components/admin/views/AdminSettings';
+import { AdminTimeSlots } from '@/components/admin/views/AdminTimeSlots';
 import { AdminService } from '@/lib/supabase';
 import type { AdminTab } from '@/components/admin/admin-types';
 
@@ -111,9 +113,11 @@ export default function AdminPage() {
 
         <div className="flex-1 min-w-0">
           {activeTab === 'dashboard' ? <AdminDashboard onRefresh={refreshPendingCount} /> : null}
+          {activeTab === 'daily_ops' ? <AdminDailyOps onRefresh={refreshPendingCount} /> : null}
           {activeTab === 'slips' ? <AdminSlips onRefresh={refreshPendingCount} /> : null}
           {activeTab === 'users' ? <AdminUsers /> : null}
           {activeTab === 'settings' ? <AdminSettings /> : null}
+          {activeTab === 'timeslot' ? <AdminTimeSlots /> : null}
         </div>
       </main>
     </div>

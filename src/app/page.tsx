@@ -38,7 +38,7 @@ export default function HomePage() {
         <div className="text-center">
           <h2 className="text-icsn-navy font-extrabold text-lg leading-tight">
             Please select your status to continue<br />
-            <span className="text-sm text-gray-500 font-normal block mt-1">กรุณาเลือกสถานะเพื่อดำเนินการต่อ</span>
+            <span className="text-sm text-muted-foreground font-normal block mt-1">กรุณาเลือกสถานะเพื่อดำเนินการต่อ</span>
           </h2>
         </div>
 
@@ -46,7 +46,7 @@ export default function HomePage() {
           {/* Option 1: New Parents */}
           <Link
             href={ROUTES.LOGIN('signup')}
-            className="group flex items-center justify-between w-full bg-white border border-gray-200 hover:border-icsn-teal hover:bg-icsn-teal/5 rounded-2xl p-4 sm:p-5 transition-all duration-300 shadow-sm active:scale-[0.98]"
+            className="group flex items-center justify-between w-full bg-white border border-border hover:border-icsn-teal hover:bg-icsn-teal/5 rounded-2xl p-4 sm:p-5 transition-all duration-300 shadow-sm active:scale-[0.98]"
           >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-icsn-teal/10 text-icsn-teal rounded-full flex items-center justify-center shrink-0 border border-icsn-teal/20 group-hover:bg-icsn-teal group-hover:text-white transition-colors">
@@ -54,53 +54,53 @@ export default function HomePage() {
               </div>
               <div className="text-left space-y-0.5">
                 <div className="flex items-center gap-2 -mt-0.5">
-                  <span className="font-bold text-gray-800 text-lg">
+                  <span className="font-bold text-foreground text-lg">
                     New Parent
                   </span>
                   <span className="px-2 py-0.5 bg-icsn-pink/10 text-icsn-pink text-xs font-bold rounded-full uppercase tracking-widest mt-0.5">New</span>
                 </div>
-                <div className="font-semibold text-gray-500 text-sm">
+                <div className="font-semibold text-muted-foreground text-sm">
                   สมัครสมาชิกใหม่
                 </div>
               </div>
             </div>
-            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all border border-transparent group-hover:border-gray-100">
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-icsn-teal transition-colors" />
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all border border-transparent group-hover:border-border">
+              <ChevronRight className="w-4 h-4 text-muted-foreground/70 group-hover:text-icsn-teal transition-colors" />
             </div>
           </Link>
 
           {/* Option 2: Existing Parents */}
           <Link
             href={ROUTES.LOGIN('login')}
-            className="group flex items-center justify-between w-full bg-white border border-gray-200 hover:border-icsn-navy hover:bg-icsn-navy/5 rounded-2xl p-4 sm:p-5 transition-all duration-300 shadow-sm active:scale-[0.98]"
+            className="group flex items-center justify-between w-full bg-white border border-border hover:border-icsn-navy hover:bg-icsn-navy/5 rounded-2xl p-4 sm:p-5 transition-all duration-300 shadow-sm active:scale-[0.98]"
           >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-icsn-navy/5 text-icsn-navy rounded-full flex items-center justify-center shrink-0 border border-icsn-navy/10 group-hover:bg-icsn-navy group-hover:text-white transition-colors">
                 <LogIn className="w-5 h-5 ml-0.5" />
               </div>
               <div className="text-left space-y-0.5">
-                <div className="font-bold text-gray-800 text-lg -mt-0.5">
+                <div className="font-bold text-foreground text-lg -mt-0.5">
                   Sign In
                 </div>
-                <div className="font-semibold text-gray-500 text-sm">
+                <div className="font-semibold text-muted-foreground text-sm">
                   เข้าสู่ระบบเดิม
                 </div>
               </div>
             </div>
-            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all border border-transparent group-hover:border-gray-100">
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-icsn-navy transition-colors" />
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all border border-transparent group-hover:border-border">
+              <ChevronRight className="w-4 h-4 text-muted-foreground/70 group-hover:text-icsn-navy transition-colors" />
             </div>
           </Link>
         </div>
 
         {/* Footer Admin section with a neat badge styling */}
-        <div className="pt-6 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400 px-1">
+        <div className="pt-6 border-t border-border flex items-center justify-between text-xs text-muted-foreground/70 px-1">
           <div>
             © ICSN Panda Playgroup
           </div>
           <Link
             href={ROUTES.ADMIN}
-            className="font-semibold text-gray-400 hover:text-icsn-pink transition-colors flex items-center gap-1 bg-gray-50 hover:bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-100"
+            className="font-semibold text-muted-foreground/70 hover:text-icsn-pink transition-colors flex items-center gap-1 bg-muted hover:bg-muted/80 px-2.5 py-1 rounded-lg border border-border"
           >
             <Lock className="w-3 h-3" />
             Admin (สำหรับเจ้าหน้าที่)

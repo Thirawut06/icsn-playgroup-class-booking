@@ -1,32 +1,36 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Check, Package, Pencil, Plus, ToggleLeft, ToggleRight, Trash2, X } from 'lucide-react';
+import { Plus, Trash2, Edit2, Loader2, Save, X, AlertCircle } from 'lucide-react';
 import { PackageService, AdminService } from '@/lib/supabase';
 import type { PackageOption } from '@/types';
 import toast from 'react-hot-toast';
 import { COPY } from '@/config/copy';
-import {
-  AdminEmptyState,
-  AdminFieldLabel,
-  
-  
+import { 
+  AdminPrimaryButton, 
+  AdminInfoBox, 
+  AdminDataTable, 
+  AdminToggle, 
+  AdminIconButton 
 } from './admin-ui';
 
 export function PackageOptionsTab() {
   const [options, setOptions] = useState<PackageOption[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Add state
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [credits, setCredits] = useState('');
-  const [adding, setAdding] = useState(false);
+  
+  const [isAdding, setIsAdding] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editPrice, setEditPrice] = useState('');
   const [editCredits, setEditCredits] = useState('');
-  const [saving, setSaving] = useState(false);
 
   const loadOptions = useCallback(async () => {
     setLoading(true);
@@ -44,15 +48,14 @@ export function PackageOptionsTab() {
     loadOptions();
   }, [loadOptions]);
 
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAdd = async () => {
     const priceNum = parseFloat(price);
     const creditsNum = parseInt(credits, 10);
     if (!name.trim() || !priceNum || !creditsNum) {
       toast.error(COPY.ALERTS.REQUIRE_ALL_FIELDS);
       return;
     }
-    setAdding(true);
+    setIsProcessing(true);
     try {
       await AdminService.invokeAdminAction('add-package', {
         name: name.trim(),
@@ -62,23 +65,29 @@ export function PackageOptionsTab() {
       setName('');
       setPrice('');
       setCredits('');
+      setIsAdding(false);
       await loadOptions();
+      toast.success('เพิ่มแพ็กเกจใหม่สำเร็จ');
     } catch (err) {
       toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
-      setAdding(false);
+      setIsProcessing(false);
     }
   };
 
   const toggleActive = async (pkg: PackageOption) => {
+    setIsProcessing(true);
     try {
       await AdminService.invokeAdminAction('toggle-package', {
         packageId: pkg.id,
         isActive: !pkg.is_active,
       });
+      toast.success(pkg.is_active ? 'ปิดใช้งานแพ็กเกจนี้แล้ว' : 'เปิดใช้งานแพ็กเกจนี้แล้ว');
       await loadOptions();
     } catch (err) {
       toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -87,10 +96,20 @@ export function PackageOptionsTab() {
     setEditName(pkg.name);
     setEditPrice(String(pkg.price));
     setEditCredits(String(pkg.credits));
+    setIsAdding(false);
+  };
+
+  const startAdd = () => {
+    setIsAdding(true);
+    setEditingId(null);
+    setName('');
+    setPrice('');
+    setCredits('');
   };
 
   const cancelEdit = () => {
     setEditingId(null);
+    setIsAdding(false);
   };
 
   const saveEdit = async () => {
@@ -101,7 +120,7 @@ export function PackageOptionsTab() {
       toast.error(COPY.ALERTS.REQUIRE_ALL_FIELDS);
       return;
     }
-    setSaving(true);
+    setIsProcessing(true);
     try {
       await AdminService.invokeAdminAction('update-package', {
         packageId: editingId,
@@ -110,198 +129,196 @@ export function PackageOptionsTab() {
         credits: creditsNum,
       });
       setEditingId(null);
+      toast.success('บันทึกการแก้ไขสำเร็จ');
       await loadOptions();
     } catch (err) {
       toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
-      setSaving(false);
+      setIsProcessing(false);
     }
   };
 
   const deletePackage = async (pkg: PackageOption) => {
     if (!confirm(`ลบแพ็กเกจ "${pkg.name}" — แน่ใจหรือไม่?`)) return;
+    setIsProcessing(true);
     try {
       await AdminService.invokeAdminAction('delete-package', { packageId: pkg.id });
+      toast.success('ลบแพ็กเกจสำเร็จ');
       await loadOptions();
     } catch (err) {
       toast.error(COPY.ALERTS.CANNOT_DELETE(err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   return (
-    <div className="w-full">
-      
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="p-0 sm:p-6 space-y-6">
+        
+        <AdminInfoBox
+          title="เกี่ยวกับแพ็กเกจราคา"
+          description={
+            <>
+              แพ็กเกจที่ตั้งค่าในหน้านี้ จะแสดงให้ผู้ปกครองเห็นในหน้าแรกของแอปพลิเคชัน<br />
+              คุณสามารถเลือกเปิด/ปิดแพ็กเกจที่ไม่ต้องการใช้งานชั่วคราวได้
+            </>
+          }
+          icon={AlertCircle}
+          action={
+            <AdminPrimaryButton onClick={startAdd} disabled={isAdding || isProcessing}>
+              <Plus className="w-4 h-4 mr-1.5" />
+              เพิ่มแพ็กเกจใหม่
+            </AdminPrimaryButton>
+          }
+        />
 
-      <form
-        onSubmit={handleAdd}
-        className="p-6 bg-gray-50 border border-gray-200 rounded-2xl flex flex-wrap items-end gap-4"
-      >
-        <div>
-          <AdminFieldLabel>ชื่อแพ็กเกจ</AdminFieldLabel>
-          <input
-            type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder="เช่น 4 ครั้ง"
-            className="border border-gray-200 px-4 py-3 rounded-xl text-sm w-44 h-12 bg-white outline-none focus:ring-1 focus:ring-icsn-teal focus:border-icsn-teal transition"
-          />
-        </div>
-        <div>
-          <AdminFieldLabel>ราคา (บาท)</AdminFieldLabel>
-          <input
-            type="number"
-            min={0}
-            value={price}
-            onChange={e => setPrice(e.target.value)}
-            className="border border-gray-200 px-4 py-3 rounded-xl text-sm w-32 h-12 bg-white outline-none focus:ring-1 focus:ring-icsn-teal focus:border-icsn-teal transition"
-          />
-        </div>
-        <div>
-          <AdminFieldLabel>เครดิต</AdminFieldLabel>
-          <input
-            type="number"
-            min={1}
-            value={credits}
-            onChange={e => setCredits(e.target.value)}
-            className="border border-gray-200 px-4 py-3 rounded-xl text-sm w-24 h-12 bg-white outline-none focus:ring-1 focus:ring-icsn-teal focus:border-icsn-teal transition"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={adding}
-          className="flex items-center gap-2 bg-icsn-navy hover:bg-icsn-navy/90 text-white px-6 py-3 rounded-xl text-sm font-bold h-12 cursor-pointer disabled:opacity-50 shadow-sm transition"
+        <AdminDataTable
+          headers={[
+            { label: 'ชื่อแพ็กเกจ' },
+            { label: 'ราคา (บาท)', align: 'center' },
+            { label: 'เครดิต', align: 'center' },
+            { label: 'สถานะ', align: 'center' },
+            { label: 'จัดการ', align: 'right' },
+          ]}
         >
-          <Plus className="w-5 h-5" />
-          {adding ? 'กำลังเพิ่ม...' : 'เพิ่มแพ็กเกจ'}
-        </button>
-      </form>
+          {loading ? (
+            <tr>
+              <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                <Loader2 className="w-6 h-6 animate-spin mx-auto text-icsn-teal" />
+              </td>
+            </tr>
+          ) : options.length === 0 && !isAdding ? (
+            <tr>
+              <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                <p>ยังไม่มีแพ็กเกจในระบบ</p>
+              </td>
+            </tr>
+          ) : (
+            <>
+              {options.map((pkg) => {
+                const isEditing = editingId === pkg.id;
 
-      {loading ? (
-        <p className="text-center text-gray-500 py-10 text-base font-medium">{COPY.LOADING.SHORT}</p>
-      ) : options.length === 0 ? (
-        <AdminEmptyState message="ยังไม่มีแพ็กเกจในระบบ" />
-      ) : (
-        <div className="space-y-4">
-          {options.map(pkg => {
-            const isEditing = editingId === pkg.id;
-
-            return (
-              <div
-                key={pkg.id}
-                className={`border rounded-2xl p-5 md:p-6 bg-white transition ${
-                  isEditing ? 'border-icsn-teal ring-4 ring-icsn-teal/10 shadow-sm' : 'border-gray-200 hover:border-gray-300 shadow-sm'
-                }`}
-              >
-                {isEditing ? (
-                  /* ─── Edit Mode ─── */
-                  <div className="space-y-4">
-                    <div className="flex flex-wrap gap-4">
-                      <div className="flex-1 min-w-[150px]">
-                        <AdminFieldLabel>ชื่อ</AdminFieldLabel>
+                if (isEditing) {
+                  return (
+                    <tr key={pkg.id} className="bg-blue-50/30">
+                      <td className="px-6 py-4">
                         <input
                           type="text"
                           value={editName}
-                          onChange={e => setEditName(e.target.value)}
-                          className="border border-gray-200 px-4 py-3 rounded-xl text-sm w-full h-12 bg-white outline-none focus:border-icsn-teal focus:ring-1 focus:ring-icsn-teal transition"
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-icsn-teal outline-none"
+                          placeholder="เช่น 10 Classes"
                         />
-                      </div>
-                      <div className="w-32">
-                        <AdminFieldLabel>ราคา (฿)</AdminFieldLabel>
+                      </td>
+                      <td className="px-6 py-4 text-center">
                         <input
                           type="number"
                           value={editPrice}
-                          onChange={e => setEditPrice(e.target.value)}
-                          className="border border-gray-200 px-4 py-3 rounded-xl text-sm w-full h-12 bg-white outline-none focus:border-icsn-teal focus:ring-1 focus:ring-icsn-teal transition"
+                          onChange={(e) => setEditPrice(e.target.value)}
+                          className="w-24 mx-auto px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-icsn-teal outline-none text-center"
+                          min="0"
                         />
-                      </div>
-                      <div className="w-24">
-                        <AdminFieldLabel>เครดิต</AdminFieldLabel>
+                      </td>
+                      <td className="px-6 py-4 text-center">
                         <input
                           type="number"
                           value={editCredits}
-                          onChange={e => setEditCredits(e.target.value)}
-                          className="border border-gray-200 px-4 py-3 rounded-xl text-sm w-full h-12 bg-white outline-none focus:border-icsn-teal focus:ring-1 focus:ring-icsn-teal transition"
+                          onChange={(e) => setEditCredits(e.target.value)}
+                          className="w-24 mx-auto px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-icsn-teal outline-none text-center"
+                          min="1"
                         />
-                      </div>
-                    </div>
-                    <div className="flex gap-3">
-                      <button
-                        type="button"
-                        onClick={saveEdit}
-                        disabled={saving}
-                        className="flex items-center gap-2 bg-icsn-teal hover:bg-icsn-teal/90 text-white px-5 py-2.5 rounded-xl text-sm font-bold h-11 cursor-pointer disabled:opacity-50 transition"
-                      >
-                        <Check className="w-5 h-5" />
-                        {saving ? 'กำลังบันทึก...' : 'บันทึก'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={cancelEdit}
-                        className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl text-sm font-bold h-11 cursor-pointer transition"
-                      >
-                        <X className="w-5 h-5" />
-                        ยกเลิก
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  /* ─── View Mode ─── */
-                  <div className="flex items-center justify-between gap-6">
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className="min-w-0">
-                        <p className="font-bold text-gray-900 text-base md:text-lg truncate">{pkg.name}</p>
-                        <p className="text-gray-500 text-sm md:text-base mt-1">
-                          ฿{Number(pkg.price).toLocaleString()} — <span className="font-bold text-gray-700">{pkg.credits} เครดิต</span>
-                        </p>
-                      </div>
-                      <span
-                        className={`inline-flex px-3 py-1.5 rounded-lg font-bold text-xs border shrink-0 ${
-                          pkg.is_active !== false
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : 'bg-gray-100 text-gray-500 border-gray-200'
-                        }`}
-                      >
-                        {pkg.is_active !== false ? 'เปิดใช้งาน' : 'ปิด'}
-                      </span>
-                    </div>
+                      </td>
+                      <td className="px-6 py-4 text-center text-sm text-gray-500">-</td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <AdminIconButton icon={X} onClick={cancelEdit} title="ยกเลิก" />
+                          <button onClick={saveEdit} disabled={isProcessing} className="p-2 bg-icsn-teal text-white hover:bg-icsn-green rounded-lg transition" title="บันทึก">
+                            {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                }
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => startEdit(pkg)}
-                        className="p-2.5 text-gray-400 hover:text-icsn-teal hover:bg-gray-50 rounded-xl transition cursor-pointer"
-                        title="แก้ไข"
-                      >
-                        <Pencil className="w-5 h-5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => toggleActive(pkg)}
-                        className="text-icsn-teal hover:opacity-80 cursor-pointer p-1"
-                        title={pkg.is_active !== false ? 'ปิดการใช้งาน' : 'เปิดการใช้งาน'}
-                      >
-                        {pkg.is_active !== false ? (
-                          <ToggleRight className="w-8 h-8" />
-                        ) : (
-                          <ToggleLeft className="w-8 h-8 text-gray-400" />
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => deletePackage(pkg)}
-                        className="p-2.5 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition cursor-pointer"
-                        title="ลบ"
-                      >
-                        <Trash2 className="w-5 h-5" />
+                return (
+                  <tr key={pkg.id} className={`hover:bg-gray-50/50 transition-colors ${!pkg.is_active ? 'opacity-60' : ''}`}>
+                    <td className="px-6 py-4">
+                      <p className={`font-bold text-gray-800 ${!pkg.is_active ? 'line-through' : ''}`}>
+                        {pkg.name}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <p className="text-gray-700">฿{pkg.price.toLocaleString()}</p>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="inline-flex items-center justify-center min-w-[2.5rem] h-7 bg-gray-100 text-gray-700 rounded-full text-sm font-bold">
+                        {pkg.credits}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <AdminToggle 
+                        isActive={!!pkg.is_active} 
+                        onClick={() => toggleActive(pkg)} 
+                        disabled={isProcessing} 
+                      />
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <AdminIconButton icon={Edit2} variant="primary" onClick={() => startEdit(pkg)} title="แก้ไข" />
+                        <AdminIconButton icon={Trash2} variant="danger" onClick={() => deletePackage(pkg)} disabled={isProcessing} title="ลบ" />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {isAdding && (
+                <tr className="bg-green-50/30">
+                  <td className="px-6 py-4">
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-icsn-teal outline-none"
+                      placeholder="เช่น 10 Classes"
+                      autoFocus
+                    />
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <input
+                      type="number"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      className="w-24 mx-auto px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-icsn-teal outline-none text-center"
+                      min="0"
+                    />
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <input
+                      type="number"
+                      value={credits}
+                      onChange={(e) => setCredits(e.target.value)}
+                      className="w-24 mx-auto px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-icsn-teal outline-none text-center"
+                      min="1"
+                    />
+                  </td>
+                  <td className="px-6 py-4 text-center text-sm text-gray-500">เปิดใช้งานทันที</td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <AdminIconButton icon={X} onClick={cancelEdit} title="ยกเลิก" />
+                      <button onClick={handleAdd} disabled={isProcessing} className="p-2 bg-icsn-teal text-white hover:bg-icsn-green rounded-lg transition" title="บันทึก">
+                        {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                       </button>
                     </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                  </td>
+                </tr>
+              )}
+            </>
+          )}
+        </AdminDataTable>
+      </div>
     </div>
   );
 }

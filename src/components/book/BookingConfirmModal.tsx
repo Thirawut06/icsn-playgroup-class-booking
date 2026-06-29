@@ -31,22 +31,22 @@ export function BookingConfirmModal({
         </div>
         <h3 className="text-xl font-black text-icsn-navy mb-2">{COPY.BOOKING_FLOW.CONFIRM_BOOKING_TITLE}</h3>
         
-        <div className="w-full bg-gray-50 rounded-2xl p-4 mb-5 space-y-3 text-left">
+        <div className="w-full bg-muted rounded-2xl p-4 mb-5 space-y-3 text-left">
           <div className="flex justify-between items-start text-base gap-4">
-            <span className="text-gray-500 font-medium shrink-0">{COPY.BOOKING_FLOW.STUDENT_LABEL}</span>
+            <span className="text-muted-foreground font-medium shrink-0">{COPY.BOOKING_FLOW.STUDENT_LABEL}</span>
             <span className="font-bold text-icsn-navy text-right break-words">{childName}</span>
           </div>
           <div className="flex justify-between items-start text-base gap-4">
-            <span className="text-gray-500 font-medium shrink-0">{COPY.BOOKING_FLOW.DATE_LABEL}</span>
+            <span className="text-muted-foreground font-medium shrink-0">{COPY.BOOKING_FLOW.DATE_LABEL}</span>
             <span className="font-bold text-icsn-teal text-right break-words">{dateLabel}</span>
           </div>
           <div className="flex justify-between items-start text-base gap-4">
-            <span className="text-gray-500 font-medium shrink-0">{COPY.BOOKING_FLOW.SELECT_SESSION_LABEL}</span>
+            <span className="text-muted-foreground font-medium shrink-0">{COPY.BOOKING_FLOW.SELECT_SESSION_LABEL}</span>
             <span className="font-bold text-icsn-navy text-right break-words">{timeLabel}</span>
           </div>
         </div>
 
-        <p className="text-gray-500 text-sm mb-5 font-medium px-2 leading-relaxed">
+        <p className="text-muted-foreground text-sm mb-5 font-medium px-2 leading-relaxed">
           {COPY.BOOKING_FLOW.DEDUCT_NOTICE} <span className="text-icsn-teal font-bold mx-0.5">1 {COPY.BOOKING_FLOW.CREDIT_LABEL}</span> <span className="inline-block">{COPY.BOOKING_FLOW.FROM_PACKAGE}</span>
         </p>
 
@@ -54,7 +54,7 @@ export function BookingConfirmModal({
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className="flex-1 py-3.5 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition disabled:opacity-50"
+            className="flex-1 py-3.5 bg-muted text-muted-foreground font-bold rounded-xl hover:bg-muted/80 transition disabled:opacity-50"
           >
             ยกเลิก
           </button>

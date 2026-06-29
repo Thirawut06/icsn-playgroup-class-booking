@@ -51,11 +51,11 @@ export function SignupForm() {
       <div className="space-y-4">
         <div>
           <label className="block mb-1.5">
-            <span className="text-base font-bold text-gray-800">Email Address</span>
-            <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.EMAIL_LABEL}</span>
+            <span className="text-base font-bold text-foreground">Email Address</span>
+            <span className="text-sm text-muted-foreground font-normal ml-1">{COPY.AUTH.EMAIL_LABEL}</span>
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground/70 z-10">
               <Mail className="w-5 h-5" />
             </div>
             <input
@@ -64,18 +64,18 @@ export function SignupForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="your.email@example.com"
-              className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-icsn-teal text-gray-800 bg-gray-50/50 transition-colors h-12 text-base"
+              className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
             />
           </div>
         </div>
 
         <div>
           <label className="block mb-1.5">
-            <span className="text-base font-bold text-gray-800">Password</span>
-            <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.PASSWORD_LABEL}</span>
+            <span className="text-base font-bold text-foreground">Password</span>
+            <span className="text-sm text-muted-foreground font-normal ml-1">{COPY.AUTH.PASSWORD_LABEL}</span>
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground/70 z-10">
               <Lock className="w-5 h-5" />
             </div>
             <input
@@ -85,18 +85,18 @@ export function SignupForm() {
               required
               minLength={6}
               placeholder="อย่างน้อย 6 ตัวอักษร"
-              className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-icsn-teal text-gray-800 bg-gray-50/50 transition-colors h-12 text-base"
+              className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
             />
           </div>
         </div>
 
         <div>
           <label className="block mb-1.5">
-            <span className="text-base font-bold text-gray-800">Parent's Full Name</span>
-            <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.NAME_LABEL}</span>
+            <span className="text-base font-bold text-foreground">Parent's Full Name</span>
+            <span className="text-sm text-muted-foreground font-normal ml-1">{COPY.AUTH.NAME_LABEL}</span>
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground/70 z-10">
               <User className="w-5 h-5" />
             </div>
             <input
@@ -105,18 +105,18 @@ export function SignupForm() {
               onChange={(e) => setParentName(e.target.value)}
               required
               placeholder="เช่น คุณแม่ พิมพ์ชนก"
-              className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-icsn-teal text-gray-800 bg-gray-50/50 transition-colors h-12 text-base"
+              className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
             />
           </div>
         </div>
 
         <div>
           <label className="block mb-1.5">
-            <span className="text-base font-bold text-gray-800">Phone Number</span>
-            <span className="text-sm text-gray-500 font-normal ml-1">{COPY.AUTH.PHONE_LABEL}</span>
+            <span className="text-base font-bold text-foreground">Phone Number</span>
+            <span className="text-sm text-muted-foreground font-normal ml-1">{COPY.AUTH.PHONE_LABEL}</span>
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 z-10">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground/70 z-10">
               <Phone className="w-5 h-5" />
             </div>
             <input
@@ -125,14 +125,14 @@ export function SignupForm() {
               onChange={(e) => setPhone(e.target.value)}
               required
               placeholder="e.g., 0812345678"
-              className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-icsn-teal text-gray-800 bg-gray-50/50 transition-colors h-12 text-base"
+              className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
             />
           </div>
         </div>
       </div>
 
       {errorMessage && (
-        <div className="bg-red-50 text-red-700 p-4 rounded-xl text-sm border border-red-100 flex items-start gap-2">
+        <div className="bg-error/10 text-error p-4 rounded-xl text-sm border border-error/20 flex items-start gap-2">
           <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
           <p className="font-medium">{errorMessage}</p>
         </div>
@@ -141,7 +141,7 @@ export function SignupForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full mt-4 bg-icsn-teal hover:bg-icsn-teal/90 text-white py-3 px-4 rounded-full font-bold shadow-sm transition-all flex items-center justify-center cursor-pointer h-[52px] text-lg shrink-0 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-100"
+        className="w-full mt-4 bg-icsn-teal hover:bg-icsn-teal/90 text-white py-3 px-4 rounded-full font-bold shadow-sm transition-all flex items-center justify-center cursor-pointer h-[52px] text-lg shrink-0 disabled:bg-foreground/10 disabled:cursor-not-allowed disabled:opacity-100"
       >
         {!loading ? (
           <div className="flex items-center gap-2 justify-center w-full">

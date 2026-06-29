@@ -18,7 +18,7 @@ export function ApplyHeader({ showSuccess, path, setPath }: ApplyHeaderProps) {
     >
       <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
       {(!showSuccess && path) ? (
-        <button onClick={() => setPath(null)} className="absolute top-4 left-4 z-20 text-white hover:text-gray-200 cursor-pointer">
+        <button onClick={() => setPath(null)} className="absolute top-4 left-4 z-20 text-white hover:text-muted-foreground cursor-pointer">
           <ArrowLeft className="w-6 h-6" />
         </button>
       ) : (
@@ -28,7 +28,7 @@ export function ApplyHeader({ showSuccess, path, setPath }: ApplyHeaderProps) {
           } else {
             router.push('/');
           }
-        }} className="absolute top-4 left-4 z-20 text-white hover:text-gray-200 cursor-pointer">
+        }} className="absolute top-4 left-4 z-20 text-white hover:text-muted-foreground cursor-pointer">
           <ArrowLeft className="w-6 h-6" />
         </button>
       )}

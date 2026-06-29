@@ -55,9 +55,9 @@ export function CalendarWidget({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-icsn-card space-y-4">
+    <div className="bg-white rounded-2xl border border-border p-4 shadow-icsn-card space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+      <div className="flex items-center justify-between border-b border-border pb-3">
         <h3 className="font-bold text-icsn-navy flex items-center gap-1.5 text-base">
           <CalendarIcon className="w-5 h-5 text-icsn-teal" />
           <span>{COPY.BOOKING_FLOW.STEP_2}</span>
@@ -66,17 +66,17 @@ export function CalendarWidget({
         <div className="flex items-center gap-1">
           <button
             onClick={() => onMonthChange(0)}
-            className="p-2 hover:bg-gray-50 rounded-xl transition text-icsn-navy disabled:opacity-30 disabled:hover:bg-transparent"
+            className="p-2 hover:bg-muted/80 rounded-xl transition text-icsn-navy disabled:opacity-30 disabled:hover:bg-transparent"
             disabled={monthIndex === 0}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <h4 className="text-sm font-bold text-icsn-navy bg-gray-50 px-2.5 py-1.5 rounded-xl">
+          <h4 className="text-sm font-bold text-icsn-navy bg-muted px-2.5 py-1.5 rounded-xl">
             {monthName}
           </h4>
           <button
             onClick={() => onMonthChange(1)}
-            className="p-2 hover:bg-gray-50 rounded-xl transition text-icsn-navy disabled:opacity-30 disabled:hover:bg-transparent"
+            className="p-2 hover:bg-muted/80 rounded-xl transition text-icsn-navy disabled:opacity-30 disabled:hover:bg-transparent"
             disabled={monthIndex === 1}
             title="ดูรอบเรียนล่วงหน้า 2 เดือน"
           >
@@ -86,7 +86,7 @@ export function CalendarWidget({
       </div>
 
       {/* Thai Week Names */}
-      <div className="grid grid-cols-7 text-center text-sm font-bold text-gray-400">
+      <div className="grid grid-cols-7 text-center text-sm font-bold text-muted-foreground/70">
         <div>อา</div><div>จ</div><div>อ</div><div>พ</div><div>พฤ</div><div>ศ</div><div>ส</div>
       </div>
 
@@ -99,7 +99,7 @@ export function CalendarWidget({
           const isSelected = selectedDate === dayObj.dateStr;
           const isBooked = myBookings.some(b => b.session_date === dayObj.dateStr && b.child_id === selectedChildId);
 
-          let btnClass = "text-gray-300 bg-gray-50/50";
+          let btnClass = "text-muted-foreground/70 bg-muted/50";
           let dotClass = "bg-transparent";
 
           if (isBookable) {
@@ -110,7 +110,7 @@ export function CalendarWidget({
               btnClass = "text-icsn-teal bg-icsn-teal/10 border border-icsn-teal/30 font-black";
               dotClass = "bg-icsn-teal";
             } else {
-              btnClass = "text-icsn-navy bg-white border border-gray-100 hover:border-icsn-teal/30 hover:bg-icsn-teal/5";
+              btnClass = "text-icsn-navy bg-white border border-border hover:border-icsn-teal/30 hover:bg-icsn-teal/5";
               dotClass = "bg-icsn-teal";
             }
           } else {
@@ -124,10 +124,10 @@ export function CalendarWidget({
                 dotClass = "bg-icsn-navy";
               }
             } else if (isFuture) {
-              btnClass = "text-gray-400 bg-gray-50/30 cursor-not-allowed";
-              dotClass = "bg-rose-400";
+              btnClass = "text-muted-foreground/70 bg-muted/30 cursor-not-allowed";
+              dotClass = "bg-error";
             } else {
-              btnClass = "text-gray-300 bg-gray-50/50 cursor-not-allowed";
+              btnClass = "text-muted-foreground/70 bg-muted/50 cursor-not-allowed";
             }
           }
 
@@ -146,9 +146,9 @@ export function CalendarWidget({
       </div>
 
       {/* Legend */}
-      <div className="pt-3 border-t border-gray-50 flex flex-wrap justify-center gap-4 text-xs text-gray-500 font-medium">
+      <div className="pt-3 border-t border-border flex flex-wrap justify-center gap-4 text-xs text-muted-foreground font-medium">
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 bg-gray-100 border border-gray-200 rounded-full"></span>
+          <span className="w-3 h-3 bg-muted border border-border rounded-full"></span>
           ผ่านไปแล้ว / วันหยุด
         </span>
         <span className="flex items-center gap-1.5">
@@ -156,19 +156,10 @@ export function CalendarWidget({
           เปิดให้จอง
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 bg-rose-400 rounded-full shadow-sm"></span>
+          <span className="w-3 h-3 bg-error rounded-full shadow-sm"></span>
           เต็มแล้ว / ปิดจอง
         </span>
-      </div>
-      
-      {/* Warning Rule Note */}
-      <div className="bg-amber-50 border border-amber-200 text-amber-700 p-3 rounded-2xl flex items-start gap-2 mt-4">
-        <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-amber-500" />
-        <p className="text-xs font-bold leading-relaxed">
-          {COPY.RULES.NO_CANCEL_AFTER_7AM}
-        </p>
       </div>
     </div>
   );
 }
-

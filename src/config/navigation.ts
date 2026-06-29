@@ -1,7 +1,7 @@
-import { LayoutDashboard, ReceiptText, Users, Settings } from 'lucide-react';
+import { LayoutDashboard, ReceiptText, Users, Settings, Clock, CalendarDays } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export type AdminTabId = 'dashboard' | 'slips' | 'users' | 'settings';
+export type AdminTabId = 'dashboard' | 'daily_ops' | 'slips' | 'users' | 'settings' | 'timeslot';
 
 export interface NavItem {
   id: AdminTabId;
@@ -14,9 +14,16 @@ export interface NavItem {
 export const ADMIN_NAV_SCHEMA: NavItem[] = [
   {
     id: 'dashboard',
-    label: 'Dashboard',
+    label: 'Dashboard Overview',
     icon: LayoutDashboard,
-    description: 'ภาพรวมรายวัน การเช็คชื่อ และการจัดการ Walk-in',
+    description: 'ภาพรวมสถิติรายวันและการเงิน',
+    requiredRole: 'admin',
+  },
+  {
+    id: 'daily_ops',
+    label: 'Daily Operations',
+    icon: CalendarDays,
+    description: 'การจัดการรอบรายวันและการเช็คชื่อ',
     requiredRole: 'staff',
   },
   {
@@ -38,6 +45,13 @@ export const ADMIN_NAV_SCHEMA: NavItem[] = [
     label: 'System Settings',
     icon: Settings,
     description: 'ตั้งค่าระบบ, วันหยุด, และแพ็กเกจ',
+    requiredRole: 'admin',
+  },
+  {
+    id: 'timeslot',
+    label: 'Time Slots',
+    icon: Clock,
+    description: 'ตั้งค่าช่วงเวลา (Time Slots)',
     requiredRole: 'admin',
   }
 ];

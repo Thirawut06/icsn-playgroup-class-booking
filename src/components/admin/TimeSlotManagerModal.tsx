@@ -130,31 +130,31 @@ export function TimeSlotManagerModal({ isOpen, onClose }: TimeSlotManagerModalPr
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] max-w-2xl bg-white rounded-2xl shadow-2xl z-50 flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+            <div className="w-10 h-10 rounded-full bg-info/10 flex items-center justify-center text-info">
               <Clock className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-800">จัดการรอบเวลา (Session Templates)</h2>
-              <p className="text-sm text-gray-500">รอบเวลาที่ถูกตั้งไว้จะใช้เป็นค่าเริ่มต้นสำหรับสร้างคลาสในอนาคต</p>
+              <h2 className="text-xl font-bold text-foreground">จัดการรอบเวลา (Session Templates)</h2>
+              <p className="text-sm text-muted-foreground">รอบเวลาที่ถูกตั้งไว้จะใช้เป็นค่าเริ่มต้นสำหรับสร้างคลาสในอนาคต</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
+            className="p-2 hover:bg-muted/80 rounded-full transition-colors text-muted-foreground"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-gray-50/50">
+        <div className="flex-1 overflow-y-auto p-6 bg-muted/50">
           
           {/* Add Form */}
-          <div className="bg-white p-5 border border-gray-200 rounded-xl shadow-sm mb-6">
-            <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <Plus className="w-4 h-4 text-blue-600" /> เพิ่มรอบเวลาใหม่
+          <div className="bg-white p-5 border border-border rounded-xl shadow-sm mb-6">
+            <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
+              <Plus className="w-4 h-4 text-info" /> เพิ่มรอบเวลาใหม่
             </h3>
             <div className="flex flex-col sm:flex-row gap-4 items-end">
               <div className="flex-[2] min-w-[200px]">
@@ -164,7 +164,7 @@ export function TimeSlotManagerModal({ isOpen, onClose }: TimeSlotManagerModalPr
                   value={newLabel}
                   onChange={e => setNewLabel(e.target.value)}
                   placeholder="เช่น เช้า (09:00 - 10:30)"
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                  className="w-full px-4 py-2.5 bg-muted border border-border rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-info/20 focus:border-info outline-none transition-all"
                 />
               </div>
               <div className="flex-1 min-w-[120px]">
@@ -174,13 +174,13 @@ export function TimeSlotManagerModal({ isOpen, onClose }: TimeSlotManagerModalPr
                   min="1"
                   value={newCapacity}
                   onChange={e => setNewCapacity(parseInt(e.target.value) || 0)}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                  className="w-full px-4 py-2.5 bg-muted border border-border rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-info/20 focus:border-info outline-none transition-all"
                 />
               </div>
               <button
                 onClick={handleAdd}
                 disabled={adding || !newLabel.trim() || newCapacity <= 0}
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-sm shadow-sm transition-all disabled:opacity-50 sm:w-auto w-full"
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-info hover:bg-info text-white font-bold rounded-lg text-sm shadow-sm transition-all disabled:opacity-50 sm:w-auto w-full"
               >
                 {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 เพิ่มรอบ
@@ -190,30 +190,30 @@ export function TimeSlotManagerModal({ isOpen, onClose }: TimeSlotManagerModalPr
 
           {/* List */}
           <div>
-            <h3 className="text-sm font-bold text-gray-800 mb-3">รอบเวลาปัจจุบัน ({templates.length})</h3>
+            <h3 className="text-sm font-bold text-foreground mb-3">รอบเวลาปัจจุบัน ({templates.length})</h3>
             
             {loading ? (
               <div className="py-12 flex justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-info" />
               </div>
             ) : templates.length === 0 ? (
-              <div className="py-12 text-center border-2 border-dashed border-gray-200 bg-white rounded-xl text-gray-500">
+              <div className="py-12 text-center border-2 border-dashed border bg-white rounded-xl text-muted-foreground">
                 ยังไม่มีการตั้งค่ารอบเวลา
               </div>
             ) : (
-              <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+              <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-gray-50 border-b border-gray-100 text-sm">
-                      <th className="px-5 py-3 font-bold text-gray-600">ชื่อรอบเวลา</th>
-                      <th className="px-5 py-3 font-bold text-gray-600 text-center">จำนวนรับ</th>
-                      <th className="px-5 py-3 font-bold text-gray-600 text-center w-28">สถานะ</th>
-                      <th className="px-5 py-3 font-bold text-gray-600 text-right w-24">จัดการ</th>
+                    <tr className="bg-muted border-b border-border text-sm">
+                      <th className="px-5 py-3 font-bold text-muted-foreground">ชื่อรอบเวลา</th>
+                      <th className="px-5 py-3 font-bold text-muted-foreground text-center">จำนวนรับ</th>
+                      <th className="px-5 py-3 font-bold text-muted-foreground text-center w-28">สถานะ</th>
+                      <th className="px-5 py-3 font-bold text-muted-foreground text-right w-24">จัดการ</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {templates.map(template => (
-                      <tr key={template.id} className="hover:bg-gray-50/50 transition-colors group">
+                      <tr key={template.id} className="hover:bg-muted/80/50 transition-colors group">
                         
                         {editingId === template.id ? (
                           // Edit Mode
@@ -223,7 +223,7 @@ export function TimeSlotManagerModal({ isOpen, onClose }: TimeSlotManagerModalPr
                                 type="text"
                                 value={editLabel}
                                 onChange={e => setEditLabel(e.target.value)}
-                                className="w-full px-3 py-1.5 border border-blue-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                className="w-full px-3 py-1.5 border border-info/30 rounded text-sm focus:outline-none focus:ring-1 focus:ring-info"
                               />
                             </td>
                             <td className="px-5 py-3">
@@ -232,18 +232,18 @@ export function TimeSlotManagerModal({ isOpen, onClose }: TimeSlotManagerModalPr
                                 min="1"
                                 value={editCapacity}
                                 onChange={e => setEditCapacity(parseInt(e.target.value) || 0)}
-                                className="w-20 mx-auto px-3 py-1.5 border border-blue-300 rounded text-sm text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                className="w-20 mx-auto px-3 py-1.5 border border-info/30 rounded text-sm text-center focus:outline-none focus:ring-1 focus:ring-info"
                               />
                             </td>
                             <td className="px-5 py-3 text-center">
-                              <span className="text-xs text-gray-400">-</span>
+                              <span className="text-xs text-muted-foreground/70">-</span>
                             </td>
                             <td className="px-5 py-3 text-right">
                               <div className="flex items-center justify-end gap-1">
-                                <button onClick={() => saveEdit(template.id)} className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors" title="บันทึก">
+                                <button onClick={() => saveEdit(template.id)} className="p-1.5 text-success hover:bg-success/10 rounded transition-colors" title="บันทึก">
                                   <Check className="w-4 h-4" />
                                 </button>
-                                <button onClick={cancelEdit} className="p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 rounded transition-colors" title="ยกเลิก">
+                                <button onClick={cancelEdit} className="p-1.5 text-muted-foreground/70 hover:bg-muted/80 hover:text-muted-foreground rounded transition-colors" title="ยกเลิก">
                                   <XIcon className="w-4 h-4" />
                                 </button>
                               </div>
@@ -253,20 +253,20 @@ export function TimeSlotManagerModal({ isOpen, onClose }: TimeSlotManagerModalPr
                           // View Mode
                           <>
                             <td className="px-5 py-4">
-                              <p className={`font-bold ${template.is_active ? 'text-gray-800' : 'text-gray-400'}`}>
+                              <p className={`font-bold ${template.is_active ? 'text-foreground' : 'text-muted-foreground/70'}`}>
                                 {template.time_label}
                               </p>
                             </td>
                             <td className="px-5 py-4 text-center">
-                              <span className="inline-flex items-center justify-center min-w-[2.5rem] h-7 rounded-full bg-blue-50 text-blue-700 font-bold text-sm">
+                              <span className="inline-flex items-center justify-center min-w-[2.5rem] h-7 rounded-full bg-info/10 text-info font-bold text-sm">
                                 {template.capacity}
                               </span>
                             </td>
                             <td className="px-5 py-4 text-center">
                               <button
                                 onClick={() => handleToggleActive(template.id, template.is_active)}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                                  template.is_active ? 'bg-green-500' : 'bg-gray-200'
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-info focus:ring-offset-2 ${
+                                  template.is_active ? 'bg-success' : 'bg-muted'
                                 }`}
                               >
                                 <span className="sr-only">Toggle active</span>
@@ -281,14 +281,14 @@ export function TimeSlotManagerModal({ isOpen, onClose }: TimeSlotManagerModalPr
                               <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button 
                                   onClick={() => startEdit(template)}
-                                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                  className="p-2 text-muted-foreground/70 hover:text-info hover:bg-info/10 rounded-lg transition-colors"
                                   title="แก้ไข"
                                 >
                                   <Edit2 className="w-4 h-4" />
                                 </button>
                                 <button 
                                   onClick={() => handleDelete(template.id)}
-                                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                  className="p-2 text-muted-foreground/70 hover:text-error hover:bg-error/10 rounded-lg transition-colors"
                                   title="ลบ"
                                 >
                                   <Trash2 className="w-4 h-4" />

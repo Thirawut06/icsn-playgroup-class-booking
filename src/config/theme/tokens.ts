@@ -13,6 +13,10 @@ export const TOKENS = {
     YELLOW: '#F6C654',
     GRAY: '#777777',
     BG: '#F8FAFC',
+    SUCCESS: '#059669',
+    ERROR: '#CC3366',
+    WARNING: '#D97706',
+    INFO: '#0284C7',
   },
 
   // 2. RADII (Standard border radius for different UI components)
@@ -34,7 +38,19 @@ export const TOKENS = {
   // 4. COMMON COMPONENTS (Semantic combinations of Tailwind classes)
   COMPONENTS: {
     PAGE_CONTAINER: 'max-w-[1600px] w-full mx-auto px-4 py-6',
-    CARD_BASE: 'bg-white border border-gray-200 rounded-2xl shadow-sm',
-    INPUT_BASE: 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-icsn-teal focus:ring-1 focus:ring-icsn-teal outline-none transition',
+    CARD_BASE: 'bg-white border border-border rounded-2xl shadow-sm',
+    INPUT_BASE: 'w-full px-3 py-2 border border-border rounded-lg focus:border-icsn-teal focus:ring-1 focus:ring-icsn-teal outline-none transition',
+    ADMIN_NAV: {
+      LIST: 'md:w-64 shrink-0 space-y-3 no-print',
+      ITEM: 'w-full flex min-h-[72px] items-center gap-3 rounded-[28px] border px-4 py-3 text-left text-xs font-semibold transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-icsn-teal/30 focus-visible:ring-offset-2',
+      ITEM_ACTIVE: 'border-icsn-teal bg-icsn-teal text-white shadow-sm',
+      ITEM_INACTIVE: 'border-border bg-white text-foreground hover:border-icsn-teal/40 hover:bg-icsn-teal/5 hover:text-icsn-navy',
+      DESCRIPTION: 'mt-0.5 hidden text-xs font-normal leading-snug md:block',
+      DESCRIPTION_ACTIVE: 'text-white/80',
+      DESCRIPTION_INACTIVE: 'text-muted-foreground',
+      BADGE: 'rounded-full px-2 py-0.5 text-xs font-bold shrink-0',
+      BADGE_ACTIVE: 'bg-white text-success',
+      BADGE_INACTIVE: 'bg-error text-white',
+    },
   }
-};
+} as const;

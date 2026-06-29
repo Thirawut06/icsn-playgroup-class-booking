@@ -9,7 +9,7 @@ export function ChildSelector() {
   const selectedChild = children.find(c => c.id === selectedChildId);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-icsn-card space-y-3">
+    <div className="bg-white rounded-2xl border border-border p-4 shadow-icsn-card space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="font-bold text-icsn-navy flex items-center gap-1.5 text-base">
           <User className="w-5 h-5 text-icsn-teal" />
@@ -23,7 +23,7 @@ export function ChildSelector() {
       <div className="flex items-center gap-3">
         {/* Selected Child's Profile Photo on the Left */}
         {children.length > 0 && (
-          <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-200 shrink-0 bg-gray-100 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full overflow-hidden border border-border shrink-0 bg-muted flex items-center justify-center">
             {selectedChild?.photo_url ? (
               <img src={selectedChild.photo_url} alt={selectedChild.nickname} className="w-full h-full object-cover" />
             ) : (
@@ -37,7 +37,7 @@ export function ChildSelector() {
           <select
             value={selectedChildId}
             onChange={(e) => setSelectedChildId(e.target.value)}
-            className="w-full text-base pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:border-transparent bg-gray-50 hover:bg-gray-100 transition text-icsn-navy font-bold appearance-none cursor-pointer"
+            className="w-full text-base pl-4 pr-10 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:border-transparent bg-muted hover:bg-muted/80 transition text-icsn-navy font-bold appearance-none cursor-pointer"
           >
             {children.length === 0 && <option value="">{COPY.BOOKING_FLOW.NO_CHILDREN}</option>}
             {children.map(child => (
@@ -46,7 +46,7 @@ export function ChildSelector() {
               </option>
             ))}
           </select>
-          <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+          <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-muted-foreground/70">
              <ChevronRight className="w-4 h-4 rotate-90" />
           </div>
         </div>

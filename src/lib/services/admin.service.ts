@@ -90,7 +90,7 @@ export const AdminService = {
 
     // Fetch package options to map credits since there is no FK
     const { data: packages } = await supabase.from('package_options').select('id, name, credits');
-    const packageMap = new Map((packages || []).map(p => [p.name, p.credits]));
+    const packageMap = new Map((packages || []).map((p: any) => [p.name, p.credits]));
 
     return (slips || []).map((slip: any) => {
       const children = slip.parent?.children || [];
@@ -163,38 +163,42 @@ export const AdminService = {
         phone,
         email,
         created_at,
-        children(nickname),
+        children(nickname, created_at),
         packages(
           credits_remaining,
           type
         ),
         bookings(id)
-      `)
-      .order('created_at', { ascending: false });
+      `);
 
     if (error) throw error;
 
-    return (parents || []).map((p: any) => {
+    const mapped = (parents || []).map((p: any) => {
       const children = (p.children as any[]) || [];
       const packages = (p.packages as any[]) || [];
       const bookings = (p.bookings as any[]) || [];
 
       const totalCredits = packages.reduce((sum, pkg) => sum + (pkg.credits_remaining || 0), 0);
 
-      let category: 'payment' | 'trial' | 'walk-in' | 'new' = 'new';
+      let category: 'payment' | 'trial' | 'walk-in' = 'walk-in';
 
       if (packages.length > 0) {
-        // Has packages
         const hasTrial = packages.some(pkg => pkg.type === 'trial');
         const hasNormal = packages.some(pkg => pkg.type !== 'trial');
 
         if (hasNormal) category = 'payment';
         else if (hasTrial) category = 'trial';
-        else category = 'payment'; // Fallback
-      } else if (bookings.length > 0) {
-        // No packages but has bookings -> Walk-in
-        category = 'walk-in';
+        else category = 'payment';
       }
+
+      // Calculate latest activity to sort properly
+      let latestActivity = new Date(p.created_at).getTime();
+      children.forEach((c: any) => {
+        if (c.created_at) {
+          const childTime = new Date(c.created_at).getTime();
+          if (childTime > latestActivity) latestActivity = childTime;
+        }
+      });
 
       return {
         id: p.id,
@@ -204,9 +208,13 @@ export const AdminService = {
         children_nicknames: children.map((c: any) => c.nickname).join(', '),
         total_credits: totalCredits,
         category,
+        latestActivity,
         raw_parent: p
       };
     });
+
+    // Sort by latest activity descending (newest first)
+    return mapped.sort((a: any, b: any) => b.latestActivity - a.latestActivity);
   },
 
   async getUserFullDetails(parentId: string): Promise<any> {
