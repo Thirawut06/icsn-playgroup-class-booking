@@ -54,23 +54,27 @@ export function useBookingActions({
     }
   };
 
+  const [cancelError, setCancelError] = useState('');
+  const [cancelSuccess, setCancelSuccess] = useState(false);
+
   const executeCancel = async (bookingId: string) => {
     setIsCancelling(true);
+    setCancelError('');
+    setCancelSuccess(false);
     try {
-      const latestPkg = await PackageService.getLatestPackage(parentId);
-      if (!latestPkg) {
-        alert("ไม่พบข้อมูลแพ็กเกจในระบบ ไม่สามารถคืนเครดิตได้ โปรดติดต่อแอดมิน");
-        return;
-      }
-      
-      await BookingService.cancelBooking(bookingId, latestPkg.id);
-      alert("ยกเลิกการจองสำเร็จ คืนเครดิตเรียบร้อย");
-      onSuccess();
+      await BookingService.cancelBooking(bookingId, parentId);
+      setCancelSuccess(true);
+      onSuccess(); // Re-fetch data
     } catch (e: any) {
-      alert("ไม่สามารถยกเลิกการจองได้: " + e.message);
+      setCancelError(e.message || "ไม่สามารถยกเลิกการจองได้");
     } finally {
       setIsCancelling(false);
     }
+  };
+
+  const resetCancelState = () => {
+    setCancelError('');
+    setCancelSuccess(false);
   };
 
   return {
@@ -78,6 +82,9 @@ export function useBookingActions({
     bookingError,
     setBookingError,
     isCancelling,
+    cancelError,
+    cancelSuccess,
+    resetCancelState,
     confirmBookClass,
     executeCancel
   };

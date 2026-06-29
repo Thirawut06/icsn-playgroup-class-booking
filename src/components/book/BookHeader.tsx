@@ -5,11 +5,12 @@ import { LogOut, Wallet } from 'lucide-react';
 interface BookHeaderProps {
   parentName: string;
   creditsRemaining: number;
+  parentPhotoUrl?: string;
   onLogout: () => void;
   onTopUpClick: () => void;
 }
 
-export function BookHeader({ parentName, creditsRemaining, onLogout, onTopUpClick }: BookHeaderProps) {
+export function BookHeader({ parentName, creditsRemaining, parentPhotoUrl, onLogout, onTopUpClick }: BookHeaderProps) {
   return (
     <>
       {/* Sticky Top Header */}
@@ -43,8 +44,11 @@ export function BookHeader({ parentName, creditsRemaining, onLogout, onTopUpClic
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-icsn-card flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-icsn-teal/10 flex items-center justify-center overflow-hidden border border-icsn-teal/20 shrink-0">
-              {/* Simulated Parent Avatar using Dicebear */}
-              <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${parentName || 'Parent'}&backgroundColor=e2e8f0`} alt="Profile" className="w-full h-full object-cover" />
+              {parentPhotoUrl ? (
+                <img src={parentPhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${parentName || 'Parent'}&backgroundColor=e2e8f0`} alt="Profile" className="w-full h-full object-cover" />
+              )}
             </div>
             <div>
               <h2 className="text-base font-bold text-icsn-navy leading-tight">

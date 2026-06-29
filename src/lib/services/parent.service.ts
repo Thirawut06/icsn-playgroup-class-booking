@@ -32,8 +32,12 @@ export const ParentService = {
   async signUp(email: string, password: string, name: string, phone: string): Promise<Parent> {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) {
-      if (error.message.includes('already registered')) {
-        throw new Error('อีเมลนี้ถูกใช้ลงทะเบียนไปแล้ว กรุณาไปที่หน้า เข้าสู่ระบบ');
+      const msg = error.message.toLowerCase();
+      if (msg.includes('already registered') || msg.includes('already exists')) {
+        throw new Error('อีเมลนี้ถูกใช้ลงทะเบียนไปแล้ว กรุณาไปที่หน้า "เข้าสู่ระบบ"');
+      }
+      if (msg.includes('password should be at least') || msg.includes('valid password')) {
+        throw new Error('กรุณากรอกข้อมูลให้ครบถ้วน รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร');
       }
       throw error;
     }

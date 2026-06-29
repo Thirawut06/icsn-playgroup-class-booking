@@ -62,6 +62,9 @@ export default function Book() {
     bookingError,
     setBookingError,
     isCancelling,
+    cancelError,
+    cancelSuccess,
+    resetCancelState,
     confirmBookClass,
     executeCancel
   } = useBookingActions({
@@ -120,12 +123,18 @@ export default function Book() {
     <div className="bg-white flex flex-col min-h-screen pb-16">
       <div className="max-w-[480px] mx-auto w-full bg-white min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)] flex flex-col relative overflow-hidden">
         
-        <BookHeader 
-          parentName={parentName} 
-          creditsRemaining={creditsRemaining} 
-          onLogout={handleLogout} 
-          onTopUpClick={() => setShowTopUpModal(true)} 
-        />
+        {(() => {
+          const parentPhotoUrl = children.find(c => c.parent_photo_url)?.parent_photo_url || '';
+          return (
+            <BookHeader 
+              parentName={parentName} 
+              creditsRemaining={creditsRemaining} 
+              parentPhotoUrl={parentPhotoUrl}
+              onLogout={handleLogout} 
+              onTopUpClick={() => setShowTopUpModal(true)} 
+            />
+          );
+        })()}
 
         <main className="flex-1 px-4 pb-5 space-y-5">
           <ChildSelector
@@ -177,7 +186,12 @@ export default function Book() {
         <CancelConfirmModal
           isOpen={!!bookingToCancel}
           isCancelling={isCancelling}
-          onClose={() => setBookingToCancel(null)}
+          cancelError={cancelError}
+          cancelSuccess={cancelSuccess}
+          onClose={() => {
+            setBookingToCancel(null);
+            resetCancelState();
+          }}
           onConfirm={() => bookingToCancel && executeCancel(bookingToCancel)}
         />
 

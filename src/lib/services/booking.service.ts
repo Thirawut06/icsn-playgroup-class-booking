@@ -89,14 +89,23 @@ export const BookingService = {
     return data;
   },
 
-  async cancelBooking(bookingId: string, packageId: string): Promise<void> {
-    const { error } = await supabase.rpc('cancel_booking', {
-      p_booking_id: bookingId,
-      p_package_id: packageId,
-      p_cancelled_by: 'parent',
-      p_cancel_reason: null,
+  async cancelBooking(bookingId: string, parentId: string): Promise<void> {
+    const { data, error } = await supabase.functions.invoke('parent-cancel', {
+      body: {
+        bookingId,
+        parentId,
+        cancelReason: 'Cancelled by parent via web UI',
+      }
     });
-    if (error) throw error;
+
+    if (error) {
+      // In some cases, Supabase Edge Functions return an error object directly
+      throw new Error(error.message || 'Failed to cancel booking');
+    }
+    
+    if (data && data.error) {
+      throw new Error(data.error);
+    }
   },
 
   async getConfirmedBookingsForDate(dateStr: string): Promise<any[]> {

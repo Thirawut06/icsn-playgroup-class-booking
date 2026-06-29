@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { CalendarHeart } from 'lucide-react';
 import type { Booking } from '@/types';
 
@@ -22,11 +22,18 @@ export function UpcomingBookings({ bookings, selectedChildId, onCancelRequest }:
       
       <div className="space-y-3">
         {filtered.map(booking => {
-          const bDate = new Date(booking.session_date);
-          const isToday = bDate.toDateString() === new Date().toDateString();
-          const isPast7AM = new Date().getHours() >= 7;
-          const canCancel = !(isToday && isPast7AM);
-
+          const sDate = booking.session_date;
+          
+          // Timezone safe check for Bangkok Time
+          const now = new Date();
+          const bkkDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(now);
+          const bkkHour = parseInt(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', hour: 'numeric', hour12: false }).format(now));
+          
+          const isPastDate = sDate < bkkDate;
+          const isCantCancelToday = sDate === bkkDate && bkkHour >= 7;
+          const canCancel = !isPastDate && !isCantCancelToday;
+          
+          const bDate = new Date(booking.session_date); // For rendering UI only
           return (
             <div key={booking.id} className="bg-icsn-teal/5 border border-icsn-teal/20 rounded-2xl p-4 flex flex-col gap-3">
               <div className="flex items-center justify-between">

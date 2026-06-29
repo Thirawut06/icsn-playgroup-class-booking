@@ -54,24 +54,27 @@ export function formatThaiFullDate(date: Date): string {
  * @returns true if bookable, false otherwise
  */
 export function checkIsBookableDate(dateStr: string): boolean {
-  const targetDate = new Date(dateStr);
-  targetDate.setHours(0, 0, 0, 0);
-  
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  
+  // Format today as YYYY-MM-DD in local time
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
 
   // 1. Cannot book past dates
-  if (targetDate < today) {
+  if (dateStr < todayStr) {
     return false;
   }
   
-  // 2. Cannot book today if past cutoff time
-  const isToday = targetDate.getTime() === today.getTime();
-  if (isToday && new Date().getHours() >= CUTOFF_HOUR_FOR_SAME_DAY_BOOKING) {
+  // 2. Cannot book today if past cutoff time (07:00 AM)
+  const isToday = dateStr === todayStr;
+  if (isToday && today.getHours() >= CUTOFF_HOUR_FOR_SAME_DAY_BOOKING) {
     return false;
   }
 
   // 3. Cannot book on weekends
+  const targetDate = new Date(dateStr);
   const dayOfWeek = targetDate.getDay();
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
   if (isWeekend) {

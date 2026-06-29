@@ -133,12 +133,7 @@ export function SignupForm() {
       {errorMessage && (
         <div className="bg-red-50 text-red-700 p-4 rounded-xl text-sm border border-red-100 flex items-start gap-2">
           <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-medium">{errorMessage}</p>
-            <p className="text-xs text-red-600 mt-1">
-              กรุณากรอกข้อมูลให้ครบถ้วน รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร
-            </p>
-          </div>
+          <p className="font-medium">{errorMessage}</p>
         </div>
       )}
 

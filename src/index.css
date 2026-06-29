@@ -182,3 +182,145 @@ body {
         transform: translateX(-50%) translateY(0);
     }
 }
+
+/* Custom Checkbox & Radio Buttons styling to look clean and consistent across all platforms */
+input[type="radio"].custom-radio {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #cbd5e1;
+    border-radius: 50%;
+    outline: none;
+    background-color: #ffffff;
+    cursor: pointer;
+    display: inline-grid;
+    place-content: center;
+    transition: all 0.15s ease-in-out;
+}
+
+input[type="radio"].custom-radio:checked {
+    border-color: #00B0B9;
+}
+
+input[type="radio"].custom-radio::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    background-color: #00B0B9;
+}
+
+input[type="radio"].custom-radio:checked::before {
+    transform: scale(1);
+}
+
+/* Payment (pink) variant of radio button */
+input[type="radio"].custom-radio-pink {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #cbd5e1;
+    border-radius: 50%;
+    outline: none;
+    background-color: #ffffff;
+    cursor: pointer;
+    display: inline-grid;
+    place-content: center;
+    transition: all 0.15s ease-in-out;
+}
+
+input[type="radio"].custom-radio-pink:checked {
+    border-color: #CC3366;
+}
+
+input[type="radio"].custom-radio-pink::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    background-color: #CC3366;
+}
+
+input[type="radio"].custom-radio-pink:checked::before {
+    transform: scale(1);
+}
+
+/* Custom checkbox styling */
+input[type="checkbox"].custom-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #cbd5e1;
+    border-radius: 4px;
+    outline: none;
+    background-color: #ffffff;
+    cursor: pointer;
+    display: inline-grid;
+    place-content: center;
+    transition: all 0.15s ease-in-out;
+}
+
+input[type="checkbox"].custom-checkbox:checked {
+    border-color: #00B0B9;
+    background-color: #00B0B9;
+}
+
+input[type="checkbox"].custom-checkbox::before {
+    content: "";
+    width: 10px;
+    height: 6px;
+    border-left: 2px solid #ffffff;
+    border-bottom: 2px solid #ffffff;
+    transform: rotate(-45deg) scale(0);
+    transform-origin: center;
+    transition: 120ms transform ease-in-out;
+    margin-top: -2px;
+}
+
+input[type="checkbox"].custom-checkbox:checked::before {
+    transform: rotate(-45deg) scale(1);
+}
+
+/* Payment (pink) variant of checkbox */
+input[type="checkbox"].custom-checkbox-pink {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #cbd5e1;
+    border-radius: 4px;
+    outline: none;
+    background-color: #ffffff;
+    cursor: pointer;
+    display: inline-grid;
+    place-content: center;
+    transition: all 0.15s ease-in-out;
+}
+
+input[type="checkbox"].custom-checkbox-pink:checked {
+    border-color: #CC3366;
+    background-color: #CC3366;
+}
+
+input[type="checkbox"].custom-checkbox-pink::before {
+    content: "";
+    width: 10px;
+    height: 6px;
+    border-left: 2px solid #ffffff;
+    border-bottom: 2px solid #ffffff;
+    transform: rotate(-45deg) scale(0);
+    transform-origin: center;
+    transition: 120ms transform ease-in-out;
+    margin-top: -2px;
+}
+
+input[type="checkbox"].custom-checkbox-pink:checked::before {
+    transform: rotate(-45deg) scale(1);
+}

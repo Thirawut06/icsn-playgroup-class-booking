@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ParentService, PackageService, BookingService } from '@/lib/supabase';
@@ -76,32 +76,37 @@ export default function MyBookings() {
     return `${day} ${thaiFullMonths[monthIdx]} ${yearBE}`;
   };
 
+  const [cancelError, setCancelError] = useState('');
+  const [cancelSuccess, setCancelSuccess] = useState(false);
+
   const triggerCancel = (booking: any) => {
     setTargetBooking(booking);
+    setCancelError('');
+    setCancelSuccess(false);
     setShowCancelConfirm(true);
   };
 
   const processCancel = async () => {
     if (!targetBooking) return;
     setActionLoading(true);
+    setCancelError('');
+    setCancelSuccess(false);
     try {
-      // Find the first valid package to refund to
-      const pkgs = await PackageService.getPackages(parentId);
-      if (pkgs.length === 0) {
-        throw new Error("No valid package found to process cancellation");
-      }
-      const pkgId = pkgs[0].id; 
-      
-      await BookingService.cancelBooking(targetBooking.id, pkgId);
-      setShowCancelConfirm(false);
-      setTargetBooking(null);
+      await BookingService.cancelBooking(targetBooking.id, parentId);
+      setCancelSuccess(true);
       loadData(parentId);
-      alert("ยกเลิกสำเร็จ");
     } catch (error: any) {
-      alert(error.message || "เกิดข้อผิดพลาดในการยกเลิก");
+      setCancelError(error.message || "เกิดข้อผิดพลาดในการยกเลิก");
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const closeCancelModal = () => {
+    setShowCancelConfirm(false);
+    setTargetBooking(null);
+    setCancelError('');
+    setCancelSuccess(false);
   };
 
   return (
@@ -213,19 +218,41 @@ export default function MyBookings() {
       {showCancelConfirm && targetBooking && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-xl relative animate-fade-in">
-            <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
-              <XCircle className="w-7 h-7" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-800 text-center mb-2">ยืนยันการยกเลิกจอง?</h3>
-            <p className="text-sm text-gray-500 text-center mb-6">คุณต้องการยกเลิกการจองของ น้อง{targetBooking.child.nickname} ในวันที่ {formatThaiDate(targetBooking.session.session_date)} ใช่หรือไม่?</p>
-            <div className="flex gap-3">
-              <button onClick={() => setShowCancelConfirm(false)} disabled={actionLoading} className="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold py-3 rounded-xl transition">
-                ปิด (Close)
-              </button>
-              <button onClick={processCancel} disabled={actionLoading} className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition shadow-sm">
-                {actionLoading ? 'กำลังยกเลิก...' : 'ยืนยัน (Confirm)'}
-              </button>
-            </div>
+            {cancelSuccess ? (
+              <>
+                <div className="w-14 h-14 bg-teal-50 text-icsn-teal rounded-full flex items-center justify-center mx-auto mb-4 border border-teal-100">
+                  <CheckCircle2 className="w-7 h-7" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 text-center mb-2">ยกเลิกสำเร็จ</h3>
+                <p className="text-sm text-gray-500 text-center mb-6">ระบบได้ทำการคืนเครดิตให้คุณเรียบร้อยแล้ว</p>
+                <button onClick={closeCancelModal} className="w-full bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold py-3 rounded-xl transition">
+                  ปิด (Close)
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
+                  <XCircle className="w-7 h-7" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 text-center mb-2">ยืนยันการยกเลิกจอง?</h3>
+                <p className="text-sm text-gray-500 text-center mb-4">คุณต้องการยกเลิกการจองของ น้อง{targetBooking.child.nickname} ในวันที่ {formatThaiDate(targetBooking.session.session_date)} ใช่หรือไม่?</p>
+                
+                {cancelError && (
+                  <div className="w-full bg-red-50 border border-red-100 text-red-500 text-sm font-medium p-3 rounded-xl mb-4 text-center">
+                    {cancelError}
+                  </div>
+                )}
+                
+                <div className="flex gap-3">
+                  <button onClick={closeCancelModal} disabled={actionLoading} className="flex-1 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold py-3 rounded-xl transition">
+                    ปิด (Close)
+                  </button>
+                  <button onClick={processCancel} disabled={actionLoading} className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition shadow-sm">
+                    {actionLoading ? 'กำลังยกเลิก...' : 'ยืนยัน (Confirm)'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { User, ChevronRight, Plus } from 'lucide-react';
 import type { Child } from '@/types';
@@ -10,6 +10,8 @@ interface ChildSelectorProps {
 }
 
 export function ChildSelector({ children, selectedChildId, onSelectChild }: ChildSelectorProps) {
+  const selectedChild = children.find(c => c.id === selectedChildId);
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-icsn-card space-y-3">
       <div className="flex items-center justify-between">
@@ -22,21 +24,35 @@ export function ChildSelector({ children, selectedChildId, onSelectChild }: Chil
         </Link>
       </div>
       
-      <div className="relative">
-        <select
-          value={selectedChildId}
-          onChange={(e) => onSelectChild(e.target.value)}
-          className="w-full text-base px-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:border-transparent bg-gray-50 hover:bg-gray-100 transition text-icsn-navy font-bold appearance-none cursor-pointer"
-        >
-          {children.length === 0 && <option value="">-- ยังไม่มีรายชื่อนักเรียน --</option>}
-          {children.map(child => (
-            <option key={child.id} value={child.id}>
-              {child.nickname} ({child.full_name})
-            </option>
-          ))}
-        </select>
-        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
-           <ChevronRight className="w-4 h-4 rotate-90" />
+      <div className="flex items-center gap-3">
+        {/* Selected Child's Profile Photo on the Left */}
+        {children.length > 0 && (
+          <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-200 shrink-0 bg-gray-100 flex items-center justify-center">
+            {selectedChild?.photo_url ? (
+              <img src={selectedChild.photo_url} alt={selectedChild.nickname} className="w-full h-full object-cover" />
+            ) : (
+              <img src={`https://api.dicebear.com/7.x/fun-emoji/svg?seed=${selectedChild?.nickname || 'Child'}&backgroundColor=c0aede`} alt="Child Avatar" className="w-full h-full object-cover" />
+            )}
+          </div>
+        )}
+
+        {/* Dropdown Select on the Right */}
+        <div className="flex-1 relative">
+          <select
+            value={selectedChildId}
+            onChange={(e) => onSelectChild(e.target.value)}
+            className="w-full text-base pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:border-transparent bg-gray-50 hover:bg-gray-100 transition text-icsn-navy font-bold appearance-none cursor-pointer"
+          >
+            {children.length === 0 && <option value="">-- ยังไม่มีรายชื่อนักเรียน --</option>}
+            {children.map(child => (
+              <option key={child.id} value={child.id}>
+                {child.nickname} ({child.full_name})
+              </option>
+            ))}
+          </select>
+          <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+             <ChevronRight className="w-4 h-4 rotate-90" />
+          </div>
         </div>
       </div>
     </div>

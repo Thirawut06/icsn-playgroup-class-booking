@@ -1,0 +1,87 @@
+import { test, expect } from '@playwright/test';
+import { Client } from 'pg';
+
+const DB_URL = "postgresql://postgres.psusuyesaxuhiondxqie:L{;&+7GSiQnNr3tT@aws-1-ap-south-1.pooler.supabase.com:6543/postgres";
+let dbClient: Client;
+let testPhone: string;
+let testParentId: string;
+let testSessionId: string;
+let today: Date;
+
+test.beforeAll(async () => {
+  dbClient = new Client({ connectionString: DB_URL, ssl: { rejectUnauthorized: false } });
+  await dbClient.connect();
+
+  today = new Date();
+  const testSessionDate = today.toISOString().split('T')[0];
+
+  const sessionRes = await dbClient.query(`
+    INSERT INTO public.sessions (session_date, capacity, booked_count, time_label)
+    VALUES ($1, 10, 0, 'เช้า (09:00 - 12:00)')
+    ON CONFLICT (session_date, time_label) 
+    DO UPDATE SET capacity = 10
+    RETURNING id;
+  `, [testSessionDate]);
+  testSessionId = sessionRes.rows[0].id;
+
+  testPhone = '080' + Math.floor(1000000 + Math.random() * 9000000).toString();
+});
+
+test.afterAll(async () => {
+  if (testParentId) {
+    await dbClient.query('DELETE FROM public.bookings WHERE parent_id = $1', [testParentId]);
+    await dbClient.query('DELETE FROM public.packages WHERE parent_id = $1', [testParentId]);
+    await dbClient.query('DELETE FROM public.children WHERE parent_id = $1', [testParentId]);
+    await dbClient.query('DELETE FROM public.parents WHERE id = $1', [testParentId]);
+  }
+  if (testSessionId) {
+    await dbClient.query('DELETE FROM public.sessions WHERE id = $1', [testSessionId]);
+  }
+  await dbClient.end();
+});
+
+test.describe('Cancellation Cutoff Rule', () => {
+
+  test('Cannot cancel today session past 07:00 AM', async ({ page }) => {
+    testParentId = await dbClient.query(`
+      INSERT INTO public.parents (name, phone, email)
+      VALUES ('Test Parent Cutoff', $1, $1 || '@test.com')
+      RETURNING id
+    `, [testPhone]).then(res => res.rows[0].id);
+
+    const childRes = await dbClient.query(`
+      INSERT INTO public.children (parent_id, nickname, age)
+      VALUES ($1, 'TestNong2', 3)
+      RETURNING id
+    `, [testParentId]);
+    const childId = childRes.rows[0].id;
+
+    // Give credits and book directly via DB
+    await dbClient.query(`
+      INSERT INTO public.packages (parent_id, type, credits_remaining)
+      VALUES ($1, 'TEST', 5)
+    `, [testParentId]);
+
+    await dbClient.query(`
+      INSERT INTO public.bookings (parent_id, child_id, session_id, session_date, status, child_name_snapshot, parent_phone_snapshot)
+      VALUES ($1, $2, $3, $4, 'confirmed', 'TestNong2', $5)
+    `, [testParentId, childId, testSessionId, today.toISOString().split('T')[0], testPhone]);
+
+    // 1. Login via localStorage bypass
+    await page.goto('/');
+    await page.evaluate(({ pid, pphone }) => {
+      localStorage.setItem('icsn_parent_id', pid);
+      localStorage.setItem('icsn_parent_name', 'Test Parent Cutoff');
+      localStorage.setItem('icsn_parent_phone', pphone);
+    }, { pid: testParentId, pphone: testPhone });
+
+    // 2. Try to cancel it
+    await page.goto('/my-bookings');
+    await page.waitForTimeout(2000); // Wait for bookings to load
+    
+    // Expect the Cancel Booking button to be disabled due to 07:00 cutoff (since current time is past 7AM in BKK)
+    const cancelBtn = page.locator('button:has-text("Cancel Booking")');
+    await expect(cancelBtn).toBeDisabled();
+  });
+
+});

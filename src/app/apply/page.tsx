@@ -11,6 +11,11 @@ import { Input } from '@/components/ui/input';
 import { ApplyHeader } from '@/components/apply/ApplyHeader';
 import { PathSelector } from '@/components/apply/PathSelector';
 import { SuccessScreen } from '@/components/apply/SuccessScreen';
+import { ParentInfoSection } from '@/components/apply/ParentInfoSection';
+import { ChildInfoSection } from '@/components/apply/ChildInfoSection';
+import { PhotoUploadSection } from '@/components/apply/PhotoUploadSection';
+import { PaymentSection } from '@/components/apply/PaymentSection';
+import { AgreementsSection } from '@/components/apply/AgreementsSection';
 
 export default function Apply() {
   const router = useRouter();
@@ -171,7 +176,7 @@ export default function Apply() {
   return (
     <div className="bg-[#f8fafc] min-h-screen font-sarabun">
       <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-sm flex flex-col relative overflow-hidden pb-10">
-        
+
         {/* Floating Toast Notification */}
         {fileToast && (
           <div className="fixed top-6 left-1/2 z-[200] max-w-[400px] w-[calc(100%-48px)]" style={{ transform: 'translateX(-50%)', animation: 'toastIn 0.25s ease-out' }}>
@@ -184,7 +189,7 @@ export default function Apply() {
             </div>
           </div>
         )}
-        
+
         {/* Header */}
         <ApplyHeader showSuccess={showSuccess} path={path} setPath={setPath} />
 
@@ -208,324 +213,63 @@ export default function Apply() {
             </div>
 
             <form onSubmit={submitForm} className="space-y-6">
-              {/* Hidden Email */}
               <input type="hidden" value={parentEmail} />
 
-              {/* Section Header */}
-              <div className="border-b border-gray-100 pb-3">
-                <h3 className="text-lg font-bold text-icsn-navy">
-                  {path === 'trial' ? 'Further Information' : 'Personal Information'}
-                </h3>
-                <p className="text-sm text-gray-500 font-medium">
-                  {path === 'trial' ? 'ข้อมูลเพิ่มเติม' : 'ข้อมูลส่วนบุคคล'}
-                </p>
-              </div>
+              <ParentInfoSection
+                path={path}
+                parentName={parentName}
+                setParentName={setParentName}
+                parentPhone={parentPhone}
+                setParentPhone={setParentPhone}
+                isReturningParent={isReturningParent}
+              />
 
-              {/* Parent Name */}
-              <div>
-                <label className="block mb-1.5">
-                  <span className="text-base font-bold text-gray-800">Parent&apos;s full name <span className="text-red-500">*</span></span>
-                  <span className="block text-sm text-gray-500 -mt-0.5">ชื่อ-นามสกุลผู้ปกครอง</span>
-                </label>
-                <Input
-                  type="text"
-                  value={parentName}
-                  onChange={(e) => setParentName(e.target.value)}
-                  required
-                  disabled={isReturningParent}
-                  className="w-full h-12 rounded-xl bg-gray-50/50 disabled:bg-gray-100 disabled:text-gray-400"
-                />
-              </div>
+              <ChildInfoSection
+                path={path}
+                childName={childName}
+                setChildName={setChildName}
+                childNickname={childNickname}
+                setChildNickname={setChildNickname}
+                childDob={childDob}
+                setChildDob={setChildDob}
+                allergy={allergy}
+                setAllergy={setAllergy}
+                info={info}
+                setInfo={setInfo}
+                todayStr={todayStr}
+              />
 
-              {/* Parent Phone */}
-              <div>
-                <label className="block mb-1.5">
-                  <span className="text-base font-bold text-gray-800">Parent&apos;s telephone number <span className="text-red-500">*</span></span>
-                  <span className="block text-sm text-gray-500 -mt-0.5">หมายเลขโทรศัพท์ผู้ปกครอง</span>
-                </label>
-                <Input
-                  type="tel"
-                  value={parentPhone}
-                  onChange={(e) => setParentPhone(e.target.value)}
-                  required
-                  disabled={isReturningParent}
-                  className="w-full h-12 rounded-xl bg-gray-50/50 disabled:bg-gray-100 disabled:text-gray-400"
-                />
-              </div>
+              <PhotoUploadSection
+                path={path}
+                parentPhotoData={parentPhotoData}
+                setParentPhotoData={setParentPhotoData}
+                setParentPhotoFile={setParentPhotoFile}
+                childPhotoData={childPhotoData}
+                setChildPhotoData={setChildPhotoData}
+                setChildPhotoFile={setChildPhotoFile}
+                handleFile={handleFile}
+              />
 
-              {/* Parent Photo (Trial Only) */}
-              {path === 'trial' && (
-                <div>
-                  <label className="block mb-1.5">
-                    <span className="text-base font-bold text-gray-800">Individual Parent&apos;s Photo <span className="text-red-500">*</span></span>
-                    <span className="block text-sm text-gray-500 -mt-0.5">รูปถ่ายผู้ปกครองเดี่ยวชัดเจน</span>
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*,.heic,.heif"
-                    onChange={(e) => handleFile(e, setParentPhotoData, setParentPhotoFile)}
-                    required
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-icsn-teal/10 file:text-icsn-teal hover:file:bg-icsn-teal/20 border border-gray-200 rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
-                  />
-                  <span className="block text-xs text-gray-400">อัปโหลดไฟล์ที่รองรับ 1 รายการ ขนาดสูงสุด 10 MB</span>
-                  {parentPhotoData && (
-                    <div className="mt-2 w-28 h-28 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
-                      <img src={parentPhotoData} alt="Preview" className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                </div>
-              )}
+              <PaymentSection
+                path={path}
+                paymentPackages={paymentPackages}
+                packageType={packageType}
+                setPackageType={setPackageType}
+                paymentSlipData={paymentSlipData}
+                setPaymentSlipData={setPaymentSlipData}
+                setPaymentSlipFile={setPaymentSlipFile}
+                handleFile={handleFile}
+              />
 
-              {/* Child Name */}
-              <div>
-                <label className="block mb-1.5">
-                  <span className="text-base font-bold text-gray-800">Child&apos;s full name <span className="text-red-500">*</span></span>
-                  <span className="block text-sm text-gray-500 -mt-0.5">ชื่อ-นามสกุลบุตรหลาน</span>
-                </label>
-                <Input type="text" value={childName} onChange={(e) => setChildName(e.target.value)} required className="w-full h-12 rounded-xl bg-gray-50/50" />
-              </div>
-
-              {/* Child Nickname */}
-              <div>
-                <label className="block mb-1.5">
-                  <span className="text-base font-bold text-gray-800">Child nickname <span className="text-red-500">*</span></span>
-                  <span className="block text-sm text-gray-500 -mt-0.5">ชื่อเล่นบุตรหลาน</span>
-                </label>
-                <Input type="text" value={childNickname} onChange={(e) => setChildNickname(e.target.value)} required className="w-full h-12 rounded-xl bg-gray-50/50" />
-              </div>
-
-              {/* Date of Birth */}
-              <div>
-                <label className="block mb-1.5">
-                  <span className="text-base font-bold text-gray-800">Date of birth <span className="text-red-500">*</span></span>
-                  <span className="block text-sm text-gray-500 -mt-0.5">วันเดือนปีเกิด</span>
-                </label>
-                <Input type="date" value={childDob} max={todayStr} onChange={(e) => setChildDob(e.target.value)} required className="w-full h-12 rounded-xl bg-gray-50/50" />
-              </div>
-
-              {/* ====== TRIAL ONLY FIELDS ====== */}
-              {path === 'trial' && (
-                <div className="space-y-6">
-                  {/* Child Photo */}
-                  <div>
-                    <label className="block mb-1.5">
-                      <span className="text-base font-bold text-gray-800">Individual Child&apos;s Photo <span className="text-red-500">*</span></span>
-                      <span className="block text-sm text-gray-500 -mt-0.5">รูปถ่ายบุตรหลานเดี่ยวชัดเจน (ไม่ใส่แว่นกันแดดหรือหมวก)</span>
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*,.heic,.heif"
-                      onChange={(e) => handleFile(e, setChildPhotoData, setChildPhotoFile)}
-                      required
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-icsn-teal/10 file:text-icsn-teal hover:file:bg-icsn-teal/20 border border-gray-200 rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
-                    />
-                    <span className="block text-xs text-gray-400">อัปโหลดไฟล์ที่รองรับ 1 รายการ ขนาดสูงสุด 10 MB</span>
-                    {childPhotoData && (
-                      <div className="mt-2 w-28 h-28 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
-                        <img src={childPhotoData} alt="Preview" className="w-full h-full object-cover" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Allergy */}
-                  <div>
-                    <label className="block mb-1.5">
-                      <span className="text-base font-bold text-gray-800">Allergy (if any) <span className="text-red-500">*</span></span>
-                      <span className="block text-sm text-gray-500 -mt-0.5">มีข้อมูลการแพ้อาหารหรือสิ่งอื่นหรือไม่</span>
-                    </label>
-                    <Input
-                      type="text"
-                      value={allergy}
-                      onChange={(e) => setAllergy(e.target.value)}
-                      required
-                      placeholder="ระบุอาการแพ้เพื่อความปลอดภัย (หากไม่มีกรุณาระบุ ไม่มี)"
-                      className="w-full h-12 rounded-xl bg-gray-50/50"
-                    />
-                  </div>
-
-                  {/* Special Info / Concerns */}
-                  <div>
-                    <label className="block mb-1.5">
-                      <span className="text-base font-bold text-gray-800">Any information or concerns regarding your child that you would like to share with the school?</span>
-                      <span className="block text-sm text-gray-500 -mt-0.5">มีข้อมูลหรือข้อกังวลเกี่ยวกับบุตรหลานของท่านที่ต้องการแจ้งให้โรงเรียนทราบหรือไม่</span>
-                    </label>
-                    <textarea
-                      value={info}
-                      onChange={(e) => setInfo(e.target.value)}
-                      rows={3}
-                      placeholder="ระบุพฤติกรรมพิเศษ หรือ สุขภาพที่ทางคุณครูควรดูแลอย่างใกล้ชิด"
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base bg-gray-50/50 outline-none resize-none focus:border-icsn-teal transition-all"
-                    />
-                  </div>
-
-                  {/* Trial Agreements */}
-                  <div className="space-y-5 pt-4 border-t border-gray-100">
-                    {/* Media Permission */}
-                    <div>
-                      <span className="block text-[13.5px] font-bold text-gray-800 leading-relaxed mb-2">
-                        I give permission for ICSN to use photos or videos (i.e. &quot;media&quot;) taken of my child in school-related academic and social activities. I understand and agree that this media may be used for promotional and marketing purposes without compensation. <span className="text-red-500">*</span><br/>
-                        <span className="text-xs text-gray-600 font-normal mt-1 block leading-relaxed">
-                          ข้าพเจ้าอนุญาตให้ ICSN ใช้รูปถ่ายหรือวิดีโอ (หรือที่เรียกว่า &quot;สื่อ&quot;) ที่ถ่ายจากกิจกรรมทางการศึกษาและสังคมของบุตรหลานข้าพเจ้าในโรงเรียน ข้าพเจ้าทราบและยอมรับว่าสื่อดังกล่าวอาจถูกนำไปใช้เพื่อการประชาสัมพันธ์และการตลาดโดยไม่ขอค่าตอบแทน
-                        </span>
-                      </span>
-                      <div className="flex gap-6 mt-2 pb-1">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" value="Yes" checked={mediaPerm === 'Yes'} onChange={() => setMediaPerm('Yes')} className="w-[18px] h-[18px] accent-icsn-teal" />
-                          <span className="text-[13.5px] font-medium text-gray-700">Yes</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" value="No" checked={mediaPerm === 'No'} onChange={() => setMediaPerm('No')} className="w-[18px] h-[18px] accent-icsn-teal" />
-                          <span className="text-[13.5px] font-medium text-gray-700">No</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* No Photo Permission */}
-                    <div>
-                      <label className="flex items-start gap-3 cursor-pointer p-3.5 bg-gray-50 rounded-xl border border-gray-100">
-                        <input
-                          type="checkbox"
-                          checked={noPhotoPerm}
-                          onChange={(e) => setNoPhotoPerm(e.target.checked)}
-                          className="mt-1 w-[18px] h-[18px] accent-icsn-teal rounded border-gray-300"
-                        />
-                        <div>
-                          <span className="block text-sm font-bold text-gray-800 leading-relaxed">
-                            By checking the box, I agree not to take pictures of other students in the school for posting on social media. <span className="text-red-500">*</span>
-                          </span>
-                          <span className="block text-xs text-gray-600 mt-1 leading-relaxed">
-                            โดยการเลือกช่องนี้ ข้าพเจ้ายินยอมไม่ถ่ายรูปนักเรียนคนอื่นภายในโรงเรียนเพื่อโพสต์ในสื่อโซเชียล
-                          </span>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ====== PAYMENT ONLY FIELDS ====== */}
-              {path === 'payment' && (
-                <div className="space-y-6">
-                  {/* Section Header */}
-                  <div className="pt-4 border-t border-gray-100 mb-2">
-                    <h3 className="text-lg font-bold text-icsn-pink">Payment Confirmation</h3>
-                    <p className="text-sm text-gray-500 leading-relaxed mt-0.5">กรุณาโอนเงินชำระไปยังบัญชีใดบัญชีหนึ่งของโรงเรียนและแนบหลักฐานการโอนด้านล่างนี้</p>
-                  </div>
-
-                  {/* Package Selection (Radio) */}
-                  <div>
-                    <label className="block mb-3">
-                      <span className="text-base font-bold text-gray-800">Please choose a package of your payment <span className="text-red-500">*</span></span>
-                      <span className="block text-sm text-gray-500 -mt-0.5">กรุณาเลือกแพ็กเกจการชำระเงินของท่าน</span>
-                    </label>
-                    <div className="space-y-2.5">
-                      {paymentPackages.map(pkg => (
-                        <label
-                          key={pkg.id}
-                          className={`flex items-center gap-3 p-3.5 border rounded-xl cursor-pointer transition-colors ${packageType === pkg.name ? 'border-icsn-pink bg-icsn-pink/5' : 'border-gray-200 hover:bg-gray-50'}`}
-                        >
-                          <input
-                            type="radio"
-                            value={pkg.name}
-                            checked={packageType === pkg.name}
-                            onChange={() => setPackageType(pkg.name)}
-                            className="w-[18px] h-[18px] accent-icsn-pink"
-                          />
-                          <span className="text-sm font-semibold text-gray-800 leading-relaxed">{pkg.name} - {pkg.price} บาท</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Payment Method Image */}
-                  <div>
-                    <label className="block mb-1.5">
-                      <span className="text-base font-bold text-gray-800">Payment Method : Please upload your payment evident <span className="text-red-500">*</span></span>
-                      <span className="block text-sm text-gray-500 -mt-0.5">ขั้นตอนการชำระเงิน: กรุณาแนบหลักฐานการชำระเงิน</span>
-                    </label>
-                    <div className="mb-4 max-w-sm mx-auto">
-                      <img src="/payment-method.jpg" alt="Payment Method Instruction" className="w-full h-auto rounded-xl border border-gray-200 shadow-sm" />
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*,.heic,.heif"
-                      onChange={(e) => handleFile(e, setPaymentSlipData, setPaymentSlipFile)}
-                      required
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-icsn-pink/10 file:text-icsn-pink hover:file:bg-icsn-pink/20 border border-gray-200 rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
-                    />
-                    <span className="block text-xs text-gray-400 mb-2">อัปโหลดไฟล์ที่รองรับ 1 รายการ ขนาดสูงสุด 10 MB</span>
-                    {paymentSlipData && (
-                      <div className="mt-2 w-32 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
-                        <img src={paymentSlipData} alt="Preview" className="w-full h-auto object-contain" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Payment Agreements */}
-                  <div className="space-y-5 pt-4 border-t border-gray-100">
-                    {/* Media Permission */}
-                    <div>
-                      <span className="block text-[13.5px] font-bold text-gray-800 leading-relaxed mb-2">
-                        I give permission for ICSN to use photos or videos (i.e. &quot;media&quot;) taken of my child in school-related academic and social activities. I understand and agree that this media may be used for promotional and marketing purposes without compensation. <span className="text-red-500">*</span><br/>
-                        <span className="text-xs text-gray-600 font-normal mt-1 block leading-relaxed">
-                          ข้าพเจ้าอนุญาตให้ ICSN ใช้รูปถ่ายหรือวิดีโอ (หรือที่เรียกว่า &quot;สื่อ&quot;) ที่ถ่ายจากกิจกรรมทางการศึกษาและสังคมของบุตรหลานข้าพเจ้าในโรงเรียน ข้าพเจ้าทราบและยอมรับว่าสื่อดังกล่าวอาจถูกนำไปใช้เพื่อการประชาสัมพันธ์และการตลาดโดยไม่ขอค่าตอบแทน
-                        </span>
-                      </span>
-                      <div className="flex gap-6 mt-2 pb-1">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" value="Yes" checked={mediaPerm === 'Yes'} onChange={() => setMediaPerm('Yes')} className="w-[18px] h-[18px] accent-icsn-pink" />
-                          <span className="text-[13.5px] font-medium text-gray-700">Yes</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" value="No" checked={mediaPerm === 'No'} onChange={() => setMediaPerm('No')} className="w-[18px] h-[18px] accent-icsn-pink" />
-                          <span className="text-[13.5px] font-medium text-gray-700">No</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* Non-refundable */}
-                    <div>
-                      <label className="flex items-start gap-3 cursor-pointer p-3.5 bg-gray-50 rounded-xl border border-gray-100">
-                        <input
-                          type="checkbox"
-                          checked={nonRefundable}
-                          onChange={(e) => setNonRefundable(e.target.checked)}
-                          className="mt-1 w-[18px] h-[18px] accent-icsn-pink rounded border-gray-300"
-                        />
-                        <div>
-                          <span className="block text-sm font-bold text-gray-800 leading-relaxed">
-                            By checking this box, you agree that this payment is non-refundable. <span className="text-red-500">*</span>
-                          </span>
-                          <span className="block text-xs text-gray-600 mt-1 leading-relaxed">
-                            โดยการทำเครื่องหมายในช่องนี้ ถือว่าท่านยอมรับว่าการชำระเงินนี้ไม่สามารถขอคืนได้
-                          </span>
-                        </div>
-                      </label>
-                    </div>
-
-                    {/* No Photo Permission */}
-                    <div>
-                      <label className="flex items-start gap-3 cursor-pointer p-3.5 bg-gray-50 rounded-xl border border-gray-100">
-                        <input
-                          type="checkbox"
-                          checked={noPhotoPerm}
-                          onChange={(e) => setNoPhotoPerm(e.target.checked)}
-                          className="mt-1 w-[18px] h-[18px] accent-icsn-pink rounded border-gray-300"
-                        />
-                        <div>
-                          <span className="block text-sm font-bold text-gray-800 leading-relaxed">
-                            By checking the box, I agree not to take pictures of other students in the school for posting on social media. <span className="text-red-500">*</span>
-                          </span>
-                          <span className="block text-xs text-gray-600 mt-1 leading-relaxed">
-                            โดยการเลือกช่องนี้ ข้าพเจ้ายินยอมไม่ถ่ายรูปนักเรียนคนอื่นภายในโรงเรียนเพื่อโพสต์ในสื่อโซเชียล
-                          </span>
-                          <span className="block text-[12.5px] font-bold text-gray-700 mt-1">Yes</span>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <AgreementsSection
+                path={path}
+                mediaPerm={mediaPerm}
+                setMediaPerm={setMediaPerm}
+                noPhotoPerm={noPhotoPerm}
+                setNoPhotoPerm={setNoPhotoPerm}
+                nonRefundable={nonRefundable}
+                setNonRefundable={setNonRefundable}
+              />
 
               {/* Error Message */}
               {errorMessage && (
