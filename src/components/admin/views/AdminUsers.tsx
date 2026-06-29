@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Users, Search, Loader2, Info } from 'lucide-react';
 import { AdminPanel, AdminPanelHeader } from '../admin-ui';
 import { AdminService } from '@/lib/supabase';
+import type { ClassifiedUser } from '@/types';
 import { UserDetailDrawer } from '../UserDetailDrawer';
 import toast from 'react-hot-toast';
 
@@ -12,28 +13,29 @@ type Category = 'all' | 'payment' | 'trial' | 'walk-in';
 export function AdminUsers() {
   const [activeTab, setActiveTab] = useState<Category>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<ClassifiedUser[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Drawer state
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedParentId, setSelectedParentId] = useState<string>('');
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const data = await AdminService.getAllUsersClassified();
       setUsers(data);
-    } catch (err: any) {
-      toast.error("Failed to fetch users: " + err.message);
+    } catch (err: unknown) {
+      toast.error("Failed to fetch users: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line
+    fetchUsers();
+  }, []);
 
   const filteredUsers = useMemo(() => {
     let filtered = users;

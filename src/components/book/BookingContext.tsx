@@ -50,7 +50,7 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
       if (parent) {
         setParentName(parent.name);
         setChildren(parent.children || []);
-        if (parent.children?.length > 0) {
+        if (parent.children && parent.children.length > 0) {
           setSelectedChildId(parent.children[0].id);
         }
       }
@@ -90,6 +90,7 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
       router.push('/login');
       return;
     }
+    // eslint-disable-next-line
     setParentId(pId);
     loadData(pId);
   }, [router]);

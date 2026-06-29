@@ -1,5 +1,5 @@
 import { supabase } from '../supabase';
-import { Parent, Child } from '../../types';
+import { Parent, Child, ParentWithDetails } from '../../types';
 
 export const ParentService = {
   async getParentByPhone(phone: string): Promise<Parent | null> {
@@ -113,7 +113,7 @@ export const ParentService = {
     return parentData;
   },
 
-  async getParentDetails(parentId: string): Promise<any> {
+  async getParentDetails(parentId: string): Promise<ParentWithDetails | null> {
     const { data, error } = await supabase
       .from('parents')
       .select(`

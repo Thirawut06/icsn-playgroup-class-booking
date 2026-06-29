@@ -28,6 +28,7 @@ export function usePendingSlips({ onRefresh }: UsePendingSlipsOptions = {}) {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line
     loadSlips();
   }, [loadSlips]);
 

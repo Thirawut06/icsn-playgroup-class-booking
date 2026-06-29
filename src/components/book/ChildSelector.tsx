@@ -25,8 +25,10 @@ export function ChildSelector() {
         {children.length > 0 && (
           <div className="w-12 h-12 rounded-full overflow-hidden border border-border shrink-0 bg-muted flex items-center justify-center">
             {selectedChild?.photo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img src={selectedChild.photo_url} alt={selectedChild.nickname} className="w-full h-full object-cover" />
             ) : (
+              // eslint-disable-next-line @next/next/no-img-element
               <img src={`https://api.dicebear.com/7.x/fun-emoji/svg?seed=${selectedChild?.nickname || 'Child'}&backgroundColor=c0aede`} alt="Child Avatar" className="w-full h-full object-cover" />
             )}
           </div>

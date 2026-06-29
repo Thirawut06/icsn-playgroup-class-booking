@@ -59,12 +59,12 @@ export function LoginForm() {
       } else {
         router.push('/apply');
       }
-    } catch (error: any) {
-      if (error.message === 'PROFILE_MISSING') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message === 'PROFILE_MISSING') {
         setIsCompletingProfile(true);
         setErrorMessage('');
       } else {
-        let msg = error.message || "เกิดข้อผิดพลาดในการเข้าสู่ระบบ";
+        const msg = error instanceof Error && error.message ? error.message : "เกิดข้อผิดพลาดในการเข้าสู่ระบบ";
         setErrorMessage(msg);
       }
     } finally {
@@ -85,7 +85,7 @@ export function LoginForm() {
             </div>
             <div>
               <label className="block mb-1.5">
-                <span className="text-base font-bold text-foreground">Parent's Full Name</span>
+                <span className="text-base font-bold text-foreground">Parent&apos;s Full Name</span>
                 <span className="text-sm text-muted-foreground font-normal ml-1">{COPY.AUTH.NAME_LABEL}</span>
               </label>
               <div className="relative">

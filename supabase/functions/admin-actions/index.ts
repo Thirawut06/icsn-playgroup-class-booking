@@ -76,7 +76,7 @@ serve(async (req) => {
       const { data: slip, error: sErr } = await supabase.from('slip_uploads').select('*').eq('id', slipId).single()
       if (sErr) throw sErr
 
-      let creditsToAdd = typeof creditsOverride === 'number' && creditsOverride > 0
+      const creditsToAdd = typeof creditsOverride === 'number' && creditsOverride > 0
         ? creditsOverride
         : await resolveCreditsFromSlip(supabase, slip)
 

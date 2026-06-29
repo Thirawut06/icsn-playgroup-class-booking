@@ -1,16 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
+import { env } from '../env';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+declare global {
+  var _supabaseInstance: ReturnType<typeof createClient> | undefined;
+}
 
 const createOrGetSupabase = () => {
   if (typeof window === 'undefined') {
     return createClient(supabaseUrl, supabaseAnonKey);
   }
-  if (!(globalThis as any)._supabaseInstance) {
-    (globalThis as any)._supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+  if (!globalThis._supabaseInstance) {
+    globalThis._supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
   }
-  return (globalThis as any)._supabaseInstance;
+  return globalThis._supabaseInstance;
 };
 
 export const supabase = createOrGetSupabase();

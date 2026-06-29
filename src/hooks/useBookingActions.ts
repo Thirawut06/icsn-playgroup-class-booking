@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookingService, PackageService } from '@/lib/supabase';
+import { BookingService } from '@/lib/supabase';
 import type { Session, Package } from '@/types';
 
 interface UseBookingActionsProps {
@@ -46,8 +46,8 @@ export function useBookingActions({
       await BookingService.bookClass(parentId, selectedChildId, finalSessionId, pkgToUse.id);
       clearSelection();
       onSuccess();
-    } catch (e: any) {
-      setBookingError("ไม่สามารถจองได้: " + e.message);
+    } catch (e: unknown) {
+      setBookingError("ไม่สามารถจองได้: " + (e instanceof Error ? e.message : String(e)));
     } finally {
       setIsSubmitting(false);
     }
@@ -64,8 +64,8 @@ export function useBookingActions({
       await BookingService.cancelBooking(bookingId, parentId);
       setCancelSuccess(true);
       onSuccess(); // Re-fetch data
-    } catch (e: any) {
-      setCancelError(e.message || "ไม่สามารถยกเลิกการจองได้");
+    } catch (e: unknown) {
+      setCancelError(e instanceof Error && e.message ? e.message : "ไม่สามารถยกเลิกการจองได้");
     } finally {
       setIsCancelling(false);
     }

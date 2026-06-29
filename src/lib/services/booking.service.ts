@@ -1,5 +1,5 @@
 import { supabase } from '../supabase';
-import { Session, Booking } from '../../types';
+import { Session, Booking, SessionTemplate, ConfirmedBookingRow } from '../../types';
 import { BOOKING_STATUS, CLASS_CONFIG } from '@/config/constants';
 
 export const BookingService = {
@@ -20,7 +20,7 @@ export const BookingService = {
       .from('blockout_dates')
       .select('block_date');
     if (error) throw error;
-    return (data || []).map((d: any) => d.block_date);
+    return (data || []).map((d: { block_date: string }) => d.block_date);
   },
 
   async getOrCreateSessionsForDate(dateStr: string): Promise<Session[]> {
@@ -43,7 +43,7 @@ export const BookingService = {
     if (error) throw error;
 
     // Sessions with bookings are "locked" — never touch these
-    const lockedSessions = (existing || []).filter((s: any) => s.booked_count > 0);
+    const lockedSessions = (existing || []).filter((s: Session) => (s.booked_count || 0) > 0);
 
     // If no templates exist, return locked sessions or fallback to default
     if (!templates || templates.length === 0) {
@@ -64,26 +64,25 @@ export const BookingService = {
     }
 
     // 3. Delete all empty (no bookings) sessions for this date — will rebuild fresh from templates
-    const templateLabels = new Set(templates.map((t: any) => t.time_label));
-    const emptySessions = (existing || []).filter((s: any) => s.booked_count === 0);
+    const emptySessions = (existing || []).filter((s: Session) => s.booked_count === 0);
 
     if (emptySessions.length > 0) {
       await supabase
         .from('sessions')
         .delete()
-        .in('id', emptySessions.map((s: any) => s.id));
+        .in('id', emptySessions.map((s: Session) => s.id));
     }
 
     // 4. Determine which templates need new sessions (not already covered by locked sessions)
-    const lockedLabels = new Set(lockedSessions.map((s: any) => s.time_label));
-    const neededTemplates = templates.filter((t: any) => !lockedLabels.has(t.time_label));
+    const lockedLabels = new Set(lockedSessions.map((s: Session) => s.time_label));
+    const neededTemplates = templates.filter((t: SessionTemplate) => !lockedLabels.has(t.time_label));
 
     if (neededTemplates.length === 0) {
-      return lockedSessions.sort((a: any, b: any) => a.time_label.localeCompare(b.time_label));
+      return lockedSessions.sort((a: Session, b: Session) => (a.time_label || '').localeCompare(b.time_label || ''));
     }
 
     // 5. Insert fresh sessions from current templates
-    const sessionsToInsert = neededTemplates.map((t: any) => ({
+    const sessionsToInsert = neededTemplates.map((t: SessionTemplate) => ({
       session_date: dateStr,
       time_label: t.time_label,
       total_capacity: t.capacity,
@@ -131,7 +130,7 @@ export const BookingService = {
     return data || [];
   },
 
-  async bookClass(parentId: string, childId: string, sessionId: string, packageId?: string): Promise<any> {
+  async bookClass(parentId: string, childId: string, sessionId: string): Promise<{ success: boolean; error?: string }> {
     // 1. Fetch snapshot data (fallback to 'Unknown' if missing)
     const { data: child } = await supabase.from('children').select('nickname').eq('id', childId).maybeSingle();
     const { data: parent } = await supabase.from('parents').select('phone').eq('id', parentId).maybeSingle();
@@ -170,7 +169,7 @@ export const BookingService = {
     }
   },
 
-  async getConfirmedBookingsForDate(dateStr: string): Promise<any[]> {
+  async getConfirmedBookingsForDate(dateStr: string): Promise<ConfirmedBookingRow[]> {
     const { data, error } = await supabase
       .from('bookings')
       .select(`
@@ -193,7 +192,7 @@ export const BookingService = {
     }));
   },
 
-  async getAllActiveBookings(): Promise<any[]> {
+  async getAllActiveBookings(): Promise<ConfirmedBookingRow[]> {
     const today = new Date().toISOString().split('T')[0];
     const { data, error } = await supabase
       .from('bookings')
@@ -218,7 +217,7 @@ export const BookingService = {
     }));
   },
 
-  async searchActiveBookings(searchTerm: string): Promise<any[]> {
+  async searchActiveBookings(searchTerm: string): Promise<ConfirmedBookingRow[]> {
     const today = new Date().toISOString().split('T')[0];
     
     const { data: parents } = await supabase
@@ -231,8 +230,8 @@ export const BookingService = {
       .select('id')
       .ilike('nickname', `%${searchTerm}%`);
 
-    const parentIds = (parents || []).map((p: any) => p.id);
-    const childIds = (children || []).map((c: any) => c.id);
+    const parentIds = (parents || []).map((p: { id: string }) => p.id);
+    const childIds = (children || []).map((c: { id: string }) => c.id);
 
     if (parentIds.length === 0 && childIds.length === 0) {
       return [];

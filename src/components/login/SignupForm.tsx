@@ -39,8 +39,8 @@ export function SignupForm() {
       localStorage.setItem(STORAGE_KEYS.PARENT_EMAIL, email.trim());
 
       router.push('/apply');
-    } catch (error: any) {
-      setErrorMessage(error.message || "เกิดข้อผิดพลาดในการสมัครสมาชิก");
+    } catch (error: unknown) {
+      setErrorMessage(error instanceof Error && error.message ? error.message : "เกิดข้อผิดพลาดในการสมัครสมาชิก");
     } finally {
       setLoading(false);
     }
@@ -92,7 +92,7 @@ export function SignupForm() {
 
         <div>
           <label className="block mb-1.5">
-            <span className="text-base font-bold text-foreground">Parent's Full Name</span>
+            <span className="text-base font-bold text-foreground">Parent&apos;s Full Name</span>
             <span className="text-sm text-muted-foreground font-normal ml-1">{COPY.AUTH.NAME_LABEL}</span>
           </label>
           <div className="relative">

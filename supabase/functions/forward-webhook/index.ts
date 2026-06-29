@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify(payload)
     })
 
-    let resultText = await gasResponse.text()
+    const resultText = await gasResponse.text()
     console.log("Response from Google Apps Script:", resultText)
 
     // Handle HTML redirect responses from GAS if any

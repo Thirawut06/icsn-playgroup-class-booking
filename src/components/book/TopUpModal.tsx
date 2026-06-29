@@ -52,8 +52,8 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
     try {
       await PackageService.submitTopUp(parentId, packageType, paymentSlipFile, true);
       setIsSuccess(true);
-    } catch (e: any) {
-      toast.error(COPY.ALERTS.ERROR_GENERIC(e.message));
+    } catch (e: unknown) {
+      toast.error(COPY.ALERTS.ERROR_GENERIC(e instanceof Error ? e.message : String(e)));
     } finally {
       setIsSubmitting(false);
     }
@@ -124,7 +124,8 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
               <div>
                 <label className="block text-sm font-bold text-icsn-navy mb-1.5">Payment Method</label>
                 <div className="mb-2 rounded-xl overflow-hidden border border-border shadow-sm">
-                  <img src="/payment-method.jpg" alt="Payment Method" className="w-full h-auto" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/payment-method.jpg" alt="Payment Method" className="w-full h-auto" />
                 </div>
 
                 <label className="flex items-center gap-3 p-3 border-2 border-dashed border-icsn-teal/30 bg-icsn-teal/5 rounded-xl cursor-pointer hover:bg-icsn-teal/10 transition">
@@ -138,6 +139,7 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
 
                 {paymentSlipData && (
                   <div className="mt-2 flex items-center gap-2 p-2 border border-border rounded-xl bg-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={paymentSlipData} alt="Slip" className="h-10 w-10 rounded-lg object-cover bg-muted shrink-0" />
                     <span className="text-sm text-muted-foreground flex-1 truncate">{paymentSlipFile?.name}</span>
                     <button type="button" onClick={() => { setPaymentSlipData(''); setPaymentSlipFile(null); }} className="bg-error text-white p-1 rounded-full hover:bg-error transition shrink-0">

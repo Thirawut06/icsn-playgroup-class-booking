@@ -136,3 +136,15 @@ export interface SessionTemplate {
   is_active: boolean;
   created_at: string;
 }
+
+export interface ClassifiedUser {
+  id: string;
+  name: string;
+  email?: string;
+  phone: string;
+  children_nicknames: string;
+  total_credits: number;
+  category: 'payment' | 'trial' | 'walk-in';
+  latestActivity: number;
+  raw_parent?: any;
+}

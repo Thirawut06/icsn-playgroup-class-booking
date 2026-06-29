@@ -29,9 +29,9 @@ export function UserDetailDrawer({ parentId, isOpen, onClose }: UserDetailDrawer
     try {
       const details = await AdminService.getUserFullDetails(parentId);
       setData(details);
-      setAdminNotes(details.admin_notes || '');
-    } catch (err: any) {
-      toast.error("Failed to load user details: " + err.message);
+      setAdminNotes((details?.admin_notes as string) || '');
+    } catch (err: unknown) {
+      toast.error("Failed to load user details: " + (err instanceof Error ? err.message : String(err)));
       onClose();
     } finally {
       setLoading(false);

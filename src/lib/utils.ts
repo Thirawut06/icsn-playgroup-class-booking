@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function getErrorMessage(err: any): string {
+export function getErrorMessage(err: unknown): string {
   if (!err) return 'Unknown error';
   if (typeof err === 'string') return err;
   if (err instanceof Error) return err.message;

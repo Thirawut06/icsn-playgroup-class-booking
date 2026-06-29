@@ -58,7 +58,7 @@ export const PackageService = {
     }
   },
 
-  async submitTopUp(parentId: string, packageType: string, slipFile: File | null, nonRefundable: boolean): Promise<any> {
+  async submitTopUp(parentId: string, packageType: string, slipFile: File | null, nonRefundable: boolean): Promise<Record<string, unknown> | null> {
     let actualSlipUrl = "";
     if (slipFile) {
       const ext = slipFile.name.split('.').pop() || 'jpg';

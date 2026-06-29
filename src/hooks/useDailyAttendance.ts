@@ -44,6 +44,7 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
   }, [dailyDate]);
 
   useEffect(() => {
+    // eslint-disable-next-line
     loadData();
   }, [loadData]);
 

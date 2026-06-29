@@ -21,7 +21,7 @@ export const SettingsService = {
     if (error) throw error;
 
     // Convert array of {key, value} to object
-    const settingsObj = { ...DEFAULT_SETTINGS } as any;
+    const settingsObj: SystemSettings = { ...DEFAULT_SETTINGS };
     
     if (data) {
       for (const row of data) {

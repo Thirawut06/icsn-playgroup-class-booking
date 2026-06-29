@@ -1,5 +1,5 @@
 import { supabase } from '../supabase';
-import { Session, DailyAttendanceRow, PendingSlipRow } from '../../types';
+import { Session, DailyAttendanceRow, PendingSlipRow, ExportCSVRow, ClassifiedUser } from '../../types';
 import { BOOKING_STATUS, CLASS_CONFIG } from '@/config/constants';
 
 export const AdminService = {
@@ -90,33 +90,21 @@ export const AdminService = {
 
     // Fetch package options to map credits since there is no FK
     const { data: packages } = await supabase.from('package_options').select('id, name, credits');
-    const packageMap = new Map((packages || []).map((p: any) => [p.name, p.credits]));
+    const packageMap = new Map((packages || []).map((p: { name: string; credits: number }) => [p.name, p.credits]));
 
-    return (slips || []).map((slip: any) => {
-      const children = slip.parent?.children || [];
-      let formattedChildName = '-';
-      if (children.length > 0) {
-        const firstChild = children[0];
-        formattedChildName = firstChild.full_name
-          ? `${firstChild.full_name} (${firstChild.nickname})`
-          : firstChild.nickname;
-      }
-      const creditsToAdd = packageMap.get(slip.package_id) || 0;
-
-      return {
-        id: slip.id,
-        parent_id: slip.parent_id,
-        file_url: slip.file_url,
-        status: slip.status,
-        created_at: slip.created_at,
-        package_id: slip.package_id,
-        non_refundable: slip.non_refundable,
-        parent_name: slip.parent?.name || '-',
-        parent_phone: slip.parent?.phone || '-',
-        child_nickname: formattedChildName,
-        credits_to_add: creditsToAdd
-      };
-    });
+    return (slips || []).map((slip: any) => ({
+      id: slip.id,
+      parent_id: slip.parent_id,
+      file_url: slip.file_url,
+      status: slip.status,
+      created_at: slip.created_at,
+      package_id: slip.package_id,
+      non_refundable: slip.non_refundable,
+      parent_name: slip.parent?.name || '-',
+      parent_phone: slip.parent?.phone || '-',
+      child_nickname: slip.parent?.children?.[0]?.nickname || slip.parent?.children?.[0]?.full_name || '-',
+      credits_to_add: packageMap.get(slip.package_id) || 0
+    }));
   },
 
   async invokeAdminAction<T = Record<string, unknown>>(
@@ -154,7 +142,7 @@ export const AdminService = {
 
 
 
-  async getAllUsersClassified(): Promise<any[]> {
+  async getAllUsersClassified(): Promise<ClassifiedUser[]> {
     const { data: parents, error } = await supabase
       .from('parents')
       .select(`
@@ -173,10 +161,18 @@ export const AdminService = {
 
     if (error) throw error;
 
-    const mapped = (parents || []).map((p: any) => {
-      const children = (p.children as any[]) || [];
-      const packages = (p.packages as any[]) || [];
-      const bookings = (p.bookings as any[]) || [];
+    const mapped = (parents || []).map((p: {
+      id: string;
+      name: string;
+      phone: string;
+      email?: string;
+      created_at: string;
+      children?: { nickname: string; created_at?: string }[];
+      packages?: { credits_remaining: number; type: string }[];
+      bookings?: { id: string }[];
+    }) => {
+      const children = p.children || [];
+      const packages = p.packages || [];
 
       const totalCredits = packages.reduce((sum, pkg) => sum + (pkg.credits_remaining || 0), 0);
 
@@ -193,7 +189,7 @@ export const AdminService = {
 
       // Calculate latest activity to sort properly
       let latestActivity = new Date(p.created_at).getTime();
-      children.forEach((c: any) => {
+      children.forEach((c: { nickname: string; created_at?: string }) => {
         if (c.created_at) {
           const childTime = new Date(c.created_at).getTime();
           if (childTime > latestActivity) latestActivity = childTime;
@@ -205,7 +201,7 @@ export const AdminService = {
         name: p.name,
         email: p.email,
         phone: p.phone,
-        children_nicknames: children.map((c: any) => c.nickname).join(', '),
+        children_nicknames: children.map((c: { nickname: string }) => c.nickname).join(', '),
         total_credits: totalCredits,
         category,
         latestActivity,
@@ -214,10 +210,10 @@ export const AdminService = {
     });
 
     // Sort by latest activity descending (newest first)
-    return mapped.sort((a: any, b: any) => b.latestActivity - a.latestActivity);
+    return mapped.sort((a: { latestActivity: number }, b: { latestActivity: number }) => b.latestActivity - a.latestActivity);
   },
 
-  async getUserFullDetails(parentId: string): Promise<any> {
+  async getUserFullDetails(parentId: string): Promise<Record<string, unknown> | null> {
     const { data, error } = await supabase
       .from('parents')
       .select(`
@@ -250,7 +246,7 @@ export const AdminService = {
     if (error) throw error;
   },
 
-  async getAllParentsWithCredits(): Promise<any[]> {
+  async getAllParentsWithCredits(): Promise<Record<string, unknown>[]> {
     const { data: parents, error } = await supabase
       .from('parents')
       .select(`
@@ -265,23 +261,29 @@ export const AdminService = {
 
     if (error) throw error;
 
-    return (parents || []).map((p: any) => {
-      const children = (p.children as any[]) || [];
-      const packages = (p.packages as any[]) || [];
+    return (parents || []).map((p: {
+      id: string;
+      name: string;
+      phone: string;
+      children?: { nickname: string }[];
+      packages?: { credits_remaining: number }[];
+    }) => {
+      const children = p.children || [];
+      const packages = p.packages || [];
       const totalCredits = packages.reduce((sum, pkg) => sum + (pkg.credits_remaining || 0), 0);
 
       return {
         id: p.id,
         name: p.name,
         phone: p.phone,
-        children_nicknames: children.map((c: any) => c.nickname).join(', '),
+        children_nicknames: children.map((c: { nickname: string }) => c.nickname).join(', '),
         total_credits: totalCredits,
         raw_parent: p
       };
     });
   },
 
-  async searchParentByPhone(phone: string): Promise<any | null> {
+  async searchParentByPhone(phone: string): Promise<Record<string, unknown> | null> {
     const { data: parent, error } = await supabase
       .from('parents')
       .select('*')
@@ -372,7 +374,7 @@ export const AdminService = {
 
   // ===== Phase 2: User Management =====
 
-  async getAllChildren(): Promise<any[]> {
+  async getAllChildren(): Promise<Record<string, unknown>[]> {
     // Fetch children along with their parent's name and phone
     const { data, error } = await supabase
       .from('children')
@@ -390,7 +392,7 @@ export const AdminService = {
     return data || [];
   },
 
-  async getCreditLogs(parentId: string): Promise<any[]> {
+  async getCreditLogs(parentId: string): Promise<Record<string, unknown>[]> {
     const { data, error } = await supabase
       .from('credit_transactions')
       .select('*')
@@ -401,7 +403,7 @@ export const AdminService = {
     return data || [];
   },
 
-  async updateChildProfile(childId: string, updates: any): Promise<void> {
+  async updateChildProfile(childId: string, updates: Record<string, unknown>): Promise<void> {
     const { error } = await supabase
       .from('children')
       .update(updates)
@@ -410,7 +412,7 @@ export const AdminService = {
     if (error) throw error;
   },
 
-  async getExportCSVData(): Promise<any[]> {
+  async getExportCSVData(): Promise<ExportCSVRow[]> {
     // Dummy implementation to fix TS error.
     return [];
   },
