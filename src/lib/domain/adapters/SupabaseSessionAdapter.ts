@@ -26,6 +26,12 @@ export class SupabaseSessionAdapter implements ISessionRepository {
     return data || [];
   }
 
+  async getOrCreateSessionsForDate(dateStr: string): Promise<Session[]> {
+    const { data, error } = await supabase.rpc('get_or_create_sessions_for_date', { p_date: dateStr });
+    if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
+    return data || [];
+  }
+
   async deleteSessions(ids: string[]): Promise<void> {
     if (!ids.length) return;
     const { error } = await supabase

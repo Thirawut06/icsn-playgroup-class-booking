@@ -12,6 +12,11 @@ export interface ISessionRepository {
   fetchSessionsForDate(dateStr: string): Promise<Session[]>;
 
   /**
+   * Securely get or create sessions for a given date via RPC.
+   */
+  getOrCreateSessionsForDate(dateStr: string): Promise<Session[]>;
+
+  /**
    * Delete empty sessions by their IDs.
    */
   deleteSessions(ids: string[]): Promise<void>;
