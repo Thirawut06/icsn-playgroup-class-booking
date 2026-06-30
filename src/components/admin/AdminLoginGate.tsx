@@ -20,14 +20,14 @@ export function AdminLoginGate({ onSuccess }: AdminLoginGateProps) {
     setLoading(true);
     setError('');
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
+      const authRes = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (authError) throw authError;
+      if (authRes.error) throw authRes.error;
 
-      if (!isAdminUser(data.user)) {
+      if (!isAdminUser(authRes.data.user)) {
          await supabase.auth.signOut();
          throw new Error('บัญชีนี้ไม่มีสิทธิ์การเข้าถึงระดับ Admin (Unauthorized)');
       }

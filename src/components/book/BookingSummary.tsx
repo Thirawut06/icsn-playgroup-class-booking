@@ -67,7 +67,7 @@ export function BookingSummary({
           <div className="space-y-4">
             {/* Unified Summary Card */}
             <div className="bg-gray-50/80 border border-gray-100 rounded-2xl p-4 space-y-3.5">
-              
+
               {/* Date */}
               <div className="flex items-center justify-between">
                 <span className="text-base font-medium text-gray-500">{COPY.BOOKING_FLOW.DATE_LABEL}</span>
@@ -94,7 +94,7 @@ export function BookingSummary({
               {/* Time Slots */}
               <div className="pt-3.5 border-t border-gray-100">
                 <span className="text-base font-medium text-gray-500 block mb-2.5">{COPY.BOOKING_FLOW.SELECT_SESSION_LABEL}</span>
-                
+
                 {availableSessions.length > 0 ? (
                   <div className="flex flex-col gap-2">
                     {availableSessions.map((session) => (
@@ -102,23 +102,21 @@ export function BookingSummary({
                         key={session.id}
                         onClick={() => session.is_active && onSelectSession(session)}
                         disabled={!session.is_active}
-                        className={`w-full text-left px-4 py-3 rounded-xl border font-bold text-base transition-all flex justify-between items-center ${
-                          !session.is_active
-                            ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-70'
-                            : selectedSession?.id === session.id
+                        className={`w-full text-left px-4 py-3 rounded-xl border font-bold text-base transition-all flex justify-between items-center ${!session.is_active
+                          ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-70'
+                          : selectedSession?.id === session.id
                             ? 'bg-icsn-teal text-white border-icsn-teal shadow-md ring-2 ring-icsn-teal/20'
                             : 'bg-white text-icsn-navy border-icsn-teal/30 hover:border-icsn-teal/60 hover:bg-icsn-teal/5'
-                        }`}
+                          }`}
                       >
                         <span>{session.time_label || COPY.BOOKING_FLOW.SESSION_MORNING}</span>
-                        <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${
-                          !session.is_active
-                            ? 'bg-gray-200 text-gray-500'
-                            : selectedSession?.id === session.id 
-                            ? 'bg-white/20 text-white' 
+                        <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${!session.is_active
+                          ? 'bg-gray-200 text-gray-500'
+                          : selectedSession?.id === session.id
+                            ? 'bg-white/20 text-white'
                             : 'bg-icsn-teal/10 text-icsn-teal'
-                        }`}>
-                          {!session.is_active ? 'ปิดให้บริการ' : `ว่าง ${Math.max(0, session.total_capacity - (session.booked_count || 0))}`}
+                          }`}>
+                          {!session.is_active ? 'ปิดรับลงทะเบียน' : `ว่าง ${Math.max(0, session.total_capacity - (session.booked_count || 0))}`}
                         </span>
                       </button>
                     ))}
@@ -126,7 +124,7 @@ export function BookingSummary({
                 ) : (
                   <div className="text-center py-4 text-muted-foreground text-sm border border-dashed border-border rounded-xl">
                     <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-icsn-teal/50" />
-                    <p>กำลังโหลดข้อมูล หรือไม่มีรอบเรียนเปิดให้บริการ</p>
+                    <p>กำลังโหลดข้อมูล หรือไม่มีรอบเรียนเปิดให้ลงทะเบียน</p>
                   </div>
                 )}
               </div>
