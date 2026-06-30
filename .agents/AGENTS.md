@@ -53,3 +53,9 @@ You carefully provide accurate, factual, thoughtful answers, and are a genius at
 ## Supabase Database Management
 - **Manual Role Assignment:** If providing SQL to grant admin rights manually, ALWAYS provide the exact JSONB syntax and explicitly wrap strings (like emails) in single quotes to avoid Postgres syntax errors. Example:
   `UPDATE auth.users SET raw_app_meta_data = raw_app_meta_data || '{"role": "admin"}'::jsonb WHERE email = 'admin@example.com';`
+
+<!-- BEGIN:nextjs-agent-rules -->
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+<!-- END:nextjs-agent-rules -->
