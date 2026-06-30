@@ -18,15 +18,12 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protect admin routes
+  // We do NOT redirect /admin here. The actual protection is securely handled
+  // by AdminLoginGate and Supabase RLS. Redirecting here prevents logged-in 
+  // parents from accessing the admin login screen to switch accounts, and 
+  // can cause infinite redirect loops due to Next.js router caching.
   if (pathname.startsWith('/admin')) {
-    if (user) {
-      if (!isAdminUser(user)) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/'; // Unauthorized, redirect to home
-        return NextResponse.redirect(url);
-      }
-    }
-    // If not authenticated, let them access /admin to see AdminLoginGate
+    // Let them access /admin to see AdminLoginGate or the Dashboard
   }
 
   return supabaseResponse;
