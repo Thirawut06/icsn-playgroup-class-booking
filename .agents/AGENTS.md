@@ -49,10 +49,17 @@ You carefully provide accurate, factual, thoughtful answers, and are a genius at
 
 ## ICSN Playgroup Domain Rules
 - **Daily Operations (Sessions):** When building admin features that operate on daily data (like setting capacity or toggling active status), DO NOT throw errors if a session does not exist for the day. Instead, proactively use `sessionModule.getOrCreateSessionsForDate` to initialize the session before applying the updates.
+- **Time Slot Management (Session Templates):** Changes to default time slots (e.g. changing time labels, capacities, or deleting a time slot) must **only apply to future, uncreated sessions**. They must NEVER retroactively modify or delete existing sessions to prevent breaking historical data or confusing parents who have already booked.
 
 ## Supabase Database Management
 - **Manual Role Assignment:** If providing SQL to grant admin rights manually, ALWAYS provide the exact JSONB syntax and explicitly wrap strings (like emails) in single quotes to avoid Postgres syntax errors. Example:
   `UPDATE auth.users SET raw_app_meta_data = raw_app_meta_data || '{"role": "admin"}'::jsonb WHERE email = 'admin@example.com';`
+
+## Supabase Security & Performance (CRITICAL)
+- **Secure Auth Checks:** Always use `await supabase.auth.getUser()` when verifying authentication for route protection, RBAC, or sensitive actions. NEVER rely on `supabase.auth.getSession()` for authorization, as it only reads local storage and can be spoofed.
+- **Explicit Selects:** NEVER use wildcard selects (`select('*')`) in production code. Always explicitly specify the required columns (e.g., `select('id, name, children(id, nickname)')`) to prevent over-fetching and accidental data exposure.
+- **Edge Function Auth:** Do not manually parse `sessionStorage` to construct Authorization headers for Supabase Edge Functions. The Supabase client automatically attaches the auth header of the current user when using `supabase.functions.invoke()`.
+- **Centralized Role Checking:** Always use centralized helper functions (e.g., `isAdminUser(user)` from `src/lib/auth/roles.ts`) for permission checks rather than writing inline checks against `app_metadata` or `user_metadata`.
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
