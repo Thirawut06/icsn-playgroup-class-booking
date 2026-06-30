@@ -84,7 +84,7 @@ export const AdminUserService = {
           sessions(id, session_date, time_label, total_capacity, booked_count, is_active, theme, activity_desc)
         ),
         credit_transactions(
-          id, parent_id, package_id, amount, action_type, reason, created_at
+          id, parent_id, package_id, amount, action_type, notes, created_at
         ),
         slip_uploads(
           id, parent_id, file_url, status, reviewed_at, created_at

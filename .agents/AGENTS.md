@@ -61,6 +61,19 @@ You carefully provide accurate, factual, thoughtful answers, and are a genius at
 - **Edge Function Auth:** Do not manually parse `sessionStorage` to construct Authorization headers for Supabase Edge Functions. The Supabase client automatically attaches the auth header of the current user when using `supabase.functions.invoke()`.
 - **Centralized Role Checking:** Always use centralized helper functions (e.g., `isAdminUser(user)` from `src/lib/auth/roles.ts`) for permission checks rather than writing inline checks against `app_metadata` or `user_metadata`.
 
+## UI/UX & Tailwind CSS Rules
+- **Tailwind Border Colors:** Always explicitly define a border color (e.g., `border-border`, `border-icsn-teal`) when applying a `border` class. Never use `border` alone, as it defaults to black on some elements/browsers.
+- **Avoid Box-in-Box Anti-Pattern:** Do not nest card components (elements with `bg-white`, `border`, `shadow`) inside an outer wrapper that also has card styling. Place inner card components directly on the application's neutral background (e.g., `bg-icsn-bg`).
+
+## Routing & Middleware Rules
+- **Admin Route Protection:** Do NOT protect the `/admin` route by redirecting users in `middleware.ts`. This prevents logged-in parents from seeing the admin login screen to switch accounts. Rely exclusively on client-side role verification (e.g., `AdminLoginGate`) and backend Supabase RLS.
+
+## Deployment Architecture
+- **Shared Hosting Integration:** When deploying the Next.js app alongside a traditional shared hosting provider (like cPanel/Hosting Lotus), always use Vercel with a Subdomain (via CNAME record). Do not attempt subpath reverse proxying on shared hosting.
+
+## Supabase PostgREST Accuracy
+- **Query Column Matching:** When writing `select()` queries, always verify column names against the actual SQL migration files. Do not assume column names (e.g., `credit_transactions` uses `notes`, not `reason`).
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
