@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ParentService, PackageService, BookingService, supabase } from '@/lib/supabase';
+import { bookingModule } from '@/lib/domain';
 import { ArrowLeft, PlusCircle, CalendarCheck, Info, MapPin, XCircle, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import type { Booking } from '@/types';
 
@@ -93,7 +94,7 @@ export default function MyBookings() {
     setCancelError('');
     setCancelSuccess(false);
     try {
-      await BookingService.cancelBooking(targetBooking.id, parentId);
+      await bookingModule.cancelBookingAsParent(targetBooking.id, parentId);
       setCancelSuccess(true);
       loadData(parentId);
     } catch (error: any) {

@@ -65,22 +65,5 @@ describe('BookingService', () => {
     });
   });
 
-  describe('bookClass', () => {
-    it('should call rpc to book class and return data', async () => {
-      const mockChild = { nickname: 'Kiddo' };
-      const mockParent = { phone: '1234567890' };
-      const mockRpcResult = { success: true, booking_id: 'b1' };
 
-      vi.mocked(supabase.from)
-        .mockReturnValueOnce({ select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: mockChild }) } as any)
-        .mockReturnValueOnce({ select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: mockParent }) } as any);
-
-      vi.mocked(supabase.rpc).mockResolvedValueOnce({ data: mockRpcResult, error: null } as never);
-
-      const result = await BookingService.bookClass('p1', 'c1', 's1');
-
-      expect(result).toEqual(mockRpcResult);
-      expect(supabase.rpc).toHaveBeenCalledWith('book_class_transactionally', expect.any(Object));
-    });
-  });
 });

@@ -15,6 +15,7 @@ import { BookingConfirmModal } from '@/components/book/BookingConfirmModal';
 import { BookingProvider, useBookingContext } from '@/components/book/BookingContext';
 import { useBookingActions } from '@/hooks/useBookingActions';
 import { checkIsBookableDate } from '@/utils/dateUtils';
+import { sessionModule } from '@/lib/domain';
 import { BookingService, supabase } from '@/lib/supabase';
 
 export default function Book() {
@@ -107,7 +108,7 @@ function BookPageContent() {
 
     // Always fetch/create sessions for this date to ensure templates are synced
     try {
-      const newSessions = await BookingService.getOrCreateSessionsForDate(dayObj.dateStr);
+      const newSessions = await sessionModule.getOrCreateSessionsForDate(dayObj.dateStr);
       if (newSessions.length > 0) {
         mergeSessionsForDate(dayObj.dateStr, newSessions);
         currentSessions = newSessions;
