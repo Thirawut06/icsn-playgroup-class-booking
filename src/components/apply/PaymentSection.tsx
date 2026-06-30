@@ -43,7 +43,7 @@ export function PaymentSection({
           {paymentPackages.map(pkg => (
             <label
               key={pkg.id}
-              className={`flex items-center gap-3 p-3.5 border rounded-xl cursor-pointer transition-colors ${packageType === pkg.name ? 'border-icsn-pink bg-icsn-pink/5' : 'border hover:bg-muted/80'}`}
+              className={`flex items-center gap-3 p-3.5 border rounded-xl cursor-pointer transition-colors ${packageType === pkg.name ? 'border-icsn-pink bg-icsn-pink/5' : 'border-border hover:bg-muted/80'}`}
             >
               <input
                 type="radio"

@@ -57,8 +57,8 @@ export function AdminSettings() {
             </div>
           </div>
 
-          <div className="px-6 sm:px-0 pb-6 sm:pb-0">
-            <div className="bg-white border border-border/50 sm:border-border rounded-2xl shadow-sm sm:shadow-md overflow-hidden p-6 transition-all">
+          <div className="px-6 sm:px-0 pb-6 sm:pb-0 pt-6">
+            <div className="transition-all">
                {activeSubTab === 'system' ? <SettingsTab /> : null}
                {activeSubTab === 'calendar' ? <CalendarSettingsTab /> : null}
                {activeSubTab === 'packages' ? <PackageOptionsTab /> : null}
