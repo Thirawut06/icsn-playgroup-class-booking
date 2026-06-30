@@ -1,36 +1,40 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
+import { isAdminUser } from '@/lib/auth/roles';
 
 interface AdminLoginGateProps {
   onSuccess: () => void;
 }
 
 export function AdminLoginGate({ onSuccess }: AdminLoginGateProps) {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const verifyPassword = async (e: React.FormEvent) => {
+  const verifyAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('admin-actions', {
-        body: { action: 'verify-password', password, payload: {} },
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-      if (fnError) throw fnError;
-      if (data?.success) {
-        sessionStorage.setItem('icsn_admin_verified', 'true');
-        sessionStorage.setItem('icsn_admin_pwd', password);
-        onSuccess();
-      } else {
-        throw new Error(data?.error || 'รหัสผ่านไม่ถูกต้อง');
+
+      if (authError) throw authError;
+
+      if (!isAdminUser(data.user)) {
+         await supabase.auth.signOut();
+         throw new Error('บัญชีนี้ไม่มีสิทธิ์การเข้าถึงระดับ Admin (Unauthorized)');
       }
+
+      onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'รหัสผ่านไม่ถูกต้อง');
+      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -66,8 +70,19 @@ export function AdminLoginGate({ onSuccess }: AdminLoginGateProps) {
           </p>
         </div>
 
-        <form onSubmit={verifyPassword} className="space-y-4 pt-2">
+        <form onSubmit={verifyAdmin} className="space-y-4 pt-2">
           <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+              Admin Email / อีเมลแอดมิน
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              placeholder="admin@example.com"
+              className="block w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal text-black text-center font-mono placeholder-gray-300 text-lg mb-4"
+            />
             <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
               Admin Password / รหัสผ่านแอดมิน
             </label>

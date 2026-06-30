@@ -66,7 +66,7 @@ describe('ParentService', () => {
       
       expect(parent.id).toBe('user-123');
       expect(supabase.auth.signUp).toHaveBeenCalledWith({ email: 'test@test.com', password: 'password123' });
-      expect(mockInsert).toHaveBeenCalledWith([{ id: 'user-123', phone: '0812345678', name: 'John Doe' }]);
+      expect(mockInsert).toHaveBeenCalledWith([{ id: 'user-123', email: 'test@test.com', phone: '0812345678', name: 'John Doe' }]);
     });
   });
 

@@ -38,7 +38,7 @@ export function BookingConfirmModal({
           </div>
           <div className="flex justify-between items-start text-base gap-4">
             <span className="text-muted-foreground font-medium shrink-0">{COPY.BOOKING_FLOW.DATE_LABEL}</span>
-            <span className="font-bold text-icsn-teal text-right break-words">{dateLabel}</span>
+            <span className="font-bold text-icsn-teal text-right break-words" suppressHydrationWarning>{dateLabel}</span>
           </div>
           <div className="flex justify-between items-start text-base gap-4">
             <span className="text-muted-foreground font-medium shrink-0">{COPY.BOOKING_FLOW.SELECT_SESSION_LABEL}</span>

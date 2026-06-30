@@ -33,10 +33,6 @@ export function LoginForm() {
         if (!user) throw new Error("ไม่พบข้อมูลผู้ใช้");
 
         const parent = await ParentService.completeProfile(user.id, completeName.trim(), cleanPhone);
-        localStorage.setItem(STORAGE_KEYS.PARENT_ID, parent.id);
-        localStorage.setItem(STORAGE_KEYS.PARENT_NAME, parent.name);
-        localStorage.setItem(STORAGE_KEYS.PARENT_PHONE, parent.phone);
-        localStorage.setItem(STORAGE_KEYS.PARENT_EMAIL, email.trim());
         
         router.push('/apply');
         return;
@@ -47,11 +43,6 @@ export function LoginForm() {
       }
 
       const parent = await ParentService.signIn(email.trim(), password);
-
-      localStorage.setItem(STORAGE_KEYS.PARENT_ID, parent.id);
-      localStorage.setItem(STORAGE_KEYS.PARENT_NAME, parent.name);
-      localStorage.setItem(STORAGE_KEYS.PARENT_PHONE, parent.phone);
-      localStorage.setItem(STORAGE_KEYS.PARENT_EMAIL, email.trim());
 
       const children = await ParentService.getChildren(parent.id);
       if (children && children.length > 0) {

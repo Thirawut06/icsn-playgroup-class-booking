@@ -1,0 +1,108 @@
+import { supabase } from '../supabase';
+import { DailyAttendanceRow, PendingSlipRow, ExportCSVRow, Session } from '../../types';
+import { BOOKING_STATUS } from '@/config/constants';
+import { AuthState } from '../auth/rbac';
+
+export const AdminBookingService = {
+  async adminAddWalkin(phone: string, childName: string): Promise<{ parent_id: string, child_id: string }> {
+    const { data, error } = await supabase.rpc('admin_add_walkin', {
+      p_phone: phone,
+      p_child_name: childName
+    });
+    if (error) throw error;
+    return data;
+  },
+
+
+  async getDailyAttendance(dateStr: string): Promise<DailyAttendanceRow[]> {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select(`
+        id,
+        created_at,
+        child_name_snapshot,
+        parent_phone_snapshot,
+        child:children(id, nickname, full_name, age, food_allergy),
+        parent:parents(name, phone)
+      `)
+      .eq('session_date', dateStr)
+      .eq('status', BOOKING_STATUS.CONFIRMED)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      nickname: row.child?.nickname || row.child_name_snapshot || '(Deleted User)',
+      full_name: row.child?.full_name,
+      age: row.child?.age ?? 0,
+      food_allergy: row.child?.food_allergy ?? null,
+      parent_name: row.parent?.name || '-',
+      parent_phone: row.parent?.phone || row.parent_phone_snapshot || '-',
+      created_at: row.created_at,
+    }));
+  },
+
+  async getPendingSlips(): Promise<PendingSlipRow[]> {
+    const { data: slips, error } = await supabase
+      .from('slip_uploads')
+      .select(`
+        id,
+        parent_id,
+        file_url,
+        status,
+        created_at,
+        package_id,
+        non_refundable,
+        parent:parents(name, phone, children(full_name, nickname))
+      `)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    // Fetch package options to map credits since there is no FK
+    const { data: packages } = await supabase.from('package_options').select('id, name, credits');
+    const packageMap = new Map((packages || []).map((p: any) => [p.name, p.credits]));
+
+    return (slips || []).map((slip: any) => ({
+      id: slip.id,
+      parent_id: slip.parent_id,
+      file_url: slip.file_url,
+      status: slip.status,
+      created_at: slip.created_at,
+      package_id: slip.package_id,
+      non_refundable: slip.non_refundable,
+      parent_name: slip.parent?.name || '-',
+      parent_phone: slip.parent?.phone || '-',
+      child_nickname: slip.parent?.children?.[0]?.nickname || slip.parent?.children?.[0]?.full_name || '-',
+      credits_to_add: packageMap.get(slip.package_id) || 0
+    }));
+  },
+
+  async invokeAdminAction<T = Record<string, unknown>>(
+    actionType: string,
+    payload: Record<string, unknown> = {}
+  ): Promise<T> {
+    const { data, error } = await supabase.functions.invoke('admin-actions', {
+      body: { action: actionType, payload }
+    });
+    
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data as T;
+  },
+
+  async adjustCredits(parentId: string, amount: number, reason: string): Promise<number> {
+    const result = await this.invokeAdminAction<{ creditsRemaining: number }>('adjust-credits', {
+      parentId,
+      amount,
+      reason,
+    });
+    return result.creditsRemaining;
+  },
+
+
+  async getExportCSVData(): Promise<ExportCSVRow[]> {
+    return [];
+  }
+};

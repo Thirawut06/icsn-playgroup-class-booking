@@ -32,12 +32,7 @@ export function SignupForm() {
       }
 
       const parent = await ParentService.signUp(email.trim(), password, parentName.trim(), cleanPhone);
-
-      localStorage.setItem(STORAGE_KEYS.PARENT_ID, parent.id);
-      localStorage.setItem(STORAGE_KEYS.PARENT_NAME, parent.name);
-      localStorage.setItem(STORAGE_KEYS.PARENT_PHONE, parent.phone);
-      localStorage.setItem(STORAGE_KEYS.PARENT_EMAIL, email.trim());
-
+      
       router.push('/apply');
     } catch (error: unknown) {
       setErrorMessage(error instanceof Error && error.message ? error.message : "เกิดข้อผิดพลาดในการสมัครสมาชิก");

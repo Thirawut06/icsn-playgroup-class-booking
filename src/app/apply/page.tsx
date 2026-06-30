@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ParentService, PackageService } from '@/lib/supabase';
-import { STORAGE_KEYS, FILE_UPLOAD } from '@/config/constants';
+import { ParentService, PackageService, supabase } from '@/lib/supabase';
+import { FILE_UPLOAD } from '@/config/constants';
 import { Ticket, Wallet, ChevronRight, Check, ArrowLeft, Loader2, UploadCloud, AlertCircle } from 'lucide-react';
 import type { PackageOption } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -78,29 +78,32 @@ export default function Apply() {
     }
   }, [path]);
 
+  const [parentId, setParentId] = useState<string | null>(null);
+
   useEffect(() => {
-    const parentId = localStorage.getItem(STORAGE_KEYS.PARENT_ID);
-    if (!parentId) {
-      router.push('/login?tab=signup');
-      return;
-    }
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        router.push('/login?tab=signup');
+        return;
+      }
+      setParentId(user.id);
+      
+      ParentService.getParentDetails(user.id).then(parent => {
+        if (parent) {
+          setParentEmail(parent.email || '');
+          setParentName(parent.name || '');
+          setParentPhone(parent.phone || '');
 
-    ParentService.getParentDetails(parentId).then(parent => {
-      if (parent) {
-        setParentEmail(parent.email || localStorage.getItem(STORAGE_KEYS.PARENT_EMAIL) || '');
-        setParentName(parent.name || localStorage.getItem(STORAGE_KEYS.PARENT_NAME) || '');
-        setParentPhone(parent.phone || localStorage.getItem(STORAGE_KEYS.PARENT_PHONE) || '');
+          if (parent.name) setIsReturningParent(true);
 
-        // Check if parent name/phone already stored (returning user = disabled fields)
-        if (localStorage.getItem(STORAGE_KEYS.PARENT_NAME)) setIsReturningParent(true);
-
-        if (parent.children && parent.children.length > 0) {
-          const params = new URLSearchParams(window.location.search);
-          if (params.get('addChild') !== 'true') {
-            router.push('/book');
+          if (parent.children && parent.children.length > 0) {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('addChild') !== 'true') {
+              router.push('/book');
+            }
           }
         }
-      }
+      });
     });
 
     PackageService.getPackageOptions().then(setPaymentPackages).catch(console.error);
@@ -128,7 +131,6 @@ export default function Apply() {
     setErrorMessage('');
 
     try {
-      const parentId = localStorage.getItem(STORAGE_KEYS.PARENT_ID);
       if (!parentId) throw new Error("ไม่พบข้อมูลผู้ปกครอง");
 
       // Validate media permission

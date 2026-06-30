@@ -27,3 +27,10 @@ export function formatDateShort(dateStr: string | null | undefined): string {
     year: 'numeric'
   });
 }
+
+export class AppError extends Error {
+  constructor(public message: string, public code?: string, public details?: any) {
+    super(message);
+    this.name = 'AppError';
+  }
+}

@@ -2,20 +2,30 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { LogOut } from 'lucide-react';
+import { LogOut, Loader2 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { AdminLoginGate } from '@/components/admin/AdminLoginGate';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
-import { AdminDashboard } from '@/components/admin/views/AdminDashboard';
-import { AdminDailyOps } from '@/components/admin/views/AdminDailyOps';
-import { AdminSlips } from '@/components/admin/views/AdminSlips';
-import { AdminUsers } from '@/components/admin/views/AdminUsers';
-import { AdminSettings } from '@/components/admin/views/AdminSettings';
-import { AdminTimeSlots } from '@/components/admin/views/AdminTimeSlots';
-import { AdminService } from '@/lib/supabase';
+import { AdminService, supabase } from '@/lib/supabase';
 import type { AdminTab } from '@/components/admin/admin-types';
+import { isAdminUser } from '@/lib/auth/roles';
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center h-64">
+    <Loader2 className="w-8 h-8 animate-spin text-icsn-teal" />
+  </div>
+);
+
+const AdminDashboard = dynamic(() => import('@/components/admin/views/AdminDashboard').then(mod => mod.AdminDashboard), { loading: LoadingFallback });
+const AdminDailyOps = dynamic(() => import('@/components/admin/views/AdminDailyOps').then(mod => mod.AdminDailyOps), { loading: LoadingFallback });
+const AdminSlips = dynamic(() => import('@/components/admin/views/AdminSlips').then(mod => mod.AdminSlips), { loading: LoadingFallback });
+const AdminUsers = dynamic(() => import('@/components/admin/views/AdminUsers').then(mod => mod.AdminUsers), { loading: LoadingFallback });
+const AdminSettings = dynamic(() => import('@/components/admin/views/AdminSettings').then(mod => mod.AdminSettings), { loading: LoadingFallback });
+const AdminTimeSlots = dynamic(() => import('@/components/admin/views/AdminTimeSlots').then(mod => mod.AdminTimeSlots), { loading: LoadingFallback });
 
 export default function AdminPage() {
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [pendingSlipCount, setPendingSlipCount] = useState(0);
 
@@ -29,9 +39,13 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (sessionStorage.getItem('icsn_admin_verified') === 'true') {
-      setIsAuthorized(true);
-    }
+    const checkAuth = async () => {
+      setIsAuthChecking(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthorized(isAdminUser(user));
+      setIsAuthChecking(false);
+    };
+    checkAuth();
   }, []);
 
   useEffect(() => {
@@ -40,11 +54,15 @@ export default function AdminPage() {
     }
   }, [isAuthorized, refreshPendingCount]);
 
-  const logout = () => {
-    sessionStorage.removeItem('icsn_admin_verified');
-    sessionStorage.removeItem('icsn_admin_pwd');
+  const logout = async () => {
+    await AdminService.invokeAdminAction<{ success: boolean }>('dummy').catch(() => {}); // Just for safety if we need to call edge function
+    await supabase.auth.signOut();
     setIsAuthorized(false);
   };
+
+  if (isAuthChecking) {
+    return <LoadingFallback />;
+  }
 
   if (!isAuthorized) {
     return (

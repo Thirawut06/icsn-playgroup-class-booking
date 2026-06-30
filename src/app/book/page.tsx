@@ -15,7 +15,7 @@ import { BookingConfirmModal } from '@/components/book/BookingConfirmModal';
 import { BookingProvider, useBookingContext } from '@/components/book/BookingContext';
 import { useBookingActions } from '@/hooks/useBookingActions';
 import { checkIsBookableDate } from '@/utils/dateUtils';
-import { BookingService } from '@/lib/supabase';
+import { BookingService, supabase } from '@/lib/supabase';
 
 export default function Book() {
   return (
@@ -92,8 +92,9 @@ function BookPageContent() {
 
   // ─── Event Handlers ──────────────────────────────────────────
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     localStorage.clear();
+    await supabase.auth.signOut();
     router.push('/login');
   };
 

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ParentService, PackageService, BookingService } from '@/lib/supabase';
+import { ParentService, PackageService, BookingService, supabase } from '@/lib/supabase';
 import { ArrowLeft, PlusCircle, CalendarCheck, Info, MapPin, XCircle, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import type { Booking } from '@/types';
 
@@ -20,13 +20,14 @@ export default function MyBookings() {
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
-    const pId = localStorage.getItem('icsn_parent_id');
-    if (!pId) {
-      router.push('/login');
-      return;
-    }
-    setParentId(pId);
-    loadData(pId);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      setParentId(user.id);
+      loadData(user.id);
+    });
   }, [router]);
 
   const loadData = async (pId: string) => {
@@ -183,7 +184,7 @@ export default function MyBookings() {
                   <div key={bk.id} className="border border-border rounded-2xl p-4 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center hover:border-icsn-teal/40 transition-colors bg-muted/50">
                     <div className="flex gap-4 items-start w-full sm:w-auto">
                       <div className="w-12 h-12 bg-white rounded-xl border border-border flex flex-col items-center justify-center shrink-0 shadow-sm">
-                        <span className="text-xs font-bold text-icsn-pink uppercase">{new Date(sDate).toLocaleDateString('en-US', { month: 'short' })}</span>
+                        <span className="text-xs font-bold text-icsn-pink uppercase" suppressHydrationWarning>{new Date(sDate).toLocaleDateString('en-US', { month: 'short' })}</span>
                         <span className="text-lg font-extrabold text-foreground leading-none">{new Date(sDate).getDate()}</span>
                       </div>
                       <div className="space-y-1 flex-1">

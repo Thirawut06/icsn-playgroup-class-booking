@@ -41,7 +41,7 @@ export function UpcomingBookings({ onCancelRequest }: UpcomingBookingsProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-white shadow-sm border border-icsn-teal/20 text-icsn-teal rounded-xl flex flex-col items-center justify-center font-bold">
-                    <span className="text-xs leading-none mb-0.5">{bDate.toLocaleDateString('th-TH', { month: 'short' })}</span>
+                    <span className="text-xs leading-none mb-0.5" suppressHydrationWarning>{bDate.toLocaleDateString('th-TH', { month: 'short' })}</span>
                     <span className="text-lg leading-none">{bDate.getDate()}</span>
                   </div>
                   <div>

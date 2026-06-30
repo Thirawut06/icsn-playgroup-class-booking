@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ParentService, PackageService, BookingService, SettingsService } from '@/lib/supabase';
+import { ParentService, PackageService, BookingService, SettingsService, supabase } from '@/lib/supabase';
 import type { Child, Package, Session, PackageOption, Booking } from '@/types';
 import type { SystemSettings } from '@/lib/services/settings.service';
 import { STORAGE_KEYS } from '@/config/constants';
@@ -85,14 +85,14 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
   };
 
   useEffect(() => {
-    const pId = localStorage.getItem(STORAGE_KEYS.PARENT_ID);
-    if (!pId) {
-      router.push('/login');
-      return;
-    }
-    // eslint-disable-next-line
-    setParentId(pId);
-    loadData(pId);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      setParentId(user.id);
+      loadData(user.id);
+    });
   }, [router]);
 
   return (

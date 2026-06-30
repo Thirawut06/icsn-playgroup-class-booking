@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookingService } from '@/lib/supabase';
+import { bookingModule } from '@/lib/domain';
 import type { Session, Package } from '@/types';
 
 interface UseBookingActionsProps {
@@ -38,12 +38,12 @@ export function useBookingActions({
         throw new Error("กรุณาเลือกรอบเวลาที่ต้องการจอง");
       }
       
-      const hasDuplicate = await BookingService.hasDuplicateBooking(selectedChildId, finalSessionId);
+      const hasDuplicate = await bookingModule.hasDuplicateBooking(selectedChildId, finalSessionId);
       if (hasDuplicate) {
         throw new Error("คุณได้จองสิทธิ์ให้น้องในรอบเวลานี้ไปแล้ว");
       }
       
-      await BookingService.bookClass(parentId, selectedChildId, finalSessionId, pkgToUse.id);
+      await bookingModule.bookClass(parentId, selectedChildId, finalSessionId);
       clearSelection();
       onSuccess();
     } catch (e: unknown) {
@@ -61,7 +61,7 @@ export function useBookingActions({
     setCancelError('');
     setCancelSuccess(false);
     try {
-      await BookingService.cancelBooking(bookingId, parentId);
+      await bookingModule.cancelBookingAsParent(bookingId, parentId);
       setCancelSuccess(true);
       onSuccess(); // Re-fetch data
     } catch (e: unknown) {
@@ -88,3 +88,4 @@ export function useBookingActions({
     executeCancel
   };
 }
+

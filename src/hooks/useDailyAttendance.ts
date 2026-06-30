@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, FormEvent } from 'react';
-import { AdminService, BookingService } from '@/lib/supabase';
+import { AdminService } from '@/lib/supabase';
+import { bookingModule, sessionModule } from '@/lib/domain';
 import type { DailyAttendanceRow, Session } from '@/types';
 import { CLASS_CONFIG } from '@/config/constants';
 import toast from 'react-hot-toast';
@@ -53,11 +54,11 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     if (!walkinPhone || !walkinName) return;
     setWalkinLoading(true);
     try {
-      const sessions = await BookingService.getOrCreateSessionsForDate(dailyDate);
+      const sessions = await sessionModule.getOrCreateSessionsForDate(dailyDate);
       if (!sessions || sessions.length === 0) throw new Error("ไม่พบรอบเรียนสำหรับวันนี้");
       const sess = sessions[0]; // TODO: Allow selecting specific session for walk-ins
       const { child_id } = await AdminService.adminAddWalkin(walkinPhone, walkinName);
-      await AdminService.adminBookClass(child_id, sess.id, true);
+      await bookingModule.adminBookClass(child_id, sess.id, true);
       setWalkinPhone('');
       setWalkinName('');
       await loadData();
@@ -75,7 +76,7 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     if (!reason?.trim()) return;
     if (!confirm('แน่ใจหรือไม่ว่าต้องการยกเลิกการจองนี้? (ระบบจะคืนเครดิตให้อัตโนมัติ)')) return;
     try {
-      await AdminService.invokeAdminAction('cancel-booking', { bookingId, cancelReason: reason.trim() });
+      await bookingModule.cancelBookingAsAdmin(bookingId, reason.trim());
       await loadData();
       onRefresh?.();
     } catch (err) {
@@ -95,7 +96,7 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     }
     setSavingCapacity(true);
     try {
-      const updated = await AdminService.updateSessionCapacity(session.id, cap);
+      const updated = await sessionModule.updateSessionCapacity(session.id, cap);
       setSession(updated);
       toast.success(COPY.ALERTS.UPDATE_CAPACITY_SUCCESS);
     } catch (err) {
@@ -117,7 +118,7 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     if (!confirm(msg)) return;
     setTogglingSession(true);
     try {
-      await AdminService.toggleSessionActive(session.id, newState);
+      await sessionModule.toggleSessionActive(session.id, newState);
       setSession({ ...session, is_active: newState });
     } catch (err) {
       toast.error(COPY.ALERTS.ERROR_GENERIC(getErrorMessage(err)));

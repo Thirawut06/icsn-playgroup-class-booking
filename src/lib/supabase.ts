@@ -1,24 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
-import { env } from '../env';
+import { createClient } from './supabase/client';
 
-const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-declare global {
-  var _supabaseInstance: ReturnType<typeof createClient> | undefined;
-}
-
-const createOrGetSupabase = () => {
-  if (typeof window === 'undefined') {
-    return createClient(supabaseUrl, supabaseAnonKey);
-  }
-  if (!globalThis._supabaseInstance) {
-    globalThis._supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
-  }
-  return globalThis._supabaseInstance;
-};
-
-export const supabase = createOrGetSupabase();
+export const supabase = createClient();
 
 // Export the newly separated services
 export * from './services/parent.service';

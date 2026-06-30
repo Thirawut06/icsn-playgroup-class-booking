@@ -6,30 +6,35 @@ import React from 'react';
 // Mock dependencies
 vi.mock('@/lib/supabase', () => ({
   AdminService: {
-    getAllParentsWithCredits: vi.fn().mockResolvedValue([]),
-    getAllChildren: vi.fn().mockResolvedValue([]),
+    getAllUsersClassified: vi.fn().mockResolvedValue([]),
   }
 }));
 
 describe('AdminUsers Component', () => {
-  it('renders both Parents and Children tabs and allows switching', async () => {
+  it('renders the users datatable and filter controls', async () => {
     render(<AdminUsers />);
     
     // Expect to see the header
     expect(screen.getByText(/จัดการผู้ใช้งาน/i)).toBeInTheDocument();
     
-    // Both tabs should be present
-    const parentsTabBtn = screen.getByText(/ผู้ปกครองและเครดิต/i);
-    const childrenTabBtn = screen.getByText(/ข้อมูลนักเรียน/i);
-    expect(parentsTabBtn).toBeInTheDocument();
-    expect(childrenTabBtn).toBeInTheDocument();
+    // Tabs (segmented control) should be present
+    const allTabBtn = screen.getByText(/ทั้งหมด \(All\)/i);
+    const paymentTabBtn = screen.getByText(/สมาชิกปกติ \(Payment\)/i);
+    const trialTabBtn = screen.getByText(/ทดลองเรียน \(Trial\)/i);
+    const walkinTabBtn = screen.getByText(/Walk-in \(ไม่มีแพ็กเกจ\)/i);
     
-    // Switch to Children tab
-    fireEvent.click(childrenTabBtn);
+    expect(allTabBtn).toBeInTheDocument();
+    expect(paymentTabBtn).toBeInTheDocument();
+    expect(trialTabBtn).toBeInTheDocument();
+    expect(walkinTabBtn).toBeInTheDocument();
     
-    // Ensure we see the student search input
+    // Switch to trial tab
+    fireEvent.click(trialTabBtn);
+    
+    // Ensure we see the search input
     await waitFor(() => {
-      expect(screen.getByText(/ค้นหาข้อมูลนักเรียน/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/ค้นหาชื่อ, เบอร์, ชื่อเล่นลูก.../i)).toBeInTheDocument();
     });
   });
 });
+

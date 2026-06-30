@@ -16,6 +16,10 @@ async function sendGoogleChat(message: string) {
   }).catch(e => console.error("Webhook failed:", e))
 }
 
+function isAdminUser(user: { app_metadata?: { role?: unknown } } | null | undefined) {
+  return user?.app_metadata?.role === 'admin'
+}
+
 async function resolveCreditsFromSlip(supabase: ReturnType<typeof createClient>, slip: { package_id?: string | null; file_url?: string }) {
   let creditsToAdd = 10
   if (slip.package_id) {
@@ -49,11 +53,11 @@ serve(async (req) => {
   }
 
   try {
-    const { action, payload = {}, password } = await req.json()
+    const { action, payload = {} } = await req.json()
 
-    const ADMIN_PASSWORD = Deno.env.get('ADMIN_PASSWORD') || 'admin123'
-    if (password !== ADMIN_PASSWORD) {
-      throw new Error('รหัสผ่าน Admin ไม่ถูกต้อง (Invalid Admin Password)')
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      throw new Error('Unauthorized: Missing auth header')
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
@@ -62,6 +66,19 @@ serve(async (req) => {
       throw new Error('Supabase environment variables not set')
     }
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') || '', {
+      global: { headers: { Authorization: authHeader } }
+    })
+    
+    const { data: { user }, error: userError } = await userClient.auth.getUser()
+    if (userError || !user) {
+       throw new Error('Unauthorized: Invalid token')
+    }
+    
+    if (!isAdminUser(user)) {
+       throw new Error('Unauthorized: Admin access required')
+    }
 
     if (action === 'verify-password') {
       return new Response(JSON.stringify({ success: true }), {
