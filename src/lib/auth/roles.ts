@@ -1,12 +1,8 @@
+import { User } from '@supabase/supabase-js';
+
 export type TrustedRole = 'admin' | 'parent' | 'guest';
 
-type UserWithAppMetadata = {
-  app_metadata?: {
-    role?: unknown;
-  } | null;
-} | null | undefined;
-
-export function getTrustedRole(user: UserWithAppMetadata): TrustedRole {
+export function getTrustedRole(user: User | null | undefined): TrustedRole {
   if (!user) {
     return 'guest';
   }
@@ -14,6 +10,6 @@ export function getTrustedRole(user: UserWithAppMetadata): TrustedRole {
   return user.app_metadata?.role === 'admin' ? 'admin' : 'parent';
 }
 
-export function isAdminUser(user: UserWithAppMetadata): boolean {
+export function isAdminUser(user: User | null | undefined): boolean {
   return getTrustedRole(user) === 'admin';
 }
