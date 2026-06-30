@@ -85,10 +85,6 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
   };
 
   const handleSaveCapacity = async () => {
-    if (!session) {
-      toast.error(COPY.ALERTS.NO_SESSION_YET);
-      return;
-    }
     const cap = parseInt(capacityEdit, 10);
     if (!cap || cap < 1) {
       toast.error(COPY.ALERTS.INVALID_CAPACITY);
@@ -96,7 +92,13 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     }
     setSavingCapacity(true);
     try {
-      const updated = await sessionModule.updateSessionCapacity(session.id, cap);
+      let targetSessionId = session?.id;
+      if (!targetSessionId) {
+        const sessions = await sessionModule.getOrCreateSessionsForDate(dailyDate);
+        if (!sessions || sessions.length === 0) throw new Error("ไม่สามารถสร้าง session ได้");
+        targetSessionId = sessions[0].id;
+      }
+      const updated = await sessionModule.updateSessionCapacity(targetSessionId, cap);
       setSession(updated);
       toast.success(COPY.ALERTS.UPDATE_CAPACITY_SUCCESS);
     } catch (err) {
@@ -107,19 +109,24 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
   };
 
   const handleToggleSession = async () => {
-    if (!session) {
-      toast.error(COPY.ALERTS.NO_SESSION_FOUND);
-      return;
-    }
-    const newState = !session.is_active;
+    const currentState = session ? session.is_active : true; // Default is active if not exists
+    const newState = !currentState;
     const msg = newState
       ? 'เปิดรับจองวันนี้อีกครั้ง?'
       : 'ปิดรับจองวันนี้ (ผู้ปกครองจะไม่สามารถจองวันนี้ได้)?';
     if (!confirm(msg)) return;
+    
     setTogglingSession(true);
     try {
-      await sessionModule.toggleSessionActive(session.id, newState);
-      setSession({ ...session, is_active: newState });
+      let targetSessionId = session?.id;
+      if (!targetSessionId) {
+        const sessions = await sessionModule.getOrCreateSessionsForDate(dailyDate);
+        if (!sessions || sessions.length === 0) throw new Error("ไม่สามารถสร้าง session ได้");
+        targetSessionId = sessions[0].id;
+      }
+      await sessionModule.toggleSessionActive(targetSessionId, newState);
+      const updatedSess = await AdminService.getSessionForDate(dailyDate);
+      setSession(updatedSess);
     } catch (err) {
       toast.error(COPY.ALERTS.ERROR_GENERIC(getErrorMessage(err)));
     } finally {
