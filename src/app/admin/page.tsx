@@ -81,7 +81,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col text-gray-800 font-sarabun">
       <header className="bg-white border-b border-gray-100 shadow-xs no-print sticky top-0 z-40">
-        <div className="max-w-[1600px] w-full mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-[1600px] w-full mx-auto px-4 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex items-center justify-center w-12 h-auto shrink-0">
               <Image
@@ -125,14 +125,18 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <main className="max-w-[1600px] w-full mx-auto px-4 py-6 flex-1 flex flex-col md:flex-row gap-6">
-        <AdminSidebar
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          pendingSlipCount={pendingSlipCount}
-        />
+      <main className="max-w-[1600px] w-full mx-auto px-4 lg:px-8 py-6 lg:py-8 flex-1 flex flex-col md:flex-row gap-6 lg:gap-10 items-start">
+        {/* Sticky Sidebar Wrapper */}
+        <div className="w-full md:w-64 shrink-0 md:sticky md:top-24 md:max-h-[calc(100vh-8rem)] md:overflow-y-auto no-scrollbar pb-6">
+          <AdminSidebar
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            pendingSlipCount={pendingSlipCount}
+          />
+        </div>
 
-        <div className="flex-1 min-w-0">
+        {/* Main Content Area */}
+        <div className="flex-1 min-w-0 pb-12">
           {activeTab === 'dashboard' ? <AdminDashboard onRefresh={refreshPendingCount} /> : null}
           {activeTab === 'daily_ops' ? <AdminDailyOps onRefresh={refreshPendingCount} /> : null}
           {activeTab === 'slips' ? <AdminSlips onRefresh={refreshPendingCount} /> : null}

@@ -1,5 +1,9 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
+import dotenv from 'dotenv';
+
+// Load .env.local for tests
+dotenv.config({ path: '.env.local' });
 
 // Mock matchMedia for jsdom
 Object.defineProperty(window, 'matchMedia', {

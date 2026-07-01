@@ -71,11 +71,10 @@ export function AdminDashboard({ onRefresh }: { onRefresh?: () => void }) {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       
       {/* Top Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard icon={CalendarCheck} color="blue" label="ยอดจองวันนี้" description="การจองเรียนใหม่" value={`${stats?.todayBookings || 0} / ${stats?.todayCapacity || CLASS_CONFIG.DEFAULT_CAPACITY} คน`} loading={statsLoading} />
         <StatCard icon={ReceiptText} color="amber" label="สลิปรอตรวจสอบ" description="ยอดโอนรอตรวจสอบ" value={`${stats?.pendingSlips || 0} รายการ`} loading={statsLoading} />
         <StatCard icon={Users} color="emerald" label="จำนวนเด็กในระบบ" description="ยอดนักเรียนรวมทั้งหมดในระบบ" value={`${stats?.totalChildren || 0} คน`} loading={statsLoading} />
-        <StatCard icon={CreditCard} color="purple" label="ครอบครัวที่ใช้งาน" description="จำนวนครอบครัวทั้งหมดในระบบ" value={`${stats?.activePackages || 0} ครอบครัว`} loading={statsLoading} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

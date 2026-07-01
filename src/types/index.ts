@@ -150,3 +150,16 @@ export interface ClassifiedUser {
   latestActivity: number;
   raw_parent?: any;
 }
+
+export interface SubmitChildPayload {
+  parentId: string;
+  childName: string;
+  childNickname: string;
+  childDob: string;
+  childPhotoFile: File | null;
+  parentPhotoFile: File | null;
+  allergy: string;
+  info: string;
+  mediaPerm: boolean;
+  noPhotoPerm: boolean;
+}

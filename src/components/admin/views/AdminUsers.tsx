@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Users, Search, Loader2, Info } from 'lucide-react';
-import { AdminPanel, AdminPanelHeader } from '../admin-ui';
+import { AdminPanel, AdminPanelHeader, AdminDataTable } from '../admin-ui';
 import { AdminService } from '@/lib/supabase';
 import type { ClassifiedUser } from '@/types';
 import { UserDetailDrawer } from '../UserDetailDrawer';
@@ -108,71 +108,67 @@ export function AdminUsers() {
             </div>
           </div>
 
-          {/* Table */}
-          <div className="bg-white border border-border rounded-2xl shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-muted/80 border-b border-border text-sm">
-                    <th className="px-6 py-4 font-bold text-muted-foreground">ผู้ปกครอง</th>
-                    <th className="px-6 py-4 font-bold text-muted-foreground">ชื่อนักเรียน</th>
-                    <th className="px-6 py-4 font-bold text-muted-foreground text-center">เครดิตคงเหลือ</th>
-                    <th className="px-6 py-4 font-bold text-muted-foreground text-center">จัดการ</th>
+          <AdminDataTable
+            headers={[
+              { label: 'ผู้ปกครอง' },
+              { label: 'ชื่อนักเรียน' },
+              { label: 'เครดิตคงเหลือ', align: 'center' },
+              { label: 'จัดการ', align: 'center' },
+            ]}
+          >
+            {loading ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-icsn-teal" />
+                </td>
+              </tr>
+            ) : filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
+                  ไม่พบข้อมูล
+                </td>
+              </tr>
+            ) : (
+              <>
+                {filteredUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-6 py-4">
+                      <p className="font-bold text-icsn-navy">{user.name}</p>
+                      <p className="text-sm text-muted-foreground">{user.phone} • {user.email || '-'}</p>
+                      <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${
+                        user.category === 'payment' ? 'bg-info/10 text-info' :
+                        user.category === 'trial' ? 'bg-warning/10 text-warning' :
+                        user.category === 'walk-in' ? 'bg-muted text-foreground' : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {user.category.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-medium text-foreground">{user.children_nicknames || '-'}</p>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className={`inline-flex items-center justify-center min-w-[3rem] h-8 rounded-full font-bold text-sm border ${
+                        user.total_credits > 0 ? 'bg-success/10 text-success border-success/20' : 'bg-muted text-muted-foreground border-border'
+                      }`}>
+                        {user.total_credits}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => openDrawer(user.id)}
+                          className="flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-muted text-icsn-navy border border-border rounded-xl text-sm font-bold shadow-sm transition-colors"
+                        >
+                          <Info className="w-4 h-4" />
+                          ดูรายละเอียด
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
-                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-icsn-teal" />
-                      </td>
-                    </tr>
-                  ) : filteredUsers.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
-                        ไม่พบข้อมูล
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-muted/80/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <p className="font-bold text-foreground">{user.name}</p>
-                          <p className="text-sm text-muted-foreground">{user.phone} • {user.email || '-'}</p>
-                          <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${
-                            user.category === 'payment' ? 'bg-info/10 text-info' :
-                            user.category === 'trial' ? 'bg-warning/10 text-warning' :
-                            user.category === 'walk-in' ? 'bg-muted text-foreground' : 'bg-muted text-muted-foreground'
-                          }`}>
-                            {user.category.toUpperCase()}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="font-medium text-foreground">{user.children_nicknames || '-'}</p>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <div className={`inline-flex items-center justify-center min-w-[3rem] h-8 rounded-full font-bold text-sm ${
-                            user.total_credits > 0 ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'
-                          }`}>
-                            {user.total_credits}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <button
-                            onClick={() => openDrawer(user.id)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-muted hover:bg-muted/80 text-foreground rounded-lg text-sm font-medium transition-colors"
-                          >
-                            <Info className="w-4 h-4" />
-                            ดูรายละเอียด
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                ))}
+              </>
+            )}
+          </AdminDataTable>
         </div>
       </AdminPanel>
 

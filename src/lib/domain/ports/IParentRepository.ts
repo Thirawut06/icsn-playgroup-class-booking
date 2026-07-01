@@ -1,4 +1,4 @@
-import { Parent, Child, ParentWithDetails } from '@/types';
+import { Parent, Child, ParentWithDetails, SubmitChildPayload } from '@/types';
 
 export interface IParentRepository {
   getParentByPhone(phone: string): Promise<Parent | null>;
@@ -9,16 +9,5 @@ export interface IParentRepository {
   getParentDetails(parentId: string): Promise<ParentWithDetails | null>;
   getChildren(parentId: string): Promise<Child[]>;
   uploadFile(bucket: string, file: File, path: string): Promise<string>;
-  submitNewChild(
-    parentId: string,
-    childName: string,
-    childNickname: string,
-    childDob: string,
-    childPhotoFile: File | null,
-    parentPhotoFile: File | null,
-    allergy: string,
-    info: string,
-    mediaPerm: boolean,
-    noPhotoPerm: boolean
-  ): Promise<Child>;
+  submitNewChild(payload: SubmitChildPayload): Promise<Child>;
 }

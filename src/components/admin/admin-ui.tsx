@@ -201,3 +201,43 @@ export function AdminDataTable({
     </div>
   );
 }
+
+export function AdminModal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  maxWidth = "max-w-md",
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  maxWidth?: string;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div 
+        className={`bg-white rounded-2xl shadow-xl w-full ${maxWidth} overflow-hidden flex flex-col animate-in zoom-in-95 duration-200`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-gray-50/50">
+          <h3 className="text-lg font-bold text-icsn-navy">{title}</h3>
+          <button 
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-500 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="p-6">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}

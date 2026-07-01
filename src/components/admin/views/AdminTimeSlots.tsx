@@ -9,7 +9,8 @@ import {
   AdminInfoBox,
   AdminDataTable,
   AdminToggle,
-  AdminIconButton
+  AdminModal,
+  AdminFieldLabel
 } from '../admin-ui';
 import { AdminService } from '@/lib/supabase';
 import toast from 'react-hot-toast';
@@ -27,12 +28,12 @@ export function AdminTimeSlots() {
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Edit / Add State
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState('');
   const [editCapacity, setEditCapacity] = useState('');
   
-  const [isAdding, setIsAdding] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const fetchSlots = async () => {
@@ -66,15 +67,15 @@ export function AdminTimeSlots() {
     }
   };
 
-  const handleSave = async (id?: string) => {
+  const handleSave = async () => {
     if (!editLabel.trim()) return toast.error('กรุณาระบุช่วงเวลา');
     const cap = parseInt(editCapacity);
     if (!cap || cap < 1) return toast.error('กรุณาระบุความจุที่ถูกต้อง');
 
     setIsProcessing(true);
     try {
-      if (id) {
-        await AdminService.updateSessionTemplate(id, {
+      if (editingId) {
+        await AdminService.updateSessionTemplate(editingId, {
           time_label: editLabel.trim(),
           capacity: cap
         });
@@ -83,8 +84,7 @@ export function AdminTimeSlots() {
         await AdminService.addSessionTemplate(editLabel.trim(), cap);
         toast.success('เพิ่มช่วงเวลาใหม่สำเร็จ');
       }
-      setEditingId(null);
-      setIsAdding(false);
+      setIsModalOpen(false);
       await fetchSlots();
     } catch (err: any) {
       toast.error('Error: ' + err.message);
@@ -124,25 +124,29 @@ export function AdminTimeSlots() {
     setEditingId(slot.id);
     setEditLabel(slot.time_label);
     setEditCapacity(String(slot.capacity));
-    setIsAdding(false);
+    setIsModalOpen(true);
   };
 
   const startAdd = () => {
-    setIsAdding(true);
     setEditingId(null);
     setEditLabel('');
     setEditCapacity(String(CLASS_CONFIG.DEFAULT_CAPACITY));
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setIsAdding(false);
+    setIsModalOpen(true);
   };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <AdminPanel className="no-print">
-        <AdminPanelHeader icon={Clock} title="ตั้งค่าช่วงเวลา (Time Slots)" />
+        <AdminPanelHeader 
+          icon={Clock} 
+          title="ตั้งค่าช่วงเวลา (Time Slots)" 
+          action={
+            <AdminPrimaryButton onClick={startAdd} disabled={isProcessing}>
+              <Plus className="w-5 h-5 mr-1.5" />
+              เพิ่มช่วงเวลาใหม่
+            </AdminPrimaryButton>
+          }
+        />
 
         <div className="p-6 space-y-6">
           <AdminInfoBox
@@ -154,12 +158,6 @@ export function AdminTimeSlots() {
               </>
             }
             icon={AlertCircle}
-            action={
-              <AdminPrimaryButton onClick={startAdd} disabled={isAdding || isProcessing}>
-                <Plus className="w-4 h-4 mr-1.5" />
-                เพิ่มช่วงเวลาใหม่
-              </AdminPrimaryButton>
-            }
           />
 
           <AdminDataTable
@@ -172,122 +170,109 @@ export function AdminTimeSlots() {
           >
             {loading ? (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
                   <Loader2 className="w-6 h-6 animate-spin mx-auto text-icsn-teal" />
                 </td>
               </tr>
-            ) : slots.length === 0 && !isAdding ? (
+            ) : slots.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
                   <p className="mb-4">ยังไม่มีข้อมูลช่วงเวลาเรียน</p>
-                  <AdminPrimaryButton onClick={handleSeedDefaults} disabled={isProcessing}>
+                  <button onClick={handleSeedDefaults} disabled={isProcessing} className="px-6 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-xl font-bold transition">
                     เพิ่มค่าเริ่มต้น (9.00, 11.00, 13.15)
-                  </AdminPrimaryButton>
+                  </button>
                 </td>
               </tr>
             ) : (
               <>
-                {slots.map((slot) => {
-                  const isEditing = editingId === slot.id;
-
-                  if (isEditing) {
-                    return (
-                      <tr key={slot.id} className="bg-blue-50/30">
-                        <td className="px-6 py-4">
-                          <input
-                            type="text"
-                            value={editLabel}
-                            onChange={(e) => setEditLabel(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-icsn-teal outline-none"
-                            placeholder="เช่น 9.00 - 10.30"
-                          />
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <input
-                            type="number"
-                            value={editCapacity}
-                            onChange={(e) => setEditCapacity(e.target.value)}
-                            className="w-24 mx-auto px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-icsn-teal outline-none text-center"
-                            min="1"
-                          />
-                        </td>
-                        <td className="px-6 py-4 text-center text-sm text-gray-500">-</td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <AdminIconButton icon={X} onClick={cancelEdit} title="ยกเลิก" />
-                            <button onClick={() => handleSave(slot.id)} disabled={isProcessing} className="p-2 bg-icsn-teal text-white hover:bg-icsn-green rounded-lg transition" title="บันทึก">
-                              {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  }
-
-                  return (
-                    <tr key={slot.id} className={`hover:bg-gray-50/50 transition-colors ${!slot.is_active ? 'opacity-60' : ''}`}>
-                      <td className="px-6 py-4">
-                        <p className="font-bold text-gray-800">{slot.time_label}</p>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="inline-flex items-center justify-center min-w-[2.5rem] h-7 bg-gray-100 text-gray-700 rounded-full text-sm font-bold">
-                          {slot.capacity}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <AdminToggle 
-                          isActive={slot.is_active} 
-                          onClick={() => handleToggleActive(slot.id, slot.is_active)} 
-                          disabled={isProcessing} 
-                        />
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <AdminIconButton icon={Edit2} variant="primary" onClick={() => startEdit(slot)} title="แก้ไข" />
-                          <AdminIconButton icon={Trash2} variant="danger" onClick={() => handleDelete(slot.id)} disabled={isProcessing} title="ลบ" />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-
-                {isAdding && (
-                  <tr className="bg-green-50/30">
+                {slots.map((slot) => (
+                  <tr key={slot.id} className={`hover:bg-muted/30 transition-colors ${!slot.is_active ? 'opacity-60' : ''}`}>
                     <td className="px-6 py-4">
-                      <input
-                        type="text"
-                        value={editLabel}
-                        onChange={(e) => setEditLabel(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-icsn-teal outline-none"
-                        placeholder="เช่น 15.00 - 16.30"
-                        autoFocus
-                      />
+                      <p className="font-bold text-icsn-navy">{slot.time_label}</p>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <input
-                        type="number"
-                        value={editCapacity}
-                        onChange={(e) => setEditCapacity(e.target.value)}
-                        className="w-24 mx-auto px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-icsn-teal outline-none text-center"
-                        min="1"
+                      <span className="inline-flex items-center justify-center min-w-[2.5rem] h-7 bg-muted text-foreground rounded-full text-sm font-bold border border-border">
+                        {slot.capacity}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <AdminToggle 
+                        isActive={slot.is_active} 
+                        onClick={() => handleToggleActive(slot.id, slot.is_active)} 
+                        disabled={isProcessing} 
                       />
                     </td>
-                    <td className="px-6 py-4 text-center text-sm text-gray-500">เปิดใช้งานทันที</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <AdminIconButton icon={X} onClick={cancelEdit} title="ยกเลิก" />
-                        <button onClick={() => handleSave()} disabled={isProcessing} className="p-2 bg-icsn-teal text-white hover:bg-icsn-green rounded-lg transition" title="บันทึก">
-                          {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        <button 
+                          onClick={() => startEdit(slot)} 
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold text-blue-600 hover:bg-blue-50 transition-colors border border-transparent hover:border-blue-200"
+                        >
+                          <Edit2 className="w-4 h-4" /> แก้ไข
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(slot.id)} 
+                          disabled={isProcessing} 
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50 transition-colors border border-transparent hover:border-red-200 disabled:opacity-50"
+                        >
+                          <Trash2 className="w-4 h-4" /> ลบ
                         </button>
                       </div>
                     </td>
                   </tr>
-                )}
+                ))}
               </>
             )}
           </AdminDataTable>
         </div>
       </AdminPanel>
+
+      <AdminModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingId ? 'แก้ไขช่วงเวลา (Edit Time Slot)' : 'เพิ่มช่วงเวลาใหม่ (Add Time Slot)'}
+      >
+        <div className="space-y-4">
+          <div>
+            <AdminFieldLabel>ช่วงเวลา (Time Label)</AdminFieldLabel>
+            <input
+              type="text"
+              value={editLabel}
+              onChange={(e) => setEditLabel(e.target.value)}
+              className="w-full px-4 py-3 bg-white border border-border rounded-xl focus:ring-2 focus:ring-icsn-teal/30 focus:border-icsn-teal/50 outline-none transition-all text-icsn-navy"
+              placeholder="เช่น 9.00 - 10.30"
+              autoFocus
+            />
+          </div>
+          <div>
+            <AdminFieldLabel>ความจุนักเรียน (Capacity)</AdminFieldLabel>
+            <input
+              type="number"
+              value={editCapacity}
+              onChange={(e) => setEditCapacity(e.target.value)}
+              className="w-full px-4 py-3 bg-white border border-border rounded-xl focus:ring-2 focus:ring-icsn-teal/30 focus:border-icsn-teal/50 outline-none transition-all text-icsn-navy"
+              min="1"
+            />
+          </div>
+          
+          <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="px-6 py-2.5 rounded-xl font-bold text-muted-foreground hover:bg-muted transition-colors"
+            >
+              ยกเลิก
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={isProcessing}
+              className="flex items-center gap-2 px-8 py-2.5 bg-icsn-teal hover:bg-icsn-teal/90 text-white rounded-xl font-bold shadow-md transition-all disabled:opacity-50 hover:-translate-y-0.5 active:translate-y-0"
+            >
+              {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+              บันทึกข้อมูล
+            </button>
+          </div>
+        </div>
+      </AdminModal>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { supabase } from '../../supabase';
-import { Parent, Child, ParentWithDetails } from '@/types';
+import { Parent, Child, ParentWithDetails, SubmitChildPayload } from '@/types';
 import { IParentRepository } from '../ports/IParentRepository';
 
 export class SupabaseParentAdapter implements IParentRepository {
@@ -62,7 +62,16 @@ export class SupabaseParentAdapter implements IParentRepository {
       .select()
       .single();
 
-    if (pError) throw pError;
+    if (pError) {
+      // ROLLBACK: Delete the auth user if profile creation failed to prevent orphaned accounts
+      await supabase.rpc('self_delete_auth_user');
+      
+      // We must sign out the local session because the auth user was deleted
+      await supabase.auth.signOut();
+      
+      throw new Error(`ไม่สามารถสร้างโปรไฟล์ได้: ${pError.message || pError.code}`);
+    }
+    
     return parentData;
   }
 
@@ -143,18 +152,20 @@ export class SupabaseParentAdapter implements IParentRepository {
     return publicUrlData.publicUrl;
   }
 
-  async submitNewChild(
-    parentId: string,
-    childName: string,
-    childNickname: string,
-    childDob: string,
-    childPhotoFile: File | null,
-    parentPhotoFile: File | null,
-    allergy: string,
-    info: string,
-    mediaPerm: boolean,
-    noPhotoPerm: boolean
-  ): Promise<Child> {
+  async submitNewChild(payload: SubmitChildPayload): Promise<Child> {
+    const {
+      parentId,
+      childName,
+      childNickname,
+      childDob,
+      childPhotoFile,
+      parentPhotoFile,
+      allergy,
+      info,
+      mediaPerm,
+      noPhotoPerm
+    } = payload;
+
     let actualPhotoUrl = "";
     if (childPhotoFile) {
       try {

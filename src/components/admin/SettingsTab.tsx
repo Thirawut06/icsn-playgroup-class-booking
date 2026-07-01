@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Settings, Save, Loader2, Info } from 'lucide-react';
+import { Settings, Save, Loader2, Info, BellRing, Clock } from 'lucide-react';
 import { SettingsService, SystemSettings } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { COPY } from '@/config/copy';
-import { AdminFieldLabel } from './admin-ui';
+import { AdminFieldLabel, AdminPrimaryButton } from './admin-ui';
 
 export function SettingsTab() {
   const [settings, setSettings] = useState<SystemSettings>({
@@ -41,6 +41,7 @@ export function SettingsTab() {
     try {
       await SettingsService.updateAllSettings(settings);
       setSuccessMsg('บันทึกการตั้งค่าระบบเรียบร้อยแล้ว');
+      toast.success('บันทึกการตั้งค่าระบบเรียบร้อยแล้ว');
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
       toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
@@ -51,32 +52,36 @@ export function SettingsTab() {
 
   if (loading) {
     return (
-      <div className="w-full">
+      <div className="w-full py-12 flex justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-icsn-teal" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div className="w-full">
-        <div className="space-y-8 mt-4 animate-in fade-in duration-500">
-          {/* Section 1: Business Rules */}
-          <section className="bg-white p-6 rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow">
-            <h3 className="text-base font-bold text-icsn-navy mb-6 flex items-center gap-2">
-              <div className="bg-icsn-teal/10 p-2 rounded-xl text-icsn-teal">
-                <Settings className="w-5 h-5" />
-              </div>
-              กฎการจอง (Booking Rules)
-            </h3>
-            
-            <div className="pl-0 sm:pl-[52px]">
+    <div className="w-full animate-in fade-in duration-500 max-w-3xl">
+      <div className="space-y-8">
+        
+        {/* Section 1: Business Rules */}
+        <section className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-muted/40 px-6 py-4 border-b border-border flex items-center gap-3">
+            <div className="bg-icsn-teal/10 p-2 rounded-lg text-icsn-teal">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-icsn-navy text-lg">กฎการจอง (Booking Rules)</h3>
+              <p className="text-sm text-muted-foreground">ตั้งค่าเงื่อนไขเวลาในการจองหรือยกเลิกคลาส</p>
+            </div>
+          </div>
+          
+          <div className="p-6">
+            <div className="max-w-md">
               <AdminFieldLabel>เวลาตัดรอบจอง/ยกเลิก ภายในวันเดียวกัน (Cut-off Time)</AdminFieldLabel>
               <div className="flex items-center gap-3 mt-2">
                 <select
                   value={settings.cutoff_hour}
                   onChange={(e) => setSettings({ ...settings, cutoff_hour: parseInt(e.target.value) })}
-                  className="w-40 px-4 py-2.5 bg-muted/30 border border-border rounded-xl focus:ring-2 focus:ring-icsn-teal/30 outline-none font-medium text-icsn-navy transition-all"
+                  className="w-full px-4 py-3 bg-white border border-border rounded-xl focus:ring-2 focus:ring-icsn-teal/30 focus:border-icsn-teal/50 outline-none font-bold text-icsn-navy transition-all"
                 >
                   {Array.from({ length: 24 }).map((_, i) => (
                     <option key={i} value={i}>
@@ -85,53 +90,64 @@ export function SettingsTab() {
                   ))}
                 </select>
               </div>
-              <p className="text-sm text-muted-foreground mt-3 flex items-start gap-1.5 bg-muted/30 p-3 rounded-lg border border-border/50">
+              <div className="flex items-start gap-2 mt-3 p-3 bg-muted/50 rounded-lg">
                 <Info className="w-4 h-4 shrink-0 mt-0.5 text-icsn-teal" />
-                เวลาที่จะไม่อนุญาตให้ผู้ปกครองจองหรือยกเลิกคลาสของวันนี้ (ค่าเริ่มต้น: 07:00 น.)
-              </p>
-            </div>
-          </section>
-
-          {/* Section 2: Announcements */}
-          <section className="bg-white p-6 rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow">
-            <h3 className="text-base font-bold text-icsn-navy mb-6 flex items-center gap-2">
-              <div className="bg-warning/10 p-2 rounded-xl text-warning">
-                <Info className="w-5 h-5" />
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  เวลาที่จะไม่อนุญาตให้ผู้ปกครองทำรายการ "จอง" หรือ "ยกเลิก" คลาสของวันนี้<br />
+                  <span className="font-medium text-foreground">ตัวอย่าง:</span> หากตั้งไว้ที่ 07:00 น. ผู้ปกครองจะไม่สามารถกดยกเลิกคลาสของวันนี้ได้หลังจากเจ็ดโมงเช้าเป็นต้นไป
+                </p>
               </div>
-              ประกาศหน้าแอป (Announcements)
-            </h3>
-            
-            <div className="pl-0 sm:pl-[52px]">
+            </div>
+          </div>
+        </section>
+
+        {/* Section 2: Announcements */}
+        <section className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-warning/5 px-6 py-4 border-b border-warning/10 flex items-center gap-3">
+            <div className="bg-warning/20 p-2 rounded-lg text-warning">
+              <BellRing className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-icsn-navy text-lg">ประกาศหน้าแอป (Announcements)</h3>
+              <p className="text-sm text-muted-foreground">ข้อความที่จะแสดงเด่นชัดให้ผู้ปกครองทุกคนเห็น</p>
+            </div>
+          </div>
+          
+          <div className="p-6">
+            <div>
               <AdminFieldLabel>ข้อความประกาศแจ้งผู้ปกครอง (Announcement Text)</AdminFieldLabel>
               <textarea
                 value={settings.announcement_text}
                 onChange={(e) => setSettings({ ...settings, announcement_text: e.target.value })}
-                placeholder="เช่น โรงเรียนหยุดทำการในวันศุกร์ที่ 12... (เว้นว่างไว้หากไม่มีประกาศ)"
-                rows={4}
-                className="w-full mt-2 px-4 py-3 bg-muted/30 border border-border rounded-xl focus:ring-2 focus:ring-warning/30 focus:border-warning/50 outline-none text-sm transition-all resize-none text-icsn-navy"
+                placeholder="เช่น โรงเรียนหยุดทำการในวันศุกร์ที่ 12 เนื่องในวันหยุด..."
+                rows={3}
+                className="w-full mt-2 px-4 py-3 bg-white border border-border rounded-xl focus:ring-2 focus:ring-warning/30 focus:border-warning/50 outline-none text-sm transition-all resize-none text-icsn-navy"
               />
-              <p className="text-sm text-muted-foreground mt-3 flex items-start gap-1.5 bg-warning/5 p-3 rounded-lg border border-warning/10">
+              <div className="flex items-start gap-2 mt-3 p-3 bg-warning/5 rounded-lg border border-warning/10">
                 <Info className="w-4 h-4 shrink-0 mt-0.5 text-warning" />
-                ข้อความนี้จะแสดงเด่นอยู่บนสุดของหน้าการจองในแอปพลิเคชันฝั่งผู้ปกครอง
-              </p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  ข้อความนี้จะแสดงอยู่<span className="font-bold text-warning">บนสุดของหน้าหลัก (แถบสีเหลือง)</span> ในแอปพลิเคชันฝั่งผู้ปกครอง<br />
+                  หากไม่ต้องการแสดงประกาศ ให้ลบข้อความออกให้หมด (เว้นว่างไว้)
+                </p>
+              </div>
             </div>
-          </section>
-
-          {/* Save Button */}
-          <div className="flex items-center justify-end gap-4 pt-4 border-t border-border">
-            {successMsg && (
-              <span className="text-success text-sm font-bold animate-pulse">{successMsg}</span>
-            )}
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="inline-flex items-center justify-center gap-2 px-8 py-3 bg-icsn-teal hover:bg-icsn-teal/90 text-white font-bold rounded-xl shadow-md transition disabled:opacity-50 hover:-translate-y-0.5 active:translate-y-0"
-            >
-              {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-              {saving ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่า'}
-            </button>
           </div>
-        </div>
+        </section>
+      </div>
+
+      {/* Save Button */}
+      <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-border">
+        {successMsg && (
+          <span className="text-success text-sm font-bold animate-fade-in-up">{successMsg}</span>
+        )}
+        <AdminPrimaryButton
+          onClick={handleSave}
+          disabled={saving}
+          className="px-8 py-3 h-auto text-base"
+        >
+          {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
+          {saving ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่า'}
+        </AdminPrimaryButton>
       </div>
     </div>
   );

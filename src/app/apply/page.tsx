@@ -141,18 +141,18 @@ export default function Apply() {
         throw new Error("กรุณายืนยันข้อตกลงการไม่ถ่ายรูปนักเรียนคนอื่น");
       }
 
-      await ParentService.submitNewChild(
+      await ParentService.submitNewChild({
         parentId,
         childName,
         childNickname,
         childDob,
         childPhotoFile,
         parentPhotoFile,
-        allergy || '-',
-        info || '',
-        mediaPerm === 'Yes',
+        allergy: allergy || '-',
+        info: info || '',
+        mediaPerm: mediaPerm === 'Yes',
         noPhotoPerm
-      );
+      });
 
       if (path === 'payment') {
         if (!paymentSlipFile || !packageType) {
