@@ -8,8 +8,6 @@ import { AdminWalkinModal } from '../walkin/AdminWalkinModal';
 import { formatAgeDisplay } from '../admin-utils';
 import { useDailyAttendance } from '@/hooks/useDailyAttendance';
 
-import { AdminCalendarWidget } from './AdminCalendarWidget';
-
 export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
   const [isWalkinModalOpen, setIsWalkinModalOpen] = React.useState(false);
   const {
@@ -33,7 +31,6 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
     savingCapacity,
     sessionIsActive,
     togglingSession,
-    blockoutDates,
     handleWalkin,
     handleCancel,
     handleSaveCapacity,
@@ -51,13 +48,14 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
           <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-end border-b border-border pb-6">
             
             {/* Date Selection */}
-            <div className="w-full lg:w-64 space-y-4 relative z-50">
+            <div className="w-full lg:w-64 space-y-4">
               <div>
                 <AdminFieldLabel>เลือกวันที่</AdminFieldLabel>
-                <AdminCalendarWidget
-                  selectedDate={dailyDate}
-                  onDateSelect={setDailyDate}
-                  blockoutDates={blockoutDates}
+                <input
+                  type="date"
+                  value={dailyDate}
+                  onChange={e => setDailyDate(e.target.value)}
+                  className="block w-full px-4 h-[48px] border border-border rounded-xl focus:border-icsn-teal focus:ring-1 focus:ring-icsn-teal outline-none bg-white text-foreground transition shadow-sm font-semibold cursor-pointer"
                 />
               </div>
               

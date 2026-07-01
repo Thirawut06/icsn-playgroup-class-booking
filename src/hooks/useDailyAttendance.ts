@@ -32,15 +32,6 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
   const [savingCapacity, setSavingCapacity] = useState(false);
   const [togglingSession, setTogglingSession] = useState(false);
 
-  const [blockoutDates, setBlockoutDates] = useState<string[]>([]);
-
-  // Fetch blockout dates once
-  useEffect(() => {
-    AdminService.getBlockoutDates()
-      .then(dates => setBlockoutDates(dates.map(d => d.block_date)))
-      .catch(err => console.error('Failed to load blockout dates:', err));
-  }, []);
-
   // 1. Fetch sessions when date changes
   const loadSessions = useCallback(async () => {
     setLoading(true);
@@ -199,7 +190,6 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     totalCapacity,
     sessionIsActive,
     togglingSession,
-    blockoutDates,
     handleWalkin,
     handleCancel,
     handleSaveCapacity,
