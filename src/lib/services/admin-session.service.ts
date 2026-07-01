@@ -24,6 +24,25 @@ export const AdminSessionService = {
     return data || [];
   },
 
+  async getSchoolClosures(): Promise<{ id: string; start_date: string; end_date: string; reason: string }[]> {
+    const { data, error } = await supabase
+      .from('school_closures')
+      .select('*')
+      .order('start_date', { ascending: true });
+    if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
+    return data || [];
+  },
+
+  async bulkCloseDays(startDate: string, endDate: string, reason: string): Promise<void> {
+    const { data, error } = await supabase.rpc('bulk_close_days', {
+      p_start_date: startDate,
+      p_end_date: endDate,
+      p_reason: reason
+    });
+    if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
+    if (data && data.success === false) throw new Error(data.error || 'Bulk close failed');
+  },
+
   async addBlockoutDate(blockDate: string, reason?: string): Promise<void> {
     const { error } = await supabase
       .from('blockout_dates')

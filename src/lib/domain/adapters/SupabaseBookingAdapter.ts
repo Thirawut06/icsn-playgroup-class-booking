@@ -35,6 +35,24 @@ export class SupabaseBookingAdapter implements IBookingRepository {
     return data as BookingResult;
   }
 
+  async bookClassesBatch(parentId: string, childId: string, sessionIds: string[]): Promise<BookingResult> {
+    const { data: child } = await supabase.from('children').select('nickname').eq('id', childId).maybeSingle();
+    const { data: parent } = await supabase.from('parents').select('phone').eq('id', parentId).maybeSingle();
+
+    const { data, error } = await supabase
+      .rpc('book_classes_batch', {
+        p_child_id: childId,
+        p_session_ids: sessionIds,
+        p_parent_id: parentId,
+        p_child_name: child?.nickname || 'Unknown',
+        p_parent_phone: parent?.phone || 'Unknown'
+      });
+      
+    if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
+    if (data && data.success === false) throw new Error(data.error || 'Batch booking failed');
+    return data as BookingResult;
+  }
+
   async adminBookClass(childId: string, sessionId: string, isFree: boolean): Promise<{ booking_id: string }> {
     const { data, error } = await supabase.rpc('admin_book_class', {
       p_child_id: childId,

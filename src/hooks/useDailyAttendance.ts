@@ -6,6 +6,7 @@ import { CLASS_CONFIG } from '@/config/constants';
 import toast from 'react-hot-toast';
 import { COPY } from '@/config/copy';
 import { getErrorMessage } from '@/lib/utils';
+
 interface UseDailyAttendanceOptions {
   onRefresh?: () => void;
 }
@@ -13,7 +14,11 @@ interface UseDailyAttendanceOptions {
 export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}) {
   const [dailyDate, setDailyDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [attendance, setAttendance] = useState<DailyAttendanceRow[]>([]);
-  const [session, setSession] = useState<Session | null>(null);
+  
+  // Sessions State
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [selectedSessionId, setSelectedSessionId] = useState<string>('');
+  
   const [loading, setLoading] = useState(false);
   
   // Walk-in form state
@@ -27,41 +32,81 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
   const [savingCapacity, setSavingCapacity] = useState(false);
   const [togglingSession, setTogglingSession] = useState(false);
 
-  const loadData = useCallback(async () => {
+  const [blockoutDates, setBlockoutDates] = useState<string[]>([]);
+
+  // Fetch blockout dates once
+  useEffect(() => {
+    AdminService.getBlockoutDates()
+      .then(dates => setBlockoutDates(dates.map(d => d.block_date)))
+      .catch(err => console.error('Failed to load blockout dates:', err));
+  }, []);
+
+  // 1. Fetch sessions when date changes
+  const loadSessions = useCallback(async () => {
     setLoading(true);
     try {
-      const [rows, sess] = await Promise.all([
-        AdminService.getDailyAttendance(dailyDate),
-        AdminService.getSessionForDate(dailyDate),
-      ]);
-      setAttendance(rows);
-      setSession(sess);
-      setCapacityEdit(sess ? String(sess.total_capacity) : String(CLASS_CONFIG.DEFAULT_CAPACITY));
+      const fetchedSessions = await sessionModule.getOrCreateSessionsForDate(dailyDate);
+      setSessions(fetchedSessions || []);
+      
+      if (fetchedSessions && fetchedSessions.length > 0) {
+        // Only override if no session is selected OR selected session doesn't exist in new date
+        if (!selectedSessionId || !fetchedSessions.find(s => s.id === selectedSessionId)) {
+          setSelectedSessionId(fetchedSessions[0].id);
+        }
+      } else {
+        setSelectedSessionId('');
+        setAttendance([]);
+      }
     } catch (err) {
-      console.error(err);
+      console.error('Failed to load sessions:', err);
     } finally {
       setLoading(false);
     }
-  }, [dailyDate]);
+  }, [dailyDate, selectedSessionId]);
 
   useEffect(() => {
+    loadSessions();
     // eslint-disable-next-line
-    loadData();
-  }, [loadData]);
+  }, [dailyDate]);
+
+  // 2. Fetch attendance when selected session changes
+  const loadAttendance = useCallback(async () => {
+    if (!selectedSessionId) return;
+    
+    setLoading(true);
+    try {
+      const rows = await AdminService.getDailyAttendance(selectedSessionId);
+      setAttendance(rows);
+      
+      const activeSess = sessions.find(s => s.id === selectedSessionId);
+      if (activeSess) {
+        setCapacityEdit(String(activeSess.total_capacity));
+      }
+    } catch (err) {
+      console.error('Failed to load attendance:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedSessionId, sessions]);
+
+  useEffect(() => {
+    loadAttendance();
+    // eslint-disable-next-line
+  }, [selectedSessionId]);
+
+  const activeSession = sessions.find(s => s.id === selectedSessionId) || null;
 
   const handleWalkin = async (e: FormEvent) => {
     e.preventDefault();
-    if (!walkinPhone || !walkinName) return;
+    if (!walkinPhone || !walkinName || !selectedSessionId) return;
     setWalkinLoading(true);
     try {
-      const sessions = await sessionModule.getOrCreateSessionsForDate(dailyDate);
-      if (!sessions || sessions.length === 0) throw new Error("ไม่พบรอบเรียนสำหรับวันนี้");
-      const sess = sessions[0]; // TODO: Allow selecting specific session for walk-ins
       const { child_id } = await AdminService.adminAddWalkin(walkinPhone, walkinName);
-      await bookingModule.adminBookClass(child_id, sess.id, true);
+      await bookingModule.adminBookClass(child_id, selectedSessionId, walkinFree);
       setWalkinPhone('');
       setWalkinName('');
-      await loadData();
+      setWalkinFree(false);
+      await loadAttendance();
       onRefresh?.();
       toast.success(COPY.ALERTS.WALKIN_SUCCESS);
     } catch (err) {
@@ -77,7 +122,8 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     if (!confirm('แน่ใจหรือไม่ว่าต้องการยกเลิกการจองนี้? (ระบบจะคืนเครดิตให้อัตโนมัติ)')) return;
     try {
       await bookingModule.cancelBookingAsAdmin(bookingId, reason.trim());
-      await loadData();
+      await loadAttendance();
+      await loadSessions(); // update booked_count
       onRefresh?.();
     } catch (err) {
       toast.error(COPY.ALERTS.ERROR_GENERIC(getErrorMessage(err)));
@@ -85,6 +131,7 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
   };
 
   const handleSaveCapacity = async () => {
+    if (!selectedSessionId) return;
     const cap = parseInt(capacityEdit, 10);
     if (!cap || cap < 1) {
       toast.error(COPY.ALERTS.INVALID_CAPACITY);
@@ -92,14 +139,9 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     }
     setSavingCapacity(true);
     try {
-      let targetSessionId = session?.id;
-      if (!targetSessionId) {
-        const sessions = await sessionModule.getOrCreateSessionsForDate(dailyDate);
-        if (!sessions || sessions.length === 0) throw new Error("ไม่สามารถสร้าง session ได้");
-        targetSessionId = sessions[0].id;
-      }
-      const updated = await sessionModule.updateSessionCapacity(targetSessionId, cap);
-      setSession(updated);
+      const updated = await sessionModule.updateSessionCapacity(selectedSessionId, cap);
+      // Update local sessions array
+      setSessions(prev => prev.map(s => s.id === selectedSessionId ? updated : s));
       toast.success(COPY.ALERTS.UPDATE_CAPACITY_SUCCESS);
     } catch (err) {
       toast.error(COPY.ALERTS.ERROR_GENERIC(getErrorMessage(err)));
@@ -109,24 +151,20 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
   };
 
   const handleToggleSession = async () => {
-    const currentState = session ? session.is_active : true; // Default is active if not exists
-    const newState = !currentState;
+    if (!activeSession) return;
+    const newState = !activeSession.is_active;
     const msg = newState
-      ? 'เปิดรับจองวันนี้อีกครั้ง?'
-      : 'ปิดรับจองวันนี้ (ผู้ปกครองจะไม่สามารถจองวันนี้ได้)?';
+      ? 'เปิดรับจองรอบนี้อีกครั้ง?'
+      : 'ปิดรับจองรอบนี้ (ผู้ปกครองจะไม่สามารถจองรอบนี้ได้)?';
     if (!confirm(msg)) return;
     
     setTogglingSession(true);
     try {
-      let targetSessionId = session?.id;
-      if (!targetSessionId) {
-        const sessions = await sessionModule.getOrCreateSessionsForDate(dailyDate);
-        if (!sessions || sessions.length === 0) throw new Error("ไม่สามารถสร้าง session ได้");
-        targetSessionId = sessions[0].id;
+      await sessionModule.toggleSessionActive(selectedSessionId, newState);
+      const updatedSess = await AdminService.getSessionForDate(dailyDate, activeSession.time_label);
+      if (updatedSess) {
+        setSessions(prev => prev.map(s => s.id === selectedSessionId ? updatedSess : s));
       }
-      await sessionModule.toggleSessionActive(targetSessionId, newState);
-      const updatedSess = await AdminService.getSessionForDate(dailyDate);
-      setSession(updatedSess);
     } catch (err) {
       toast.error(COPY.ALERTS.ERROR_GENERIC(getErrorMessage(err)));
     } finally {
@@ -134,15 +172,18 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     }
   };
 
-  const bookedCount = session?.booked_count ?? attendance.length;
-  const totalCapacity = session?.total_capacity ?? (parseInt(capacityEdit, 10) || CLASS_CONFIG.DEFAULT_CAPACITY);
-  const sessionIsActive = session?.is_active !== false;
+  const bookedCount = activeSession?.booked_count ?? attendance.length;
+  const totalCapacity = activeSession?.total_capacity ?? (parseInt(capacityEdit, 10) || CLASS_CONFIG.DEFAULT_CAPACITY);
+  const sessionIsActive = activeSession?.is_active !== false;
 
   return {
     dailyDate,
     setDailyDate,
+    sessions,
+    selectedSessionId,
+    setSelectedSessionId,
     attendance,
-    session,
+    session: activeSession,
     loading,
     walkinPhone,
     setWalkinPhone,
@@ -158,10 +199,11 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     totalCapacity,
     sessionIsActive,
     togglingSession,
+    blockoutDates,
     handleWalkin,
     handleCancel,
     handleSaveCapacity,
     handleToggleSession,
-    refreshData: loadData,
+    refreshData: loadAttendance,
   };
 }

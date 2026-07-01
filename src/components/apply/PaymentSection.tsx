@@ -65,7 +65,7 @@ export function PaymentSection({
           <span className="block text-sm text-muted-foreground -mt-0.5">ขั้นตอนการชำระเงิน: กรุณาแนบหลักฐานการชำระเงิน</span>
         </label>
         <div className="mb-4 max-w-sm mx-auto">
-          <img src="/payment-method.jpg" alt="Payment Method Instruction" className="w-full h-auto rounded-xl border border-border shadow-sm" />
+          <img src="/New_Kbank_QR_acc-no.png" alt="Payment Method Instruction" className="w-full h-auto rounded-xl border border-border shadow-sm" />
         </div>
         <input
           type="file"

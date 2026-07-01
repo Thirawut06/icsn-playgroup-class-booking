@@ -8,6 +8,7 @@ interface SlipPreviewModalProps {
   slip: PendingSlipRow | null;
   onApprove: (slip: PendingSlipRow, overrideCredits: number) => Promise<void>;
   onReject: (slipId: string) => Promise<void>;
+  onUploadMissingSlip?: (slipId: string, file: File) => Promise<void>;
   isProcessing: boolean;
 }
 
@@ -17,13 +18,29 @@ export function SlipPreviewModal({
   slip,
   onApprove,
   onReject,
+  onUploadMissingSlip,
   isProcessing,
 }: SlipPreviewModalProps) {
+  const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
+
   React.useEffect(() => {
-    // No longer need to manage credits state locally
+    // Reset file selection when slip changes
+    setSelectedFile(null);
+    setPreviewUrl(null);
   }, [slip]);
 
   if (!isOpen || !slip) return null;
+
+  const isMissingSlip = slip.file_url === 'PENDING_WALKIN_PAYMENT';
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/10/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -46,8 +63,31 @@ export function SlipPreviewModal({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 bg-muted flex flex-col md:flex-row gap-6 items-start">
           {/* Image Preview (Left) */}
-          <div className="flex-1 w-full bg-black/5 rounded-xl border border-border overflow-hidden flex items-center justify-center min-h-[300px] p-2">
-            {slip.file_url ? (
+          <div className="flex-1 w-full bg-black/5 rounded-xl border border-border overflow-hidden flex flex-col items-center justify-center min-h-[300px] p-4 relative">
+            {isMissingSlip ? (
+              <div className="w-full flex flex-col items-center justify-center space-y-4">
+                {previewUrl ? (
+                  <>
+                    <img src={previewUrl} alt="Preview" className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-sm" />
+                    <button 
+                      onClick={() => { setSelectedFile(null); setPreviewUrl(null); }}
+                      className="text-error font-bold text-sm hover:underline"
+                    >
+                      ยกเลิกและเลือกใหม่
+                    </button>
+                  </>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full max-w-sm h-64 border-2 border-dashed border-icsn-teal/50 rounded-2xl cursor-pointer hover:bg-icsn-teal/5 transition">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <svg className="w-10 h-10 text-icsn-teal mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                      <p className="mb-2 text-sm text-foreground font-bold">คลิกเพื่ออัปโหลดรูปภาพสลิป</p>
+                      <p className="text-xs text-muted-foreground">PNG, JPG, JPEG</p>
+                    </div>
+                    <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                  </label>
+                )}
+              </div>
+            ) : slip.file_url ? (
               <img
                 src={slip.file_url}
                 alt="Payment slip"
@@ -92,29 +132,43 @@ export function SlipPreviewModal({
             </div>
 
             <div className="space-y-2 pt-3 border-t border-border">
-              <button
-                type="button"
-                onClick={() => onApprove(slip, slip.credits_to_add)}
-                disabled={isProcessing || slip.credits_to_add < 1}
-                className="w-full flex items-center justify-center gap-2 bg-icsn-teal hover:bg-icsn-teal/90 text-white py-2.5 rounded-xl font-bold transition-all shadow-sm disabled:opacity-50"
-              >
-                <Check className="w-4 h-4" />
-                อนุมัติ
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => {
-                  if (confirm('แน่ใจหรือไม่ว่าต้องการปฏิเสธสลิปนี้?')) {
-                    onReject(slip.id);
-                  }
-                }}
-                disabled={isProcessing}
-                className="w-full flex items-center justify-center gap-2 bg-white border-2 border-error/20 text-error hover:bg-error/10 hover:border-error/30 py-2.5 rounded-xl font-bold transition-all disabled:opacity-50"
-              >
-                <X className="w-4 h-4" />
-                ปฏิเสธ
-              </button>
+              {isMissingSlip ? (
+                <button
+                  type="button"
+                  onClick={() => onUploadMissingSlip?.(slip.id, selectedFile!)}
+                  disabled={isProcessing || !selectedFile}
+                  className="w-full flex items-center justify-center gap-2 bg-icsn-navy hover:bg-icsn-navy/90 text-white py-3 rounded-xl font-bold transition-all shadow-sm disabled:opacity-50"
+                >
+                  <Check className="w-5 h-5" />
+                  บันทึกรูปภาพสลิป
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => onApprove(slip, slip.credits_to_add)}
+                    disabled={isProcessing || slip.credits_to_add < 1}
+                    className="w-full flex items-center justify-center gap-2 bg-icsn-teal hover:bg-icsn-teal/90 text-white py-2.5 rounded-xl font-bold transition-all shadow-sm disabled:opacity-50"
+                  >
+                    <Check className="w-4 h-4" />
+                    อนุมัติ
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm('แน่ใจหรือไม่ว่าต้องการปฏิเสธสลิปนี้?')) {
+                        onReject(slip.id);
+                      }
+                    }}
+                    disabled={isProcessing}
+                    className="w-full flex items-center justify-center gap-2 bg-white border-2 border-error/20 text-error hover:bg-error/10 hover:border-error/30 py-2.5 rounded-xl font-bold transition-all disabled:opacity-50"
+                  >
+                    <X className="w-4 h-4" />
+                    ปฏิเสธ
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

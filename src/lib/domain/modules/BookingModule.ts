@@ -11,6 +11,13 @@ export class BookingModule {
   }
 
   /**
+   * Parent books multiple classes.
+   */
+  async bookClassesBatch(parentId: string, childId: string, sessionIds: string[]): Promise<BookingResult> {
+    return this.bookingRepository.bookClassesBatch(parentId, childId, sessionIds);
+  }
+
+  /**
    * Admin books a class (walk-in or direct).
    */
   async adminBookClass(childId: string, sessionId: string, isFree: boolean): Promise<{ booking_id: string }> {

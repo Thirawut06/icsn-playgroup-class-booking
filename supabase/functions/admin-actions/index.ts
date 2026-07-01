@@ -231,7 +231,7 @@ serve(async (req) => {
         totalCapacity?: number
         isActive?: boolean
       }
-      const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+      const updates: Record<string, unknown> = {}
       if (typeof totalCapacity === 'number') updates.total_capacity = totalCapacity
       if (typeof isActive === 'boolean') updates.is_active = isActive
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Session } from '@/types';
 import { useBookingContext } from './BookingContext';
 import { getThaiMonthName, checkIsBookableDate } from '@/utils/dateUtils';
@@ -14,14 +14,14 @@ export interface DayObj {
 interface CalendarWidgetProps {
   monthIndex: number;
   onMonthChange: (index: number) => void;
-  selectedDate: string | null;
+  selectedDates: string[];
   onDateSelect: (dayObj: DayObj) => void;
 }
 
 export function CalendarWidget({
   monthIndex,
   onMonthChange,
-  selectedDate,
+  selectedDates,
   onDateSelect,
 }: CalendarWidgetProps) {
   const { 
@@ -33,7 +33,6 @@ export function CalendarWidget({
   } = useBookingContext();
   const cutoffHour = settings?.cutoff_hour ?? 7;
 
-  const [loadingDate, setLoadingDate] = useState<string | null>(null);
   const currentViewDate = new Date();
   currentViewDate.setMonth(currentViewDate.getMonth() + monthIndex);
   const monthName = getThaiMonthName(currentViewDate);
@@ -95,8 +94,16 @@ export function CalendarWidget({
         {getDaysInMonth().map((dayObj, i) => {
           if (!dayObj) return <div key={`empty-${i}`} className="py-2 text-transparent"></div>;
 
-          const isBookable = checkIsBookableDate(dayObj.dateStr, blockoutDates || [], cutoffHour);
-          const isSelected = selectedDate === dayObj.dateStr;
+          // Check if any active session is open for booking on this day
+          const hasOpenSession = dayObj.sessions.some(s => s.is_active && (s.total_capacity - (s.booked_count || 0)) > 0);
+          
+          // Check if day is fundamentally bookable based on date/cutoff/blockouts
+          const isDateBookable = checkIsBookableDate(dayObj.dateStr, blockoutDates || [], cutoffHour);
+          
+          // True if bookable AND has at least one open session
+          const isBookable = isDateBookable && (dayObj.sessions.length === 0 || hasOpenSession);
+
+          const isSelected = selectedDates.includes(dayObj.dateStr);
           const isBooked = myBookings.some(b => b.session_date === dayObj.dateStr && b.child_id === selectedChildId);
 
           let btnClass = "text-muted-foreground/70 bg-muted/50";
@@ -104,39 +111,49 @@ export function CalendarWidget({
 
           if (isBookable) {
             if (isSelected) {
-              btnClass = "bg-icsn-teal text-white shadow-md font-black scale-[1.05]";
+              btnClass = "bg-primary text-primary-foreground shadow-md font-black scale-[1.05]";
               dotClass = "bg-white";
             } else if (isBooked) {
-              btnClass = "text-icsn-teal bg-icsn-teal/10 border border-icsn-teal/30 font-black";
-              dotClass = "bg-icsn-teal";
+              btnClass = "bg-primary/10 text-primary border border-primary/30 font-black";
+              dotClass = "bg-primary";
             } else {
-              btnClass = "text-icsn-navy bg-white border border-border hover:border-icsn-teal/30 hover:bg-icsn-teal/5";
-              dotClass = "bg-icsn-teal";
+              btnClass = "bg-background text-foreground border border-border hover:border-primary/30 hover:bg-primary/5";
+              dotClass = "bg-primary";
             }
           } else {
             const isFuture = new Date(dayObj.dateStr) >= new Date(new Date().setHours(0, 0, 0, 0));
             if (isBooked) {
               if (isSelected) {
-                btnClass = "bg-icsn-navy text-white shadow-md font-black scale-[1.05]";
-                dotClass = "bg-white";
+                btnClass = "bg-foreground text-background shadow-md font-black scale-[1.05]";
+                dotClass = "bg-background";
               } else {
-                btnClass = "text-icsn-navy bg-icsn-navy/5 border border-icsn-navy/20 font-black";
-                dotClass = "bg-icsn-navy";
+                btnClass = "bg-foreground/5 text-foreground border border-foreground/20 font-black";
+                dotClass = "bg-foreground";
               }
             } else if (isFuture) {
-              btnClass = "text-muted-foreground/70 bg-muted/30 cursor-not-allowed";
-              dotClass = "bg-error";
+              // Future but not bookable (e.g., closed by admin, or fully booked)
+              const hasClosedSession = dayObj.sessions.some(s => !s.is_active && s.theme);
+              if (hasClosedSession) {
+                 btnClass = "bg-destructive/10 text-destructive border border-destructive/20 cursor-not-allowed"; // Highlight closed days
+              } else {
+                 btnClass = "bg-muted text-muted-foreground cursor-not-allowed";
+              }
+              dotClass = "bg-destructive";
             } else {
-              btnClass = "text-muted-foreground/70 bg-muted/50 cursor-not-allowed";
+              btnClass = "bg-muted text-muted-foreground cursor-not-allowed opacity-60";
             }
           }
+
+          // If it's already booked, clicking does nothing
+          // If it's selected, clicking removes it (even if it's currently marked as not bookable now for some reason)
+          const canClick = isSelected || (isBookable && !isBooked);
 
           return (
             <button
               key={dayObj.dateStr}
-              onClick={() => onDateSelect(dayObj)}
-              disabled={!isBookable || isBooked}
-              className={`py-3 rounded-xl transition-all flex flex-col items-center justify-center relative ${(!isBookable || isBooked) ? 'cursor-not-allowed' : 'cursor-pointer active:scale-95'} ${btnClass}`}
+              onClick={() => canClick && onDateSelect(dayObj)}
+              disabled={!canClick}
+              className={`py-3 rounded-xl transition-all flex flex-col items-center justify-center relative ${!canClick ? 'cursor-not-allowed' : 'cursor-pointer active:scale-95'} ${btnClass}`}
             >
               <span>{dayObj.day}</span>
               <span className={`w-1.5 h-1.5 rounded-full mt-1 ${dotClass}`}></span>
@@ -152,11 +169,11 @@ export function CalendarWidget({
           ผ่านไปแล้ว / วันหยุด
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 bg-icsn-teal rounded-full shadow-sm"></span>
+          <span className="w-3 h-3 bg-primary rounded-full shadow-sm"></span>
           เปิดให้จอง
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 bg-error rounded-full shadow-sm"></span>
+          <span className="w-3 h-3 bg-destructive rounded-full shadow-sm"></span>
           เต็มแล้ว / ปิดจอง
         </span>
       </div>

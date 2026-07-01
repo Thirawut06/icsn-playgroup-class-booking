@@ -64,6 +64,7 @@ You carefully provide accurate, factual, thoughtful answers, and are a genius at
 ## UI/UX & Tailwind CSS Rules
 - **Tailwind Border Colors:** Always explicitly define a border color (e.g., `border-border`, `border-icsn-teal`) when applying a `border` class. Never use `border` alone, as it defaults to black on some elements/browsers.
 - **Avoid Box-in-Box Anti-Pattern:** Do not nest card components (elements with `bg-white`, `border`, `shadow`) inside an outer wrapper that also has card styling. Place inner card components directly on the application's neutral background (e.g., `bg-icsn-bg`).
+- **Forbid Hardcoded Colors:** NEVER hardcode specific utility colors (e.g., `bg-gray-100`, `text-green-600`) in UI components. Always use centralized semantic design tokens defined in `src/index.css` (e.g., `bg-background`, `text-muted-foreground`, `bg-success`). Use standard shadcn/ui semantic names (`primary`, `secondary`, `destructive`, `muted`, `accent`, `success`, `warning`) for all state feedback to ensure global consistency and accessibility.
 
 ## Routing & Middleware Rules
 - **Admin Route Protection:** Do NOT protect the `/admin` route by redirecting users in `middleware.ts`. This prevents logged-in parents from seeing the admin login screen to switch accounts. Rely exclusively on client-side role verification (e.g., `AdminLoginGate`) and backend Supabase RLS.

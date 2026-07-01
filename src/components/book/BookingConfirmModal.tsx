@@ -8,6 +8,7 @@ interface BookingConfirmModalProps {
   childName: string;
   dateLabel: string;
   timeLabel: string;
+  creditsToDeduct: number;
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -18,6 +19,7 @@ export function BookingConfirmModal({
   childName,
   dateLabel,
   timeLabel,
+  creditsToDeduct,
   onClose,
   onConfirm,
 }: BookingConfirmModalProps) {
@@ -47,7 +49,7 @@ export function BookingConfirmModal({
         </div>
 
         <p className="text-muted-foreground text-sm mb-5 font-medium px-2 leading-relaxed">
-          {COPY.BOOKING_FLOW.DEDUCT_NOTICE} <span className="text-icsn-teal font-bold mx-0.5">1 {COPY.BOOKING_FLOW.CREDIT_LABEL}</span> <span className="inline-block">{COPY.BOOKING_FLOW.FROM_PACKAGE}</span>
+          {COPY.BOOKING_FLOW.DEDUCT_NOTICE} <span className="text-icsn-teal font-bold mx-0.5">{creditsToDeduct} {COPY.BOOKING_FLOW.CREDIT_LABEL}</span> <span className="inline-block">{COPY.BOOKING_FLOW.FROM_PACKAGE}</span>
         </p>
 
         <div className="flex gap-3 w-full">

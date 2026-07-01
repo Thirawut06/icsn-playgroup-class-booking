@@ -64,6 +64,43 @@ export function usePendingSlips({ onRefresh }: UsePendingSlipsOptions = {}) {
     }
   };
 
+  const handleUploadMissingSlip = async (slipId: string, file: File) => {
+    setIsProcessing(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const filename = `${slipId}.${ext}`;
+      const { error: uploadError } = await AdminService.supabase.storage
+        .from('slips')
+        .upload(`walkins/${filename}`, file, { upsert: true });
+        
+      if (uploadError) throw uploadError;
+      
+      const { data: publicUrlData } = AdminService.supabase.storage
+        .from('slips')
+        .getPublicUrl(`walkins/${filename}`);
+        
+      const { error: dbError } = await AdminService.supabase
+        .from('slip_uploads')
+        .update({
+          file_url: publicUrlData.publicUrl,
+          status: 'approved',
+          reviewed_at: new Date().toISOString()
+        })
+        .eq('id', slipId);
+        
+      if (dbError) throw dbError;
+      
+      toast.success("อัปโหลดสลิปย้อนหลังเรียบร้อยแล้ว!");
+      await loadSlips();
+      onRefresh?.();
+      setPreviewSlip(null);
+    } catch (err) {
+      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return {
     slips,
     loading,
@@ -72,6 +109,7 @@ export function usePendingSlips({ onRefresh }: UsePendingSlipsOptions = {}) {
     isProcessing,
     handleApprove,
     handleReject,
+    handleUploadMissingSlip,
     refreshSlips: loadSlips,
   };
 }

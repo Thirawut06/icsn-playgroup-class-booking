@@ -4,29 +4,41 @@ import React from 'react';
 import { CalendarDays, Printer, Users, XCircle, Power, Loader2 } from 'lucide-react';
 import { COPY } from '@/config/copy';
 import { AdminEmptyState, AdminFieldLabel, AdminPanel, AdminPanelHeader } from '../admin-ui';
+import { AdminWalkinModal } from '../walkin/AdminWalkinModal';
 import { formatAgeDisplay } from '../admin-utils';
 import { useDailyAttendance } from '@/hooks/useDailyAttendance';
 
+import { AdminCalendarWidget } from './AdminCalendarWidget';
+
 export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
+  const [isWalkinModalOpen, setIsWalkinModalOpen] = React.useState(false);
   const {
     dailyDate,
     setDailyDate,
+    sessions,
+    selectedSessionId,
+    setSelectedSessionId,
     attendance,
+    session,
     loading,
     walkinPhone,
     setWalkinPhone,
     walkinName,
     setWalkinName,
+    walkinFree,
+    setWalkinFree,
     walkinLoading,
     capacityEdit,
     setCapacityEdit,
     savingCapacity,
     sessionIsActive,
     togglingSession,
+    blockoutDates,
     handleWalkin,
     handleCancel,
     handleSaveCapacity,
     handleToggleSession,
+    refreshData,
   } = useDailyAttendance({ onRefresh });
 
   return (
@@ -39,14 +51,40 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
           <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-end border-b border-border pb-6">
             
             {/* Date Selection */}
-            <div className="w-full lg:w-64">
-              <AdminFieldLabel>เลือกวันที่</AdminFieldLabel>
-              <input
-                type="date"
-                value={dailyDate}
-                onChange={e => setDailyDate(e.target.value)}
-                className="block w-full px-4 h-[48px] border border-border rounded-xl focus:border-icsn-teal focus:ring-1 focus:ring-icsn-teal outline-none bg-white text-foreground transition shadow-sm font-semibold cursor-pointer"
-              />
+            <div className="w-full lg:w-64 space-y-4 relative z-50">
+              <div>
+                <AdminFieldLabel>เลือกวันที่</AdminFieldLabel>
+                <AdminCalendarWidget
+                  selectedDate={dailyDate}
+                  onDateSelect={setDailyDate}
+                  blockoutDates={blockoutDates}
+                />
+              </div>
+              
+              {/* Session Tabs */}
+              {sessions.length > 0 && (
+                <div>
+                  <AdminFieldLabel>เลือกรอบเวลา</AdminFieldLabel>
+                  <div className="flex flex-wrap gap-2">
+                    {sessions.map(sess => (
+                      <button
+                        key={sess.id}
+                        onClick={() => setSelectedSessionId(sess.id)}
+                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm cursor-pointer ${
+                          selectedSessionId === sess.id
+                            ? 'bg-icsn-teal text-white'
+                            : 'bg-white text-muted-foreground border border-border hover:bg-muted'
+                        }`}
+                      >
+                        {sess.time_label}
+                        <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-white/20">
+                          {sess.booked_count || 0}/{sess.total_capacity}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Quick Actions */}
@@ -111,23 +149,28 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
             </div>
           )}
 
-          {/* Add Walk-in */}
-          <div className="bg-muted p-4 rounded-2xl border border-border">
-            <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-              <Users className="w-4 h-4 text-icsn-teal" /> เพิ่ม Walk-in (หน้างาน)
+          {/* Add Walk-in Button */}
+          <div className="flex justify-between items-center bg-muted p-4 rounded-2xl border border-border">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <Users className="w-4 h-4 text-icsn-teal" /> รับ Walk-in หน้างาน
             </h3>
-            <form onSubmit={handleWalkin} className="flex flex-col md:flex-row gap-3 items-end">
-              <div className="flex-1 w-full">
-                <input type="text" required value={walkinPhone} onChange={e => setWalkinPhone(e.target.value)} placeholder="เบอร์โทรศัพท์ (08XXXXXXXX)" className="w-full px-4 py-3 rounded-xl border border-border focus:border-icsn-teal outline-none" />
-              </div>
-              <div className="flex-1 w-full">
-                <input type="text" required value={walkinName} onChange={e => setWalkinName(e.target.value)} placeholder="ชื่อเล่นน้อง" className="w-full px-4 py-3 rounded-xl border border-border focus:border-icsn-teal outline-none" />
-              </div>
-              <button type="submit" disabled={walkinLoading} className="w-full md:w-auto px-6 py-3 bg-icsn-navy hover:bg-icsn-navy/90 text-white rounded-xl font-bold shadow-sm transition disabled:opacity-50 cursor-pointer whitespace-nowrap">
-                + เพิ่มนักเรียน
-              </button>
-            </form>
+            <button 
+              onClick={() => setIsWalkinModalOpen(true)}
+              className="px-6 py-2 bg-icsn-navy hover:bg-icsn-navy/90 text-white rounded-xl font-bold shadow-sm transition cursor-pointer"
+            >
+              + เพิ่มนักเรียน (Walk-in)
+            </button>
           </div>
+
+          <AdminWalkinModal 
+            isOpen={isWalkinModalOpen}
+            sessionId={selectedSessionId}
+            onClose={() => setIsWalkinModalOpen(false)}
+            onSuccess={() => {
+              onRefresh?.();
+              refreshData?.();
+            }}
+          />
 
           {/* Attendance Table */}
           {loading ? (

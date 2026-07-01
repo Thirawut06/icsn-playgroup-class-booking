@@ -5,8 +5,8 @@ import type { Session, Package } from '@/types';
 interface UseBookingActionsProps {
   parentId: string;
   selectedChildId: string;
-  selectedDate: string | null;
-  selectedSession: Session | null;
+  selectedDates: string[];
+  selectedSessionsMap: Record<string, Session>;
   packages: Package[];
   onSuccess: () => void;
   clearSelection: () => void;
@@ -15,8 +15,8 @@ interface UseBookingActionsProps {
 export function useBookingActions({
   parentId,
   selectedChildId,
-  selectedDate,
-  selectedSession,
+  selectedDates,
+  selectedSessionsMap,
   packages,
   onSuccess,
   clearSelection
@@ -26,24 +26,22 @@ export function useBookingActions({
   const [isCancelling, setIsCancelling] = useState(false);
 
   const confirmBookClass = async () => {
-    if (!selectedDate || !selectedChildId || packages.length === 0) return;
-    const pkgToUse = packages[0];
+    if (selectedDates.length === 0 || !selectedChildId || packages.length === 0) return;
     
     setIsSubmitting(true);
     setBookingError('');
     
     try {
-      const finalSessionId = selectedSession?.id;
-      if (!finalSessionId) {
-        throw new Error("กรุณาเลือกรอบเวลาที่ต้องการจอง");
-      }
+      const sessionIds = selectedDates.map(date => {
+        const s = selectedSessionsMap[date];
+        if (!s) throw new Error(`กรุณาเลือกรอบเวลาสำหรับวันที่ ${date}`);
+        return s.id;
+      });
+
+      // We don't manually check duplicates here anymore, we let the RPC handle the batch transaction
+      // and fail entirely if there's an issue. It's atomic.
+      await bookingModule.bookClassesBatch(parentId, selectedChildId, sessionIds);
       
-      const hasDuplicate = await bookingModule.hasDuplicateBooking(selectedChildId, finalSessionId);
-      if (hasDuplicate) {
-        throw new Error("คุณได้จองสิทธิ์ให้น้องในรอบเวลานี้ไปแล้ว");
-      }
-      
-      await bookingModule.bookClass(parentId, selectedChildId, finalSessionId);
       clearSelection();
       onSuccess();
     } catch (e: unknown) {
@@ -88,4 +86,3 @@ export function useBookingActions({
     executeCancel
   };
 }
-

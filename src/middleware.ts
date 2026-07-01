@@ -8,7 +8,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protect parent routes
-  if (pathname.startsWith('/book') || pathname.startsWith('/my-bookings') || pathname.startsWith('/apply')) {
+  if (pathname.startsWith('/book') || pathname.startsWith('/apply')) {
     if (!user) {
       // Not authenticated, redirect to login
       const url = request.nextUrl.clone();

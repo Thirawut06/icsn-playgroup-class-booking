@@ -13,8 +13,27 @@ export const AdminBookingService = {
     return data;
   },
 
+  async adminSearchWalkin(phone: string): Promise<any> {
+    const { data, error } = await supabase.rpc('admin_search_walkin', { p_phone: phone });
+    if (error) throw error;
+    return data;
+  },
 
-  async getDailyAttendance(dateStr: string): Promise<DailyAttendanceRow[]> {
+  async adminProcessWalkin(phone: string, childId: string | null, childName: string, sessionId: string, paymentType: 'deduct' | 'paid' | 'trial' | 'paid_package', packageName?: string): Promise<any> {
+    const { data, error } = await supabase.rpc('admin_process_walkin', {
+      p_phone: phone,
+      p_child_id: childId,
+      p_child_name: childName,
+      p_session_id: sessionId,
+      p_payment_type: paymentType,
+      p_package_name: packageName || null
+    });
+    if (error) throw error;
+    return data;
+  },
+
+
+  async getDailyAttendance(sessionId: string): Promise<DailyAttendanceRow[]> {
     const { data, error } = await supabase
       .from('bookings')
       .select(`
@@ -25,7 +44,7 @@ export const AdminBookingService = {
         child:children(id, nickname, full_name, age, food_allergy),
         parent:parents(name, phone)
       `)
-      .eq('session_date', dateStr)
+      .eq('session_id', sessionId)
       .eq('status', BOOKING_STATUS.CONFIRMED)
       .order('created_at', { ascending: true });
     if (error) throw error;

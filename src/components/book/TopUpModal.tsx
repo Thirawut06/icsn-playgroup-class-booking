@@ -125,7 +125,7 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
                 <label className="block text-sm font-bold text-icsn-navy mb-1.5">Payment Method</label>
                 <div className="mb-2 rounded-xl overflow-hidden border border-border shadow-sm">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/payment-method.jpg" alt="Payment Method" className="w-full h-auto" />
+                <img src="/New_Kbank_QR_acc-no.png" alt="Payment Method" className="w-full h-auto" />
                 </div>
 
                 <label className="flex items-center gap-3 p-3 border-2 border-dashed border-icsn-teal/30 bg-icsn-teal/5 rounded-xl cursor-pointer hover:bg-icsn-teal/10 transition">

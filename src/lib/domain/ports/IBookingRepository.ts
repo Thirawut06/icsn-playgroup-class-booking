@@ -16,6 +16,11 @@ export interface IBookingRepository {
   bookClass(parentId: string, childId: string, sessionId: string): Promise<BookingResult>;
 
   /**
+   * Book multiple classes in a single transaction (Parent).
+   */
+  bookClassesBatch(parentId: string, childId: string, sessionIds: string[]): Promise<BookingResult>;
+
+  /**
    * Book a class as Admin (walkin or direct).
    */
   adminBookClass(childId: string, sessionId: string, isFree: boolean): Promise<{ booking_id: string }>;

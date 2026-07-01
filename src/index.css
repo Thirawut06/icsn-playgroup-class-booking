@@ -18,10 +18,14 @@
     --color-icsn-bg: #F8FAFC;
 
     /* Semantic status colors */
-    --color-success: #059669;
+    --color-success: #16a34a; /* green-600 */
+    --color-success-foreground: #ffffff;
     --color-error: #CC3366;
+    --color-error-foreground: #ffffff;
     --color-warning: #D97706;
+    --color-warning-foreground: #ffffff;
     --color-info: #0284C7;
+    --color-info-foreground: #ffffff;
     
     /* Custom Shadows */
     --shadow-icsn-card: 0 2px 10px rgba(0,0,0,0.02);
@@ -42,6 +46,7 @@
     --color-accent: var(--accent);
     --color-accent-foreground: var(--accent-foreground);
     --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);

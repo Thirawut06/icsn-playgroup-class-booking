@@ -1,36 +1,38 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { CalendarCog, Plus, Trash2, Loader2, CalendarX, Info } from 'lucide-react';
-import { AdminService } from '@/lib/supabase';
+import { CalendarCog, Plus, Trash2, Loader2, CalendarX, Info, AlertTriangle } from 'lucide-react';
+import { AdminService, supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { COPY } from '@/config/copy';
 import { AdminFieldLabel } from './admin-ui';
 
-interface BlockoutDate {
+interface SchoolClosure {
   id: string;
-  block_date: string;
-  reason: string | null;
+  start_date: string;
+  end_date: string;
+  reason: string;
 }
 
 export function CalendarSettingsTab() {
-  const [blockoutDates, setBlockoutDates] = useState<BlockoutDate[]>([]);
+  const [closures, setClosures] = useState<SchoolClosure[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Add form state
-  const [newDate, setNewDate] = useState('');
-  const [newReason, setNewReason] = useState('');
+  // Form state
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [reason, setReason] = useState('');
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
-    fetchBlockoutDates();
+    fetchClosures();
   }, []);
 
-  const fetchBlockoutDates = async () => {
+  const fetchClosures = async () => {
     setLoading(true);
     try {
-      const data = await AdminService.getBlockoutDates();
-      setBlockoutDates(data);
+      const data = await AdminService.getSchoolClosures();
+      setClosures(data);
     } catch (err) {
       toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
@@ -39,16 +41,28 @@ export function CalendarSettingsTab() {
   };
 
   const handleAdd = async () => {
-    if (!newDate) {
-      toast.error(COPY.ALERTS.SELECT_DATE_REQUIRED);
+    if (!startDate || !endDate || !reason) {
+      toast.error("กรุณากรอกวันที่เริ่มต้น สิ้นสุด และเหตุผลให้ครบถ้วน");
       return;
     }
+    
+    if (new Date(endDate) < new Date(startDate)) {
+      toast.error("วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น");
+      return;
+    }
+
+    if (!confirm(`ยืนยันการปิดโรงเรียนตั้งแต่วันที่ ${startDate} ถึง ${endDate} ?\n\nคำเตือน: ระบบจะทำการยกเลิกคลาสที่ถูกจองไว้ในช่วงเวลานี้ และคืนเครดิตให้ผู้ปกครองโดยอัตโนมัติ`)) {
+      return;
+    }
+
     setAdding(true);
     try {
-      await AdminService.addBlockoutDate(newDate, newReason || undefined);
-      setNewDate('');
-      setNewReason('');
-      await fetchBlockoutDates();
+      await AdminService.bulkCloseDays(startDate, endDate, reason);
+      toast.success("ปิดคลาสเรียบร้อยแล้ว ระบบได้คืนเครดิตให้ผู้ปกครองที่ได้รับผลกระทบแล้ว");
+      setStartDate('');
+      setEndDate('');
+      setReason('');
+      await fetchClosures();
     } catch (err) {
       toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
@@ -57,10 +71,12 @@ export function CalendarSettingsTab() {
   };
 
   const handleRemove = async (id: string) => {
-    if (!confirm('ยืนยันลบวันหยุดนี้ออก?')) return;
+    if (!confirm('ยืนยันลบรายการปิดโรงเรียนนี้? (การลบจะไม่ดึงคลาสที่ถูกยกเลิกไปแล้วกลับมา)')) return;
     try {
-      await AdminService.removeBlockoutDate(id);
-      setBlockoutDates(curr => curr.filter(d => d.id !== id));
+      const { error } = await supabase.from('school_closures').delete().eq('id', id);
+      if (error) throw error;
+      setClosures(curr => curr.filter(d => d.id !== id));
+      toast.success("ลบรายการสำเร็จ");
     } catch (err) {
       toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     }
@@ -69,73 +85,95 @@ export function CalendarSettingsTab() {
   const formatDisplayDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return d.toLocaleDateString('th-TH', {
-      weekday: 'long',
       day: 'numeric',
-      month: 'long',
+      month: 'short',
       year: 'numeric',
     });
   };
 
-  // Split into upcoming vs past
   const today = new Date().toISOString().split('T')[0];
-  const upcomingDates = blockoutDates.filter(d => d.block_date >= today);
-  const pastDates = blockoutDates.filter(d => d.block_date < today);
+  const upcomingClosures = closures.filter(c => c.end_date >= today);
+  const pastClosures = closures.filter(c => c.end_date < today);
 
   return (
     <div className="w-full max-w-5xl mx-auto animate-in fade-in duration-500">
       <div className="space-y-8 mt-4">
         
-        {/* Add Blockout Date Form */}
+        {/* Add Closure Form */}
         <section className="bg-white p-6 sm:p-8 border border-border rounded-2xl shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="bg-error/10 p-2.5 rounded-xl text-error">
-              <CalendarX className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-icsn-navy">เพิ่มวันหยุด / ปิดรับจอง</h3>
-              <p className="text-sm text-muted-foreground mt-0.5">ระบบจะปิดรับจองในวันที่ถูกเลือกโดยอัตโนมัติ</p>
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="bg-error/10 p-2.5 rounded-xl text-error shrink-0">
+                <CalendarX className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-icsn-navy">ปิดโรงเรียน / วันหยุดยาว (Bulk Close)</h3>
+                <p className="text-sm text-muted-foreground mt-0.5">ระบบจะปิดรับจอง ยกเลิกคลาสที่ถูกจองแล้ว และคืนเครดิตให้อัตโนมัติ</p>
+              </div>
             </div>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-4 items-end bg-muted/20 p-5 rounded-xl border border-border/50">
-            <div className="flex-1 w-full">
-              <AdminFieldLabel>วันที่ต้องการปิดรับจอง</AdminFieldLabel>
-              <input
-                type="date"
-                value={newDate}
-                onChange={e => setNewDate(e.target.value)}
-                className="w-full px-4 py-2.5 mt-2 bg-white border border-border rounded-xl focus:ring-2 focus:ring-icsn-teal/30 focus:border-icsn-teal/50 outline-none transition-all text-icsn-navy font-medium"
-              />
+          <div className="flex flex-col gap-4 bg-muted/20 p-5 rounded-xl border border-border/50">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <AdminFieldLabel>วันที่เริ่มต้น (Start Date)</AdminFieldLabel>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={e => {
+                    setStartDate(e.target.value);
+                    if (!endDate || e.target.value > endDate) setEndDate(e.target.value);
+                  }}
+                  className="w-full px-4 py-2.5 mt-2 bg-white border border-border rounded-xl focus:ring-2 focus:ring-icsn-teal/30 focus:border-icsn-teal/50 outline-none transition-all text-icsn-navy font-medium"
+                />
+              </div>
+              <div>
+                <AdminFieldLabel>ถึงวันที่ (End Date)</AdminFieldLabel>
+                <input
+                  type="date"
+                  value={endDate}
+                  min={startDate}
+                  onChange={e => setEndDate(e.target.value)}
+                  className="w-full px-4 py-2.5 mt-2 bg-white border border-border rounded-xl focus:ring-2 focus:ring-icsn-teal/30 focus:border-icsn-teal/50 outline-none transition-all text-icsn-navy font-medium"
+                />
+              </div>
             </div>
-            <div className="flex-[2] w-full">
-              <AdminFieldLabel>สาเหตุ / ชื่อวันหยุด (แสดงให้ผู้ปกครองเห็น)</AdminFieldLabel>
+            <div>
+              <AdminFieldLabel>สาเหตุ / ชื่อวันหยุด (Reason)</AdminFieldLabel>
               <input
                 type="text"
-                value={newReason}
-                onChange={e => setNewReason(e.target.value)}
-                placeholder="เช่น วันหยุดสงกรานต์, ครูลากิจ..."
+                value={reason}
+                onChange={e => setReason(e.target.value)}
+                placeholder="เช่น ปิดเทอมซัมเมอร์, วันหยุดสงกรานต์..."
                 className="w-full px-4 py-2.5 mt-2 bg-white border border-border rounded-xl focus:ring-2 focus:ring-icsn-teal/30 focus:border-icsn-teal/50 outline-none transition-all text-icsn-navy"
               />
             </div>
-            <button
-              onClick={handleAdd}
-              disabled={adding || !newDate}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-icsn-navy hover:bg-icsn-navy/90 text-white font-bold rounded-xl shadow-md transition disabled:opacity-50 h-[46px] hover:-translate-y-0.5 active:translate-y-0 whitespace-nowrap"
-            >
-              {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              {adding ? 'กำลังเพิ่ม...' : 'เพิ่มวันหยุด'}
-            </button>
+            
+            <div className="flex justify-between items-center mt-2">
+              <div className="flex items-center gap-2 text-warning font-semibold text-xs bg-warning/10 px-3 py-2 rounded-lg border border-warning/20">
+                <AlertTriangle className="w-4 h-4" />
+                <span>คำเตือน: การสั่งปิดจะส่งผลทันที และระบบจะคืนเครดิตอัตโนมัติ</span>
+              </div>
+              <button
+                onClick={handleAdd}
+                disabled={adding || !startDate || !endDate || !reason}
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-error hover:bg-error/90 text-white font-bold rounded-xl shadow-md transition disabled:opacity-50 h-[46px] hover:-translate-y-0.5 active:translate-y-0"
+              >
+                {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                {adding ? 'กำลังดำเนินการ...' : 'สั่งปิดโรงเรียน'}
+              </button>
+            </div>
           </div>
         </section>
 
-        {/* Upcoming Blockout Dates */}
+        {/* Upcoming Closures */}
         <section>
           <div className="flex items-center gap-2 mb-4">
             <h3 className="text-lg font-bold text-icsn-navy">
-              วันหยุดที่กำลังจะมาถึง
+              กำหนดการปิดโรงเรียนล่วงหน้า
             </h3>
             <span className="bg-icsn-teal/10 text-icsn-teal px-2.5 py-0.5 rounded-full text-xs font-bold">
-              {upcomingDates.length} วัน
+              {upcomingClosures.length} รายการ
             </span>
           </div>
 
@@ -143,32 +181,35 @@ export function CalendarSettingsTab() {
             <div className="py-12 flex justify-center items-center">
               <Loader2 className="w-8 h-8 animate-spin text-icsn-teal/50" />
             </div>
-          ) : upcomingDates.length === 0 ? (
+          ) : upcomingClosures.length === 0 ? (
             <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-border bg-muted/30 rounded-2xl">
               <CalendarCog className="w-10 h-10 text-muted-foreground/30 mb-3" />
-              <p className="text-muted-foreground text-sm font-medium">ยังไม่มีวันหยุดที่ตั้งไว้ในอนาคต</p>
+              <p className="text-muted-foreground text-sm font-medium">ยังไม่มีกำหนดการปิดโรงเรียนในอนาคต</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {upcomingDates.map(d => (
-                <div key={d.id} className="bg-white border border-border rounded-xl p-4 flex items-center justify-between group hover:shadow-md transition-all hover:border-icsn-teal/30">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-error/5 w-12 h-12 rounded-lg flex flex-col items-center justify-center text-error border border-error/10 shrink-0">
-                      <span className="text-xs font-bold uppercase">{new Date(d.block_date).toLocaleDateString('en-US', { month: 'short' })}</span>
-                      <span className="text-lg font-black leading-none">{new Date(d.block_date).getDate()}</span>
+            <div className="grid grid-cols-1 gap-4">
+              {upcomingClosures.map(c => (
+                <div key={c.id} className="bg-white border border-border rounded-xl p-4 flex items-center justify-between group hover:shadow-md transition-all hover:border-error/30 relative overflow-hidden">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-error rounded-l-xl"></div>
+                  <div className="flex items-center gap-4 pl-3">
+                    <div className="bg-error/5 w-16 h-16 rounded-lg flex flex-col items-center justify-center text-error border border-error/10 shrink-0">
+                      <CalendarX className="w-6 h-6 mb-1 opacity-70" />
+                      <span className="text-xs font-bold uppercase text-center leading-tight">Closed</span>
                     </div>
                     <div>
-                      <h4 className="font-bold text-icsn-navy">{formatDisplayDate(d.block_date)}</h4>
-                      <p className="text-sm text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                        <Info className="w-3.5 h-3.5" />
-                        {d.reason || 'ไม่ระบุสาเหตุ'}
+                      <h4 className="font-bold text-icsn-navy text-base">{c.reason}</h4>
+                      <p className="text-sm text-muted-foreground mt-0.5 flex items-center gap-1.5 font-medium">
+                        <CalendarCog className="w-4 h-4 text-icsn-teal" />
+                        {c.start_date === c.end_date 
+                          ? formatDisplayDate(c.start_date)
+                          : `${formatDisplayDate(c.start_date)} - ${formatDisplayDate(c.end_date)}`}
                       </p>
                     </div>
                   </div>
                   <button
-                    onClick={() => handleRemove(d.id)}
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-error hover:text-white transition-colors opacity-0 group-hover:opacity-100"
-                    title="ลบวันหยุดนี้"
+                    onClick={() => handleRemove(c.id)}
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-error hover:text-white transition-colors opacity-0 group-hover:opacity-100 shrink-0"
+                    title="ลบรายการนี้"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -178,8 +219,8 @@ export function CalendarSettingsTab() {
           )}
         </section>
 
-        {/* Past Blockout Dates */}
-        {pastDates.length > 0 && (
+        {/* Past Closures */}
+        {pastClosures.length > 0 && (
           <section className="pt-6 border-t border-border">
             <details className="group">
               <summary className="cursor-pointer flex items-center gap-2 text-muted-foreground font-medium hover:text-icsn-navy transition-colors list-none">
@@ -188,13 +229,17 @@ export function CalendarSettingsTab() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
-                <span>ประวัติวันหยุดที่ผ่านมาแล้ว ({pastDates.length} วัน)</span>
+                <span>ประวัติการปิดโรงเรียนที่ผ่านมา ({pastClosures.length} รายการ)</span>
               </summary>
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pl-8">
-                {pastDates.map(d => (
-                  <div key={d.id} className="bg-muted/30 border border-border/50 rounded-lg p-3 opacity-60 grayscale">
-                    <p className="text-xs font-bold text-icsn-navy">{formatDisplayDate(d.block_date)}</p>
-                    <p className="text-xs text-muted-foreground mt-1 truncate">{d.reason || '-'}</p>
+                {pastClosures.map(c => (
+                  <div key={c.id} className="bg-muted/30 border border-border/50 rounded-lg p-3 opacity-60 grayscale">
+                    <p className="text-xs font-bold text-icsn-navy truncate">{c.reason}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {c.start_date === c.end_date 
+                          ? formatDisplayDate(c.start_date)
+                          : `${formatDisplayDate(c.start_date)} - ${formatDisplayDate(c.end_date)}`}
+                    </p>
                   </div>
                 ))}
               </div>

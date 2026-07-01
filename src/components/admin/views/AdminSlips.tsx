@@ -16,6 +16,7 @@ export function AdminSlips({ onRefresh }: { onRefresh?: () => void }) {
     isProcessing,
     handleApprove,
     handleReject,
+    handleUploadMissingSlip,
   } = usePendingSlips({ onRefresh });
 
   return (
@@ -60,7 +61,7 @@ export function AdminSlips({ onRefresh }: { onRefresh?: () => void }) {
                       onClick={() => setPreviewSlip(slip)}
                       className="w-full h-56 bg-muted rounded-xl overflow-hidden cursor-pointer border border-border relative group"
                     >
-                      {slip.file_url ? (
+                      {slip.file_url && slip.file_url !== 'PENDING_WALKIN_PAYMENT' ? (
                         <>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={slip.file_url} alt="Slip" className="w-full h-full object-contain transition-transform hover:scale-105 bg-foreground/10/5" />
@@ -69,9 +70,9 @@ export function AdminSlips({ onRefresh }: { onRefresh?: () => void }) {
                           </div>
                         </>
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/70">
-                          <ReceiptText className="w-8 h-8 mb-2" />
-                          <span className="text-sm font-bold">ไม่มีรูปสลิป</span>
+                        <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/70 bg-warning/10">
+                          <ReceiptText className="w-8 h-8 mb-2 text-warning" />
+                          <span className="text-sm font-bold text-warning">รอการอัปโหลดสลิปย้อนหลัง</span>
                         </div>
                       )}
                     </div>
@@ -104,6 +105,7 @@ export function AdminSlips({ onRefresh }: { onRefresh?: () => void }) {
           slip={previewSlip}
           onApprove={handleApprove}
           onReject={handleReject}
+          onUploadMissingSlip={handleUploadMissingSlip}
           isProcessing={isProcessing}
         />
       </AdminPanel>
