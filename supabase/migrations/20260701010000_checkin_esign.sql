@@ -15,6 +15,7 @@ VALUES ('signatures', 'signatures', false)
 ON CONFLICT (id) DO NOTHING;
 
 -- 3. Storage RLS: Only authenticated admins can read/write signatures
+DROP POLICY IF EXISTS "Admin can upload signatures" ON storage.objects;
 CREATE POLICY "Admin can upload signatures"
   ON storage.objects FOR INSERT
   TO authenticated
@@ -23,6 +24,7 @@ CREATE POLICY "Admin can upload signatures"
     AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
   );
 
+DROP POLICY IF EXISTS "Admin can read signatures" ON storage.objects;
 CREATE POLICY "Admin can read signatures"
   ON storage.objects FOR SELECT
   TO authenticated
@@ -31,6 +33,7 @@ CREATE POLICY "Admin can read signatures"
     AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
   );
 
+DROP POLICY IF EXISTS "Admin can delete signatures" ON storage.objects;
 CREATE POLICY "Admin can delete signatures"
   ON storage.objects FOR DELETE
   TO authenticated

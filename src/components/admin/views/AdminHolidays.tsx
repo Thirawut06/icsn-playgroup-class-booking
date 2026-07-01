@@ -5,7 +5,7 @@ import { CalendarCog, Plus, Trash2, Loader2, CalendarX, Info, AlertTriangle } fr
 import { AdminService, supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { COPY } from '@/config/copy';
-import { AdminFieldLabel } from './admin-ui';
+import { AdminFieldLabel, AdminPanel, AdminPanelHeader } from '../admin-ui';
 
 interface SchoolClosure {
   id: string;
@@ -14,7 +14,7 @@ interface SchoolClosure {
   reason: string;
 }
 
-export function CalendarSettingsTab() {
+export function AdminHolidays() {
   const [closures, setClosures] = useState<SchoolClosure[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -110,24 +110,14 @@ export function CalendarSettingsTab() {
   const pastClosures = closures.filter(c => c.end_date < today);
 
   return (
-    <div className="w-full max-w-5xl mx-auto animate-in fade-in duration-500">
-      <div className="space-y-8 mt-4">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <AdminPanel className="no-print">
+        <AdminPanelHeader icon={CalendarCog} title="ตั้งค่าวันหยุด (Holidays & Closures)" />
+        <div className="p-0 sm:p-6 space-y-8">
         
         {/* Add Closure Form */}
         <section className="bg-white p-6 sm:p-8 border border-border rounded-2xl shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-error/10 p-2.5 rounded-xl text-error shrink-0">
-                <CalendarX className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-icsn-navy">หยุดยาว (Long Holiday)</h3>
-                <p className="text-sm text-muted-foreground mt-0.5">ระบบจะปิดรับจอง ยกเลิกคลาสที่ถูกจองแล้ว และคืนเครดิตให้อัตโนมัติ</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex flex-col gap-4 bg-muted/20 p-5 rounded-xl border border-border/50">
+          <div className="flex flex-col gap-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <AdminFieldLabel>วันที่เริ่มต้น (Start Date)</AdminFieldLabel>
@@ -152,6 +142,7 @@ export function CalendarSettingsTab() {
                 />
               </div>
             </div>
+            <p className="text-xs text-muted-foreground">💡 หากต้องการหยุดเพียงวันเดียว ให้เลือกวันที่เริ่มต้นและสิ้นสุดเป็นวันเดียวกัน</p>
             <div>
               <AdminFieldLabel>สาเหตุ / ชื่อวันหยุด (Reason)</AdminFieldLabel>
               <input
@@ -174,7 +165,7 @@ export function CalendarSettingsTab() {
                 className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-error hover:bg-error/90 text-white font-bold rounded-xl shadow-md transition disabled:opacity-50 h-[46px] hover:-translate-y-0.5 active:translate-y-0"
               >
                 {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                {adding ? 'กำลังดำเนินการ...' : 'ตั้งค่าวันหยุดยาว'}
+                {adding ? 'กำลังดำเนินการ...' : 'บันทึกวันหยุด (ปิดคลาส)'}
               </button>
             </div>
           </div>
@@ -243,7 +234,7 @@ export function CalendarSettingsTab() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
-                <span>ประวัติวันหยุดยาวที่ผ่านมา ({pastClosures.length} รายการ)</span>
+                <span>ประวัติวันหยุดที่ผ่านมา ({pastClosures.length} รายการ)</span>
               </summary>
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pl-8">
                 {pastClosures.map(c => (
@@ -260,7 +251,8 @@ export function CalendarSettingsTab() {
             </details>
           </section>
         )}
-      </div>
+        </div>
+      </AdminPanel>
     </div>
   );
 }

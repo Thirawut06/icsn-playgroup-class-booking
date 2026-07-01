@@ -82,6 +82,7 @@ You carefully provide accurate, factual, thoughtful answers, and are a genius at
 ## Supabase PostgREST Accuracy
 - **Query Column Matching:** When writing `select()` queries, always verify column names against the actual SQL migration files. Do not assume column names (e.g., `credit_transactions` uses `notes`, not `reason`).
 
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 

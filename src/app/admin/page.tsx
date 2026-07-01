@@ -10,6 +10,7 @@ import { AdminService, supabase } from '@/lib/supabase';
 import type { AdminTab } from '@/components/admin/admin-types';
 import { isAdminUser } from '@/lib/auth/roles';
 
+
 const LoadingFallback = () => (
   <div className="flex items-center justify-center h-64">
     <Loader2 className="w-8 h-8 animate-spin text-icsn-teal" />
@@ -22,6 +23,8 @@ const AdminSlips = dynamic(() => import('@/components/admin/views/AdminSlips').t
 const AdminUsers = dynamic(() => import('@/components/admin/views/AdminUsers').then(mod => mod.AdminUsers), { loading: LoadingFallback });
 const AdminSettings = dynamic(() => import('@/components/admin/views/AdminSettings').then(mod => mod.AdminSettings), { loading: LoadingFallback });
 const AdminTimeSlots = dynamic(() => import('@/components/admin/views/AdminTimeSlots').then(mod => mod.AdminTimeSlots), { loading: LoadingFallback });
+const AdminPackages = dynamic(() => import('@/components/admin/views/AdminPackages').then(mod => mod.AdminPackages), { loading: LoadingFallback });
+const AdminHolidays = dynamic(() => import('@/components/admin/views/AdminHolidays').then(mod => mod.AdminHolidays), { loading: LoadingFallback });
 
 export default function AdminPage() {
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -134,11 +137,12 @@ export default function AdminPage() {
           {activeTab === 'daily_ops' ? <AdminDailyOps onRefresh={refreshPendingCount} /> : null}
           {activeTab === 'slips' ? <AdminSlips onRefresh={refreshPendingCount} /> : null}
           {activeTab === 'users' ? <AdminUsers /> : null}
-          {activeTab === 'settings' ? <AdminSettings /> : null}
+          {activeTab === 'packages' ? <AdminPackages /> : null}
           {activeTab === 'timeslot' ? <AdminTimeSlots /> : null}
+          {activeTab === 'holidays' ? <AdminHolidays /> : null}
+          {activeTab === 'settings' ? <AdminSettings /> : null}
         </div>
       </main>
     </div>
   );
 }
-

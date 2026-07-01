@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Plus, Trash2, Edit2, Loader2, Save, X, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Edit2, Loader2, Save, X, AlertCircle, Package } from 'lucide-react';
 import { PackageService, AdminService } from '@/lib/supabase';
 import type { PackageOption } from '@/types';
 import toast from 'react-hot-toast';
@@ -11,10 +11,12 @@ import {
   AdminInfoBox, 
   AdminDataTable, 
   AdminToggle, 
-  AdminIconButton 
-} from './admin-ui';
+  AdminIconButton,
+  AdminPanel,
+  AdminPanelHeader
+} from '../admin-ui';
 
-export function PackageOptionsTab() {
+export function AdminPackages() {
   const [options, setOptions] = useState<PackageOption[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -154,9 +156,11 @@ export function PackageOptionsTab() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <div className="p-0 sm:p-6 space-y-6">
-        
-        <AdminInfoBox
+      <AdminPanel className="no-print">
+        <AdminPanelHeader icon={Package} title="แพ็กเกจราคา (Packages & Pricing)" />
+        <div className="p-0 sm:p-6 space-y-6">
+          
+          <AdminInfoBox
           title="เกี่ยวกับแพ็กเกจราคา"
           description={
             <>
@@ -318,7 +322,8 @@ export function PackageOptionsTab() {
             </>
           )}
         </AdminDataTable>
-      </div>
+        </div>
+      </AdminPanel>
     </div>
   );
 }
