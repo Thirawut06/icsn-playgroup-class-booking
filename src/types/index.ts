@@ -55,6 +55,8 @@ export interface DailyAttendanceRow {
   parent_phone: string;
   created_at: string;
   is_walkin?: boolean;
+  signature_url?: string | null;
+  checkin_at?: string | null;
 }
 
 export interface PendingSlipRow {

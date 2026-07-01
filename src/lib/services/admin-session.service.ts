@@ -4,7 +4,7 @@ import { CLASS_CONFIG } from '@/config/constants';
 import { AppError } from '../utils';
 
 export const AdminSessionService = {
-  async getSessionForDate(dateStr: string, timeLabel = CLASS_CONFIG.DEFAULT_TIME_LABEL): Promise<Session | null> {
+  async getSessionForDate(dateStr: string, timeLabel: string = CLASS_CONFIG.DEFAULT_TIME_LABEL): Promise<Session | null> {
     const { data, error } = await supabase
       .from('sessions')
       .select('*')
@@ -41,6 +41,14 @@ export const AdminSessionService = {
     });
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
     if (data && data.success === false) throw new Error(data.error || 'Bulk close failed');
+  },
+
+  async bulkReopenDays(startDate: string, endDate: string): Promise<void> {
+    const { error } = await supabase.rpc('bulk_reopen_days', {
+      p_start_date: startDate,
+      p_end_date: endDate
+    });
+    if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
   },
 
   async addBlockoutDate(blockDate: string, reason?: string): Promise<void> {

@@ -20,5 +20,9 @@ export class SessionModule {
   async toggleSessionActive(sessionId: string, isActive: boolean): Promise<void> {
     return this.sessionRepository.toggleSessionActive(sessionId, isActive);
   }
+
+  async adminCloseSession(sessionId: string, reason: string): Promise<void> {
+    return this.sessionRepository.adminCloseSession(sessionId, reason);
+  }
 }
 

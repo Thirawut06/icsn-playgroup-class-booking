@@ -51,14 +51,14 @@ export function CalendarSettingsTab() {
       return;
     }
 
-    if (!confirm(`ยืนยันการปิดโรงเรียนตั้งแต่วันที่ ${startDate} ถึง ${endDate} ?\n\nคำเตือน: ระบบจะทำการยกเลิกคลาสที่ถูกจองไว้ในช่วงเวลานี้ และคืนเครดิตให้ผู้ปกครองโดยอัตโนมัติ`)) {
+    if (!confirm(`ยืนยันการตั้งค่าวันหยุดยาวตั้งแต่วันที่ ${startDate} ถึง ${endDate} ?\n\nคำเตือน: ระบบจะทำการยกเลิกคลาสที่ถูกจองไว้ในช่วงเวลานี้ และคืนเครดิตให้ผู้ปกครองโดยอัตโนมัติ (สำหรับลูกค้าโอนเงินสด แอดมินต้องทำการโอนคืนเอง)`)) {
       return;
     }
 
     setAdding(true);
     try {
       await AdminService.bulkCloseDays(startDate, endDate, reason);
-      toast.success("ปิดคลาสเรียบร้อยแล้ว ระบบได้คืนเครดิตให้ผู้ปกครองที่ได้รับผลกระทบแล้ว");
+      toast.success("ตั้งค่าวันหยุดยาวเรียบร้อย ระบบได้ยกเลิกและคืนเครดิตให้ลูกค้าที่มีแพ็กเกจแล้ว");
       setStartDate('');
       setEndDate('');
       setReason('');
@@ -71,12 +71,26 @@ export function CalendarSettingsTab() {
   };
 
   const handleRemove = async (id: string) => {
-    if (!confirm('ยืนยันลบรายการปิดโรงเรียนนี้? (การลบจะไม่ดึงคลาสที่ถูกยกเลิกไปแล้วกลับมา)')) return;
+    const closure = closures.find(c => c.id === id);
+    if (!closure) return;
+
+    if (!confirm('ยืนยันลบรายการวันหยุดยาวนี้? (การลบจะไม่ดึงคลาสที่ถูกยกเลิกไปแล้วกลับมา)')) return;
     try {
+      // 1. ลบจาก school_closures
       const { error } = await supabase.from('school_closures').delete().eq('id', id);
       if (error) throw error;
+
+      // 2. ปลดล็อค session กลับเป็นปกติ (is_active = true, theme = null) 
+      // โดยข้ามเสาร์-อาทิตย์ เพื่อให้สามารถเปิดจองได้ใหม่
+      try {
+        await AdminService.bulkReopenDays(closure.start_date, closure.end_date);
+        toast.success("ลบรายการสำเร็จ และเปิดคลาสในช่วงเวลานี้ให้จองได้ตามปกติ");
+      } catch (updateError) {
+        console.error("Failed to reactivate sessions:", updateError);
+        toast.error("ลบวันหยุดแล้ว แต่ไม่สามารถเปิดคลาสกลับมาได้อัตโนมัติ");
+      }
+
       setClosures(curr => curr.filter(d => d.id !== id));
-      toast.success("ลบรายการสำเร็จ");
     } catch (err) {
       toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     }
@@ -107,7 +121,7 @@ export function CalendarSettingsTab() {
                 <CalendarX className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-icsn-navy">ปิดโรงเรียน / วันหยุดยาว (Bulk Close)</h3>
+                <h3 className="text-lg font-bold text-icsn-navy">หยุดยาว (Long Holiday)</h3>
                 <p className="text-sm text-muted-foreground mt-0.5">ระบบจะปิดรับจอง ยกเลิกคลาสที่ถูกจองแล้ว และคืนเครดิตให้อัตโนมัติ</p>
               </div>
             </div>
@@ -160,7 +174,7 @@ export function CalendarSettingsTab() {
                 className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-error hover:bg-error/90 text-white font-bold rounded-xl shadow-md transition disabled:opacity-50 h-[46px] hover:-translate-y-0.5 active:translate-y-0"
               >
                 {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                {adding ? 'กำลังดำเนินการ...' : 'สั่งปิดโรงเรียน'}
+                {adding ? 'กำลังดำเนินการ...' : 'ตั้งค่าวันหยุดยาว'}
               </button>
             </div>
           </div>
@@ -170,7 +184,7 @@ export function CalendarSettingsTab() {
         <section>
           <div className="flex items-center gap-2 mb-4">
             <h3 className="text-lg font-bold text-icsn-navy">
-              กำหนดการปิดโรงเรียนล่วงหน้า
+              กำหนดการวันหยุดยาวล่วงหน้า
             </h3>
             <span className="bg-icsn-teal/10 text-icsn-teal px-2.5 py-0.5 rounded-full text-xs font-bold">
               {upcomingClosures.length} รายการ
@@ -184,7 +198,7 @@ export function CalendarSettingsTab() {
           ) : upcomingClosures.length === 0 ? (
             <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-border bg-muted/30 rounded-2xl">
               <CalendarCog className="w-10 h-10 text-muted-foreground/30 mb-3" />
-              <p className="text-muted-foreground text-sm font-medium">ยังไม่มีกำหนดการปิดโรงเรียนในอนาคต</p>
+              <p className="text-muted-foreground text-sm font-medium">ยังไม่มีกำหนดการวันหยุดยาวล่วงหน้า</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
@@ -229,7 +243,7 @@ export function CalendarSettingsTab() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
-                <span>ประวัติการปิดโรงเรียนที่ผ่านมา ({pastClosures.length} รายการ)</span>
+                <span>ประวัติวันหยุดยาวที่ผ่านมา ({pastClosures.length} รายการ)</span>
               </summary>
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pl-8">
                 {pastClosures.map(c => (

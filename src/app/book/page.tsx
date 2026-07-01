@@ -179,7 +179,6 @@ function BookPageContent() {
 
   return (
     <div className="bg-white flex flex-col min-h-screen pb-16">
-      <ClosureNotificationBanner />
       <div className="max-w-[480px] mx-auto w-full bg-white min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)] flex flex-col relative overflow-hidden">
         
         {(() => {
@@ -195,11 +194,18 @@ function BookPageContent() {
           );
         })()}
 
-        <main className="flex-1 px-4 pb-5 space-y-5 mt-2">
+        <main className="flex-1 flex flex-col">
           {settings?.announcement_text && (
-            <div className="bg-blue-50 border border-blue-200 text-blue-800 text-sm p-3 rounded-lg flex items-start gap-2 shadow-sm">
-              <span className="text-xl">📢</span>
-              <p className="font-medium whitespace-pre-wrap mt-0.5">{settings.announcement_text}</p>
+            <div className="mx-4 my-3">
+              <div className="bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-xl flex items-start gap-3">
+                <span className="text-xl leading-none mt-0.5">📢</span>
+                <div>
+                  <p className="text-xs font-bold text-blue-800/70 uppercase tracking-wider mb-0.5">
+                    ประกาศจากทีม admissions
+                  </p>
+                  <p className="text-sm font-medium whitespace-pre-wrap leading-relaxed">{settings.announcement_text}</p>
+                </div>
+              </div>
             </div>
           )}
 
@@ -230,6 +236,8 @@ function BookPageContent() {
             blockoutDates={blockoutDates}
             cutoffHour={settings?.cutoff_hour || 7}
           />
+
+          <ClosureNotificationBanner />
         </main>
 
         <TopUpModal 

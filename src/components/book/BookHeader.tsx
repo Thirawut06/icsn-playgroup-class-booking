@@ -13,62 +13,69 @@ interface BookHeaderProps {
 export function BookHeader({ parentName, creditsRemaining, parentPhotoUrl, onLogout, onTopUpClick }: BookHeaderProps) {
   return (
     <>
-      {/* Sticky Top Header */}
-      <header className="bg-white/90 backdrop-blur-md shadow-xs sticky top-0 z-50">
+      {/* Sticky Top Navbar */}
+      <header className="bg-white/95 backdrop-blur-md border-b border-border sticky top-0 z-50">
         <div className="px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-10 h-auto">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 shrink-0">
               <Image src="/main-logo-icsn.png" alt="ICSN Logo" width={48} height={48} className="w-full h-auto object-contain" priority />
             </div>
             <div>
-              <h1 className="font-bold text-icsn-navy text-base leading-none">
+              <h1 className="font-bold text-icsn-navy text-base leading-tight">
                 ICSN Panda Playgroup
               </h1>
-              <p className="text-xs text-icsn-teal font-extrabold tracking-wider mt-0.5">
-                PLAY & LEARN
+              <p className="text-xs text-icsn-teal font-bold tracking-wider">
+                PLAY &amp; LEARN
               </p>
             </div>
           </div>
 
-          {/* Header actions / Navigation */}
-          <div className="flex items-center gap-2">
-            <button onClick={onLogout} className="w-10 h-10 flex items-center justify-center text-muted-foreground/70 hover:text-error rounded-xl hover:bg-error/10 transition active:scale-95" title="Log out">
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
+          <button
+            onClick={onLogout}
+            className="w-11 h-11 flex items-center justify-center text-muted-foreground hover:text-error hover:bg-error/10 rounded-xl transition active:scale-95"
+            aria-label="ออกจากระบบ"
+            title="ออกจากระบบ"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
         </div>
       </header>
 
-      {/* Top Section: Profile & Quick Actions */}
-      <div className="px-4 pt-5 pb-1">
-        <div className="bg-white rounded-2xl p-4 border border-border shadow-icsn-card flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-icsn-teal/10 flex items-center justify-center overflow-hidden border border-icsn-teal/20 shrink-0">
-              {parentPhotoUrl ? (
-                <img src={parentPhotoUrl} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${parentName || 'Parent'}&backgroundColor=e2e8f0`} alt="Profile" className="w-full h-full object-cover" />
-              )}
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-icsn-navy leading-tight">
-                {parentName || 'คุณพ่อ/คุณแม่'}
-              </h2>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-sm text-muted-foreground font-medium">สิทธิ์เรียน:</span>
-                <span className="text-base font-black text-icsn-teal">{creditsRemaining}</span>
-                <span className="text-xs text-muted-foreground font-medium">ครั้ง</span>
-              </div>
-            </div>
+      {/* Profile Strip — flat row, no card, no shadow */}
+      <div className="px-4 py-3 flex items-center justify-between gap-3 border-b border-border/40">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Avatar */}
+          <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-muted">
+            {parentPhotoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={parentPhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${parentName || 'Parent'}&backgroundColor=e2e8f0`} alt="Profile" className="w-full h-full object-cover" />
+            )}
           </div>
-          
-          <button 
-            onClick={onTopUpClick} 
-            className="bg-icsn-navy text-white hover:bg-icsn-navy/90 font-bold px-4 py-2.5 rounded-xl text-sm flex items-center gap-1.5 shadow-md transition active:scale-95 shrink-0"
-          >
-            <Wallet className="w-4 h-4" /> Top Up
-          </button>
+
+          {/* Name + Credits */}
+          <div className="min-w-0">
+            <p className="text-base font-bold text-icsn-navy truncate leading-tight">
+              {parentName || 'คุณพ่อ/คุณแม่'}
+            </p>
+            <p className="text-sm text-muted-foreground leading-tight">
+              สิทธิ์เหลือ{' '}
+              <span className="font-black text-icsn-teal">{creditsRemaining}</span>
+              {' '}ครั้ง
+            </p>
+          </div>
         </div>
+
+        {/* Top Up — 44px touch target for elderly */}
+        <button
+          onClick={onTopUpClick}
+          className="flex items-center gap-1.5 px-4 h-11 bg-icsn-navy text-white text-sm font-bold rounded-xl hover:bg-icsn-navy/90 transition active:scale-95 shrink-0"
+        >
+          <Wallet className="w-4 h-4" />
+          เติมสิทธิ์
+        </button>
       </div>
     </>
   );

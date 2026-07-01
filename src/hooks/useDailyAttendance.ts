@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, FormEvent } from 'react';
 import { AdminService } from '@/lib/supabase';
-import { bookingModule, sessionModule } from '@/lib/domain';
+import { bookingModule, sessionModule, signatureModule } from '@/lib/domain';
 import type { DailyAttendanceRow, Session } from '@/types';
 import { CLASS_CONFIG } from '@/config/constants';
 import toast from 'react-hot-toast';
@@ -107,6 +107,35 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     }
   };
 
+  // ── Check-in with e-signature ─────────────────────────────────────────────
+  const handleCheckin = async (bookingId: string, signatureBlob: Blob) => {
+    // 1. Upload to Supabase Storage and save to booking row
+    const signatureUrl = await signatureModule.uploadSignature(bookingId, signatureBlob);
+    await signatureModule.saveCheckinSignature(bookingId, signatureUrl);
+
+    // 2. Trigger Google Drive sync in the background (fire-and-forget)
+    const row = attendance.find(r => r.id === bookingId);
+    if (row && activeSession) {
+      fetch('/api/trigger-drive-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId,
+          signatureUrl,
+          parentName: row.parent_name,
+          parentPhone: row.parent_phone,
+          childName: row.nickname,
+          sessionDate: dailyDate,
+          sessionLabel: activeSession.time_label,
+        }),
+      }).catch(err => console.error('[drive-sync] background sync failed:', err));
+    }
+
+    // 3. Refresh the table to show ✅ badge
+    await loadAttendance();
+    toast.success(`เช็คอินสำเร็จ! ${row?.nickname ?? ''} ลงชื่อแล้ว`);
+  };
+
   const handleCancel = async (bookingId: string) => {
     const reason = prompt('เหตุผลในการยกเลิก (จำเป็น):', 'Admin cancelled from daily tab');
     if (!reason?.trim()) return;
@@ -144,15 +173,27 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
   const handleToggleSession = async () => {
     if (!activeSession) return;
     const newState = !activeSession.is_active;
-    const msg = newState
-      ? 'เปิดรับจองรอบนี้อีกครั้ง?'
-      : 'ปิดรับจองรอบนี้ (ผู้ปกครองจะไม่สามารถจองรอบนี้ได้)?';
-    if (!confirm(msg)) return;
+    let reason = '';
+    if (!newState) {
+      const input = prompt('ยืนยันการปิดรับจองรอบนี้? ระบบจะยกเลิกการจองและคืนเครดิตอัตโนมัติ (สำหรับ Walk-in ต้องโอนเงินคืนเอง)\\n\\nกรุณากรอกเหตุผล (เช่น ครูลาป่วย, เต็มแล้ว):');
+      if (input === null) return; // User cancelled
+      reason = input.trim() || 'ปิดรับจอง (ไม่มีเหตุผล)';
+    } else {
+      if (!confirm('เปิดรับจองรอบนี้อีกครั้ง?')) return;
+    }
     
     setTogglingSession(true);
     try {
-      await sessionModule.toggleSessionActive(selectedSessionId, newState);
-      const updatedSess = await AdminService.getSessionForDate(dailyDate, activeSession.time_label);
+      if (!newState) {
+        // Closing session with reason
+        await sessionModule.adminCloseSession(selectedSessionId, reason);
+        toast.success("ปิดรับจองเรียบร้อย คืนเครดิตให้ลูกค้าที่มีแพ็กเกจแล้ว");
+      } else {
+        // Re-opening session
+        await sessionModule.toggleSessionActive(selectedSessionId, true);
+        toast.success("เปิดรับจองรอบนี้อีกครั้ง");
+      }
+      const updatedSess = await AdminService.getSessionForDate(dailyDate, activeSession.time_label as string);
       if (updatedSess) {
         setSessions(prev => prev.map(s => s.id === selectedSessionId ? updatedSess : s));
       }
@@ -192,6 +233,7 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     togglingSession,
     handleWalkin,
     handleCancel,
+    handleCheckin,
     handleSaveCapacity,
     handleToggleSession,
     refreshData: loadAttendance,

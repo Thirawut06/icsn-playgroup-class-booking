@@ -1,15 +1,19 @@
 "use client";
 
 import React from 'react';
-import { CalendarDays, Printer, Users, XCircle, Power, Loader2 } from 'lucide-react';
+import { CalendarDays, Printer, Users, XCircle, Power, Loader2, PenLine, CheckCircle2 } from 'lucide-react';
 import { COPY } from '@/config/copy';
 import { AdminEmptyState, AdminFieldLabel, AdminPanel, AdminPanelHeader } from '../admin-ui';
 import { AdminWalkinModal } from '../walkin/AdminWalkinModal';
+import { ESignModal } from '../checkin/ESignModal';
 import { formatAgeDisplay } from '../admin-utils';
 import { useDailyAttendance } from '@/hooks/useDailyAttendance';
+import type { DailyAttendanceRow } from '@/types';
 
 export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
   const [isWalkinModalOpen, setIsWalkinModalOpen] = React.useState(false);
+  const [esignTarget, setEsignTarget] = React.useState<DailyAttendanceRow | null>(null);
+
   const {
     dailyDate,
     setDailyDate,
@@ -33,6 +37,7 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
     togglingSession,
     handleWalkin,
     handleCancel,
+    handleCheckin,
     handleSaveCapacity,
     handleToggleSession,
     refreshData,
@@ -184,12 +189,13 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
                     <th className="px-4 py-3">อายุ (Age)</th>
                     <th className="px-4 py-3">แพ้อาหาร (Allergies)</th>
                     <th className="px-4 py-3">ผู้ปกครอง (Parent)</th>
+                    <th className="px-4 py-3 text-center">เช็คอิน</th>
                     <th className="px-4 py-3 text-right">จัดการ</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {attendance.map(row => (
-                    <tr key={row.id} className="hover:bg-muted/80/50 transition">
+                    <tr key={row.id} className={`transition ${row.checkin_at ? 'bg-success/5' : 'hover:bg-muted/80/50'}`}>
                       <td className="px-4 py-3 font-bold text-foreground">{row.nickname}</td>
                       <td className="px-4 py-3 text-muted-foreground">{formatAgeDisplay(row.age)}</td>
                       <td className="px-4 py-3">
@@ -199,6 +205,27 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
                         <div className="font-bold text-foreground">{row.parent_name}</div>
                         <div className="text-xs text-muted-foreground">{row.parent_phone}</div>
                       </td>
+
+                      {/* Check-in Status + E-Sign Button */}
+                      <td className="px-4 py-3 text-center">
+                        {row.checkin_at ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-success/15 text-success">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            เช็คอินแล้ว
+                          </span>
+                        ) : (
+                          <button
+                            id={`esign-btn-${row.id}`}
+                            onClick={() => setEsignTarget(row)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-icsn-teal/10 text-icsn-teal hover:bg-icsn-teal hover:text-white border border-icsn-teal/30 transition cursor-pointer"
+                            title="ลงชื่อเช็คอิน"
+                          >
+                            <PenLine className="w-3.5 h-3.5" />
+                            เช็คอิน
+                          </button>
+                        )}
+                      </td>
+
                       <td className="px-4 py-3 text-right">
                         <button onClick={() => handleCancel(row.id)} className="p-2 text-error hover:bg-error/10 rounded-xl transition cursor-pointer" title="ยกเลิกจอง">
                           <XCircle className="w-5 h-5" />
@@ -212,6 +239,21 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
           )}
         </div>
       </AdminPanel>
+
+      {/* E-Sign Modal – rendered outside AdminPanel so it's full-screen */}
+      {esignTarget && session && (
+        <ESignModal
+          isOpen={!!esignTarget}
+          booking={esignTarget}
+          session={session}
+          sessionDate={dailyDate}
+          onClose={() => setEsignTarget(null)}
+          onCheckin={async (bookingId, blob) => {
+            await handleCheckin(bookingId, blob);
+            setEsignTarget(null);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -39,6 +39,8 @@ export const AdminBookingService = {
       .select(`
         id,
         created_at,
+        signature_url,
+        checkin_at,
         child_name_snapshot,
         parent_phone_snapshot,
         child:children(id, nickname, full_name, age, food_allergy),
@@ -58,6 +60,8 @@ export const AdminBookingService = {
       parent_name: row.parent?.name || '-',
       parent_phone: row.parent?.phone || row.parent_phone_snapshot || '-',
       created_at: row.created_at,
+      signature_url: row.signature_url ?? null,
+      checkin_at: row.checkin_at ?? null,
     }));
   },
 

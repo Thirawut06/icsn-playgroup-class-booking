@@ -70,4 +70,13 @@ export class SupabaseSessionAdapter implements ISessionRepository {
     if (data?.error) throw new Error(data.error);
     return data.session as Session;
   }
+
+  async adminCloseSession(sessionId: string, reason: string): Promise<void> {
+    const { data, error } = await supabase.rpc('admin_close_session', {
+      p_session_id: sessionId,
+      p_reason: reason
+    });
+    if (error) throw new AppError(error.message || 'Failed to close session', error.code, error);
+    if (data && data.success === false) throw new Error(data.error || 'Failed to close session');
+  }
 }

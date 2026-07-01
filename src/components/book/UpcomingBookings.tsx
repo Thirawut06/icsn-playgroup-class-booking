@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarHeart } from 'lucide-react';
+
 import type { Booking } from '@/types';
 
 import { useBookingContext } from './BookingContext';
@@ -16,17 +16,15 @@ export function UpcomingBookings({ onCancelRequest }: UpcomingBookingsProps) {
   if (filtered.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-2xl border border-border p-4 shadow-icsn-card space-y-4">
-      <h3 className="font-bold text-icsn-navy border-b border-border pb-3 flex items-center gap-1.5 text-base">
-        <CalendarHeart className="w-5 h-5 text-icsn-teal" />
-        <span>{COPY.BOOKING_FLOW.UPCOMING_CLASSES}</span>
-      </h3>
+    <div className="px-4 py-3 border-b border-border/40">
+      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
+        {COPY.BOOKING_FLOW.UPCOMING_CLASSES}
+      </p>
       
-      <div className="space-y-3">
+      <div className="space-y-2">
         {filtered.map(booking => {
           const sDate = booking.session_date;
           
-          // Timezone safe check for Bangkok Time
           const now = new Date();
           const bkkDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(now);
           const bkkHour = parseInt(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', hour: 'numeric', hour12: false }).format(now));
@@ -35,31 +33,32 @@ export function UpcomingBookings({ onCancelRequest }: UpcomingBookingsProps) {
           const isCantCancelToday = sDate === bkkDate && bkkHour >= 7;
           const canCancel = !isPastDate && !isCantCancelToday;
           
-          const bDate = new Date(booking.session_date); // For rendering UI only
+          const bDate = new Date(booking.session_date);
           return (
-            <div key={booking.id} className="bg-icsn-teal/5 border border-icsn-teal/20 rounded-2xl p-4 flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-white shadow-sm border border-icsn-teal/20 text-icsn-teal rounded-xl flex flex-col items-center justify-center font-bold">
-                    <span className="text-xs leading-none mb-0.5" suppressHydrationWarning>{bDate.toLocaleDateString('th-TH', { month: 'short' })}</span>
-                    <span className="text-lg leading-none">{bDate.getDate()}</span>
-                  </div>
-                  <div>
-                    <p className="font-black text-icsn-navy text-base">น้อง {booking.child?.nickname}</p>
-                    <p className="text-sm font-bold text-icsn-teal">{booking.session?.time_label || COPY.BOOKING_FLOW.SESSION_MORNING}</p>
-                  </div>
+            <div key={booking.id} className="flex items-center justify-between gap-3 py-1">
+              <div className="flex items-center gap-3 min-w-0">
+                {/* Date chip */}
+                <div className="w-11 h-11 bg-icsn-teal/10 text-icsn-teal rounded-xl flex flex-col items-center justify-center font-bold shrink-0">
+                  <span className="text-xs leading-none mb-0.5" suppressHydrationWarning>{bDate.toLocaleDateString('th-TH', { month: 'short' })}</span>
+                  <span className="text-base leading-none">{bDate.getDate()}</span>
                 </div>
-                {canCancel ? (
-                  <button 
-                    onClick={() => onCancelRequest(booking.id)}
-                    className="text-sm font-bold text-error bg-white shadow-sm px-3.5 py-2 rounded-xl border border-error/20 hover:bg-error/10 active:scale-95 transition"
-                  >
-                    ยกเลิก
-                  </button>
-                ) : (
-                  <span className="text-xs font-bold text-muted-foreground/70 bg-muted px-2.5 py-1.5 rounded-xl">{COPY.BOOKING_FLOW.NOT_ALLOWED}</span>
-                )}
+                {/* Text */}
+                <div className="min-w-0">
+                  <p className="font-bold text-icsn-navy text-sm leading-tight">น้อง {booking.child?.nickname}</p>
+                  <p className="text-sm text-icsn-teal font-medium">{booking.session?.time_label || COPY.BOOKING_FLOW.SESSION_MORNING}</p>
+                </div>
               </div>
+              {/* Cancel */}
+              {canCancel ? (
+                <button 
+                  onClick={() => onCancelRequest(booking.id)}
+                  className="text-sm font-bold text-error px-4 h-10 rounded-xl border border-error/30 hover:bg-error/10 active:scale-95 transition shrink-0"
+                >
+                  ยกเลิก
+                </button>
+              ) : (
+                <span className="text-xs text-muted-foreground/60 shrink-0">{COPY.BOOKING_FLOW.NOT_ALLOWED}</span>
+              )}
             </div>
           );
         })}
