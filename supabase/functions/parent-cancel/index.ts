@@ -16,11 +16,23 @@ serve(async (req) => {
 
     if (!bookingId || !parentId) throw new Error("Missing required fields")
 
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) throw new Error('Unauthorized: Missing auth header')
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
     if (!supabaseUrl || !supabaseServiceKey) throw new Error('Supabase env vars missing')
+    if (!supabaseAnonKey) throw new Error('Supabase anon key missing')
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    })
+
+    const { data: { user }, error: userErr } = await userClient.auth.getUser()
+    if (userErr || !user) throw new Error('Unauthorized: Invalid token')
+    if (user.id !== parentId) throw new Error('Unauthorized to cancel this booking')
 
     // Verify booking belongs to parent
     const { data: bk, error: bkErr } = await supabase.from('bookings').select('*').eq('id', bookingId).single()

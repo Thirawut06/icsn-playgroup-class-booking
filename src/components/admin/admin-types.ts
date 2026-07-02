@@ -3,8 +3,10 @@ export type AdminTab =
   | 'daily_ops'
   | 'slips'
   | 'users'
+  | 'packages'
   | 'settings'
-  | 'timeslot';
+  | 'timeslot'
+  | 'holidays';
 
 export interface AdminTabProps {
   onRefresh?: () => void;

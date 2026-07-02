@@ -67,7 +67,7 @@ export function AdminHolidays() {
       
       const { data: sessionsData, error: sessionsErr } = await supabase
         .from('sessions')
-        .select('*')
+        .select('id, session_date, time_label, is_active, total_capacity, booked_count, theme')
         .gte('session_date', startDate)
         .lte('session_date', endDate);
       
@@ -201,10 +201,10 @@ export function AdminHolidays() {
     try {
       await AdminService.deleteSchoolClosure(id);
       toast.success('ยกเลิกรายการเรียบร้อยแล้ว');
-      // If the currently edited range matches what was deleted, clear the form
-      if (closures.find(c => c.id === id)?.start_date === overrideStartDate) {
-        setOverrideStartDate('');
-        setOverrideEndDate('');
+      const deleted = closures.find(c => c.id === id);
+      if (deleted && deleted.start_date === rangeStart) {
+        setRangeStart('');
+        setRangeEnd('');
         setOverrideReason('');
       }
       await fetchData();
@@ -268,7 +268,7 @@ export function AdminHolidays() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
             {/* Left Column: Calendar (lg:col-span-7) */}
-            <div className="lg:col-span-7 relative">
+            <div className="lg:col-span-7 lg:sticky lg:top-24 self-start relative">
               <div className="px-0 sm:px-4 py-4 space-y-4">
                 {/* Calendar Header */}
                 <div className="flex items-center justify-between mb-3">
@@ -628,7 +628,7 @@ export function AdminHolidays() {
                     <div className="space-y-2">
                       {sessions
                         .filter(s => s.session_date === targetDate)
-                        .sort((a, b) => a.time_label.localeCompare(b.time_label))
+                        .sort((a, b) => (a.time_label ?? '').localeCompare(b.time_label ?? ''))
                         .map(session => (
                         <div key={session.id} className={`p-3 border rounded-xl flex items-center justify-between transition-colors ${
                           session.is_active ? 'border-slate-200 bg-white' : 'border-error/20 bg-error/5'

@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import { Readable } from 'stream';
 
 export class GoogleWorkspaceService {
   private static getAuthClient() {
@@ -43,7 +44,7 @@ export class GoogleWorkspaceService {
     }
 
     // Create new folder
-    const fileMetadata: any = {
+    const fileMetadata: { name: string; mimeType: string; parents?: string[] } = {
       name: folderName,
       mimeType: 'application/vnd.google-apps.folder',
     };
@@ -73,15 +74,8 @@ export class GoogleWorkspaceService {
     
     const media = {
       mimeType,
-      body: fileBuffer, // Stream or Buffer (might need to use stream via memory stream)
+      body: Readable.from(fileBuffer),
     };
-    
-    // Convert Buffer to stream
-    const { Readable } = require('stream');
-    const stream = new Readable();
-    stream.push(fileBuffer);
-    stream.push(null);
-    media.body = stream;
 
     const res = await drive.files.create({
       requestBody: fileMetadata,
@@ -95,7 +89,7 @@ export class GoogleWorkspaceService {
   /**
    * Google Sheets: Sync Data (Overwrite Sheet)
    */
-  static async syncDataToSheet(spreadsheetId: string, range: string, dataRows: any[][]): Promise<void> {
+  static async syncDataToSheet(spreadsheetId: string, range: string, dataRows: Array<Array<string | number | boolean | null>>): Promise<void> {
     const auth = this.getAuthClient();
     const sheets = google.sheets({ version: 'v4', auth });
 

@@ -18,12 +18,12 @@ describe('AdminSettings Component', () => {
   it('renders settings tab with content correctly', async () => {
     render(<AdminSettings />);
     
-    expect(screen.getByText(/ตั้งค่าระบบ/i)).toBeInTheDocument();
+    expect(screen.getByText(/General Settings/i)).toBeInTheDocument();
     
     await waitFor(() => {
-      expect(screen.getByText(/กฎการจอง/i)).toBeInTheDocument();
+      expect(screen.getByText(/Booking Rules/i)).toBeInTheDocument();
     });
     
-    expect(screen.getByText(/จำนวนรับสมัครพื้นฐานต่อวัน/i)).toBeInTheDocument();
+    expect(screen.getByText(/Cut-off Time/i)).toBeInTheDocument();
   });
 });

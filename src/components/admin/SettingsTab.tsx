@@ -12,6 +12,7 @@ export function SettingsTab() {
     cutoff_hour: 7,
     default_capacity: 12,
     announcement_text: '',
+    operating_days: [0, 1, 2, 3, 4, 5, 6],
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

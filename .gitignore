@@ -32,6 +32,16 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+*service-account*.json
+*-service-account.json
+*-credentials.json
+icsn-playgroup-*.json
+
+# generated reports / local artifacts
+eslint-report.json
+lint-output.txt
+playwright-report/
+test-results/
 
 # vercel
 .vercel

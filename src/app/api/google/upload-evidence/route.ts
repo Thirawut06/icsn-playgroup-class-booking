@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { GoogleWorkspaceService } from '@/lib/services/google-workspace.service';
-import { supabase } from '@/lib/supabase/client'; // Assuming client or admin server client can be used here. Actually, we should use a server client, but for now we can use the regular one or admin service.
-import { AdminService } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
+import { isAdminUser } from '@/lib/auth/roles';
 
 export async function POST(request: Request) {
   try {
@@ -16,8 +16,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'GOOGLE_DRIVE_ROOT_ID is not configured' }, { status: 500 });
     }
 
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (user.id !== parentId && !isAdminUser(user)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     // Fetch parent name
-    const { data: parentData, error: parentError } = await AdminService.supabase
+    const { data: parentData, error: parentError } = await supabase
       .from('parents')
       .select('name')
       .eq('id', parentId)
@@ -31,7 +41,7 @@ export async function POST(request: Request) {
     // Fetch child name if childId provided
     let childName = null;
     if (childId) {
-      const { data: childData } = await AdminService.supabase
+      const { data: childData } = await supabase
         .from('children')
         .select('nickname')
         .eq('id', childId)
@@ -62,8 +72,9 @@ export async function POST(request: Request) {
     const driveLink = await GoogleWorkspaceService.uploadFileToDrive(fileName, mimeType, buffer, targetFolderId);
 
     return NextResponse.json({ success: true, driveLink });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Google Drive Upload Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

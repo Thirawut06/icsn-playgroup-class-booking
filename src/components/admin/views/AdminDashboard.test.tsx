@@ -30,11 +30,10 @@ vi.mock('@/lib/supabase', () => ({
 }));
 
 describe('AdminDashboard Component', () => {
-  it('renders descriptions for stat cards', async () => {
+  it('renders the current dashboard summary and quick actions', async () => {
     render(<AdminDashboard />);
     
-    // We expect descriptions for these stats to be present on the dashboard
-    expect(await screen.findByText(/ยอดนักเรียนรวมทั้งหมดในระบบ/i)).toBeInTheDocument();
-    expect(screen.getByText(/จำนวนครอบครัวทั้งหมดในระบบ/i)).toBeInTheDocument();
+    expect(await screen.findByText('0 / 12 คน')).toBeInTheDocument();
+    expect(screen.getByText(/Quick Actions/i)).toBeInTheDocument();
   });
 });
