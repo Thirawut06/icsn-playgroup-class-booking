@@ -1,4 +1,4 @@
-import { JWT } from 'https://deno.land/x/djwt@v2.8/mod.ts';
+import { SignJWT, importPKCS8 } from 'npm:jose';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 async function getGoogleAccessToken(serviceAccountJson: string, scope: string): Promise<string> {
@@ -13,23 +13,15 @@ async function getGoogleAccessToken(serviceAccountJson: string, scope: string): 
     exp: now + 3600,
   };
 
-  const pemHeader = '-----BEGIN PRIVATE KEY-----';
-  const pemFooter = '-----END PRIVATE KEY-----';
-  const rawKey = serviceAccount.private_key
-    .replace(pemHeader, '')
-    .replace(pemFooter, '')
-    .replace(/\n/g, '');
-  const binaryKey = Uint8Array.from(atob(rawKey), c => c.charCodeAt(0));
+  const privateKey = await importPKCS8(serviceAccount.private_key, 'RS256');
 
-  const cryptoKey = await crypto.subtle.importKey(
-    'pkcs8',
-    binaryKey,
-    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-
-  const jwt = await new JWT(payload).sign(cryptoKey);
+  const jwt = await new SignJWT(payload)
+    .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
+    .setIssuer(payload.iss)
+    .setAudience(payload.aud)
+    .setIssuedAt(payload.iat)
+    .setExpirationTime(payload.exp)
+    .sign(privateKey);
 
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -90,7 +82,7 @@ async function syncAllData() {
   const token = await getGoogleAccessToken(serviceAccountJson, 'https://www.googleapis.com/auth/spreadsheets');
 
   // 1. Bookings
-  const { data: bookings } = await supabase.from('bookings').select('id, session_date, status, created_at, parents(name, phone), children(nickname)').order('created_at', { ascending: false });
+  const { data: bookings } = await supabase.from('bookings').select('id, session_date, status, created_at, parents(name, phone), children(nickname)').order('created_at', { ascending: false }).limit(5000);
   const bookingsValues = [['Booking ID', 'Session Date', 'Status', 'Parent Name', 'Parent Phone', 'Child Nickname', 'Created At']];
   bookings?.forEach((b: any) => {
     bookingsValues.push([
@@ -100,7 +92,7 @@ async function syncAllData() {
   await updateSheetValues(spreadsheetId, 'Bookings!A1:Z', bookingsValues, token);
 
   // 2. Parents
-  const { data: parents } = await supabase.from('parents').select('id, name, phone, email, created_at').order('created_at', { ascending: false });
+  const { data: parents } = await supabase.from('parents').select('id, name, phone, email, created_at').order('created_at', { ascending: false }).limit(5000);
   const parentValues = [['Parent ID', 'Name', 'Phone', 'Email', 'Created At']];
   parents?.forEach((p: any) => {
     parentValues.push([p.id, p.name, p.phone, p.email || '', p.created_at]);
@@ -108,7 +100,7 @@ async function syncAllData() {
   await updateSheetValues(spreadsheetId, 'Parents!A1:Z', parentValues, token);
 
   // 3. Children
-  const { data: children } = await supabase.from('children').select('id, full_name, nickname, age, food_allergy, special_info, created_at, parents(name)').order('created_at', { ascending: false });
+  const { data: children } = await supabase.from('children').select('id, full_name, nickname, age, food_allergy, special_info, created_at, parents(name)').order('created_at', { ascending: false }).limit(5000);
   const childrenValues = [['Child ID', 'Parent Name', 'Full Name', 'Nickname', 'Age', 'Food Allergy', 'Special Info', 'Created At']];
   children?.forEach((c: any) => {
     childrenValues.push([
@@ -118,11 +110,11 @@ async function syncAllData() {
   await updateSheetValues(spreadsheetId, 'Children!A1:Z', childrenValues, token);
 
   // 4. Credit Logs
-  const { data: logs } = await supabase.from('credit_transactions').select('id, amount, action_type, reason, created_at, parents(name)').order('created_at', { ascending: false });
-  const logsValues = [['Log ID', 'Parent Name', 'Amount', 'Action Type', 'Reason', 'Created At']];
+  const { data: logs } = await supabase.from('credit_transactions').select('id, amount, action_type, notes, created_at, parents(name)').order('created_at', { ascending: false }).limit(5000);
+  const logsValues = [['Log ID', 'Parent Name', 'Amount', 'Action Type', 'Notes', 'Created At']];
   logs?.forEach((l: any) => {
     logsValues.push([
-      l.id, l.parents?.name || '', l.amount, l.action_type, l.reason || '', l.created_at
+      l.id, l.parents?.name || '', l.amount, l.action_type, l.notes || '', l.created_at
     ]);
   });
   await updateSheetValues(spreadsheetId, 'Credit Logs!A1:Z', logsValues, token);
@@ -133,17 +125,9 @@ async function syncAllData() {
 
 // Register Deno Cron (Executes every 10 minutes)
 Deno.cron("Sync to Google Sheets", "*/10 * * * *", async () => {
-  await syncAllData();
-});
-
-// Provide manual trigger endpoint
-Deno.serve(async (req) => {
-  if (req.method === 'POST') {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) return new Response('Unauthorized', { status: 401 });
-    
-    const result = await syncAllData();
-    return new Response(JSON.stringify(result), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  try {
+    await syncAllData();
+  } catch (err) {
+    console.error("Cron failed:", err);
   }
-  return new Response('Method Not Allowed', { status: 405 });
 });

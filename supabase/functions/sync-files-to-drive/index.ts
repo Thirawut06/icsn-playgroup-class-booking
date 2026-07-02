@@ -1,4 +1,4 @@
-import { JWT } from 'https://deno.land/x/djwt@v2.8/mod.ts';
+import { SignJWT, importPKCS8 } from 'npm:jose';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 async function getGoogleAccessToken(serviceAccountJson: string, scope: string): Promise<string> {
@@ -13,23 +13,15 @@ async function getGoogleAccessToken(serviceAccountJson: string, scope: string): 
     exp: now + 3600,
   };
 
-  const pemHeader = '-----BEGIN PRIVATE KEY-----';
-  const pemFooter = '-----END PRIVATE KEY-----';
-  const rawKey = serviceAccount.private_key
-    .replace(pemHeader, '')
-    .replace(pemFooter, '')
-    .replace(/\n/g, '');
-  const binaryKey = Uint8Array.from(atob(rawKey), c => c.charCodeAt(0));
+  const privateKey = await importPKCS8(serviceAccount.private_key, 'RS256');
 
-  const cryptoKey = await crypto.subtle.importKey(
-    'pkcs8',
-    binaryKey,
-    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-
-  const jwt = await new JWT(payload).sign(cryptoKey);
+  const jwt = await new SignJWT(payload)
+    .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
+    .setIssuer(payload.iss)
+    .setAudience(payload.aud)
+    .setIssuedAt(payload.iat)
+    .setExpirationTime(payload.exp)
+    .sign(privateKey);
 
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -154,7 +146,10 @@ Deno.serve(async (req) => {
       
       const blob = await res.blob();
       const ext = record.file_url.split('.').pop() || 'jpg';
-      await uploadFileToDrive(blob, `Slip_${record.id}.${ext}`, folderId, token);
+      const dateStr = new Date().toISOString().split('T')[0];
+      const timeStr = new Date().toISOString().split('T')[1].split('.')[0].replace(/:/g, '');
+      const fileName = `สลิปโอนเงิน_${dateStr}_${timeStr}.${ext}`;
+      await uploadFileToDrive(blob, fileName, folderId, token);
       console.log(`Synced slip ${record.id} to folder: ${folderName}`);
     } 
     else if (table === 'children') {
@@ -163,7 +158,8 @@ Deno.serve(async (req) => {
         if (res.ok) {
           const blob = await res.blob();
           const ext = record.photo_url.split('.').pop() || 'jpg';
-          await uploadFileToDrive(blob, `Child_${record.id}_Photo.${ext}`, folderId, token);
+          const dateStr = new Date().toISOString().split('T')[0];
+          await uploadFileToDrive(blob, `รูปโปรไฟล์เด็ก_${dateStr}.${ext}`, folderId, token);
         }
       }
       
@@ -172,7 +168,8 @@ Deno.serve(async (req) => {
         if (res.ok) {
           const blob = await res.blob();
           const ext = record.parent_photo_url.split('.').pop() || 'jpg';
-          await uploadFileToDrive(blob, `Child_${record.id}_ParentPhoto.${ext}`, folderId, token);
+          const dateStr = new Date().toISOString().split('T')[0];
+          await uploadFileToDrive(blob, `รูปโปรไฟล์ผู้ปกครอง_${dateStr}.${ext}`, folderId, token);
         }
       }
       console.log(`Synced child photos for ${record.id} to folder: ${folderName}`);

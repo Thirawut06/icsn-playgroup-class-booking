@@ -25,24 +25,15 @@ async function getGoogleAccessToken(serviceAccountJson: string): Promise<string>
     exp: now + 3600,
   };
 
-  // Import RSA private key
-  const pemHeader = '-----BEGIN PRIVATE KEY-----';
-  const pemFooter = '-----END PRIVATE KEY-----';
-  const rawKey = serviceAccount.private_key
-    .replace(pemHeader, '')
-    .replace(pemFooter, '')
-    .replace(/\n/g, '');
-  const binaryKey = Uint8Array.from(atob(rawKey), c => c.charCodeAt(0));
+  const privateKey = await importPKCS8(serviceAccount.private_key, 'RS256');
 
-  const cryptoKey = await crypto.subtle.importKey(
-    'pkcs8',
-    binaryKey,
-    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-
-  const jwt = await new JWT(payload).sign(cryptoKey);
+  const jwt = await new SignJWT(payload)
+    .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
+    .setIssuer(payload.iss)
+    .setAudience(payload.aud)
+    .setIssuedAt(payload.iat)
+    .setExpirationTime(payload.exp)
+    .sign(privateKey);
 
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -170,7 +161,7 @@ Deno.serve(async (req) => {
     const { bookingId, signatureUrl, parentName, parentPhone, childName, sessionDate, sessionLabel } = payload;
 
     const serviceAccountJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_JSON');
-    const rootFolderName = Deno.env.get('GOOGLE_DRIVE_ROOT_FOLDER') ?? 'ICSN Playgroup';
+    const driveParentFolderId = Deno.env.get('DRIVE_PARENT_FOLDER_ID') || null;
 
     if (!serviceAccountJson) {
       console.error('[drive-sync] GOOGLE_SERVICE_ACCOUNT_JSON is not set');
@@ -188,18 +179,20 @@ Deno.serve(async (req) => {
     // 2. Authenticate with Google
     const accessToken = await getGoogleAccessToken(serviceAccountJson);
 
-    // 3. Build folder structure: ICSN Playgroup / ParentName_Phone / ChildName_Date.png
-    const rootFolderId = await findOrCreateFolder(accessToken, rootFolderName, null);
-
+    // 3. Build folder structure: ParentName (น้องChildName) Phone / ChildName_Date.png
     const isGuest = parentName.startsWith('Walk-in');
-    const parentFolderName = isGuest
-      ? `Guest_${parentPhone}`
-      : `${parentName}_${parentPhone}`;
-    const parentFolderId = await findOrCreateFolder(accessToken, parentFolderName, rootFolderId);
+    
+    let parentFolderName = isGuest ? `Guest_${parentPhone}` : parentName;
+    if (!isGuest) {
+      const childStr = childName ? ` (น้อง${childName})` : '';
+      parentFolderName = `${parentName}${childStr} ${parentPhone || ''}`.trim();
+    }
+    
+    const parentFolderId = await findOrCreateFolder(accessToken, parentFolderName, driveParentFolderId);
 
     // 4. Upload file with descriptive name
     const safeSession = sessionLabel.replace(/[^a-zA-Z0-9\u0E00-\u0E7F]/g, '-');
-    const fileName = `${childName}_${sessionDate}_${safeSession}.png`;
+    const fileName = `ลายเซ็นเข้าเรียน_${sessionDate}_${safeSession}.png`;
     const fileId = await uploadFileToDrive(accessToken, fileName, fileBuffer, parentFolderId);
 
     console.log(`[drive-sync] ✅ Uploaded ${fileName} (bookingId: ${bookingId}, driveFileId: ${fileId})`);
