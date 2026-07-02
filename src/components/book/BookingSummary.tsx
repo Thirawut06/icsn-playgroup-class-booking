@@ -194,7 +194,7 @@ export function BookingSummary({
         <div className="mx-4 mb-2 mt-4 flex items-start gap-2">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-warning" />
           <p className="text-xs font-medium text-muted-foreground leading-relaxed">
-            {COPY.RULES.NO_CANCEL_AFTER_7AM}
+            {COPY.RULES.NO_CANCEL_AFTER_XAM(cutoffHour)}
           </p>
         </div>
       )}

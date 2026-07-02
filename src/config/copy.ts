@@ -28,7 +28,7 @@ export const COPY = {
   },
   RULES: {
     UPLOAD_LIMIT_HINT: (types: string, mb: number) => `${types} — ไม่เกิน ${mb}MB`,
-    NO_CANCEL_AFTER_7AM: 'ระบบจะปิดรับจองและไม่อนุญาตให้ยกเลิกสิทธิ์ ในวันที่มีการเรียนการสอนเวลา 07:00 น. เป็นต้นไป',
+    NO_CANCEL_AFTER_XAM: (hour: number) => `ระบบจะปิดรับจองและไม่อนุญาตให้ยกเลิกสิทธิ์ ในวันที่มีการเรียนการสอนเวลา ${String(hour).padStart(2, '0')}:00 น. เป็นต้นไป`,
   },
   AUTH: {
     EMAIL_LABEL: 'อีเมล',

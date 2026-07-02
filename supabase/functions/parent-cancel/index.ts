@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -39,17 +39,26 @@ Deno.serve(async (req) => {
     if (bk.parent_id !== parentId) throw new Error("Unauthorized to cancel this booking")
     if (bk.status === 'cancelled') throw new Error("Booking is already cancelled")
 
-    // Check cutoff time
+    // Check cutoff time dynamically from settings table
+    const { data: settingsData } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'cutoff_hour')
+      .maybeSingle()
+    
+    const cutoffHour = settingsData ? parseInt(settingsData.value, 10) : 7
+
     const sessionDateStr = bk.session_date // 'YYYY-MM-DD'
     const [year, month, day] = sessionDateStr.split('-').map(Number)
     
-    // Create Date for Session at 07:00 AM (Thailand Time = UTC+7)
-    // UTC time for 07:00 BKK is 00:00 UTC.
-    const cutoffDateUTC = new Date(Date.UTC(year, month - 1, day, 0, 0, 0))
+    // Create Date for Session at cutoffHour AM (Thailand Time = UTC+7)
+    // UTC time for cutoffHour BKK is (cutoffHour - 7) UTC.
+    const cutoffDateUTC = new Date(Date.UTC(year, month - 1, day, cutoffHour - 7, 0, 0))
     
     // Add timezone adjustment if we check locally. Let's just compare Date.now() with cutoffDateUTC
     if (Date.now() > cutoffDateUTC.getTime()) {
-      throw new Error("หมดเวลายกเลิกคลาสแล้วค่ะ (เลยเวลา 07:00 น. ของวันเรียน) หากมีเหตุจำเป็นต้องลาป่วยกระทันหัน รบกวนทักแจ้งแอดมินนะคะ")
+      const displayTime = `${String(cutoffHour).padStart(2, '0')}:00 น.`
+      throw new Error(`หมดเวลายกเลิกคลาสแล้วค่ะ (เลยเวลา ${displayTime} ของวันเรียน) หากมีเหตุจำเป็นต้องลาป่วยกระทันหัน รบกวนทักแจ้งแอดมินนะคะ`)
     }
 
     // Process Cancellation
