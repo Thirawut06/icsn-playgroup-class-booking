@@ -104,6 +104,7 @@ describe('Drive Sync Webhooks Integration Tests', () => {
       .single();
 
     expect(insertErr).toBeNull();
-    slipId = slip.id;
+    expect(slip).not.toBeNull();
+    slipId = slip!.id;
   });
 });
