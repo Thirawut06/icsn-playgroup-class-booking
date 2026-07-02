@@ -10,7 +10,8 @@ interface UpcomingBookingsProps {
 }
 
 export function UpcomingBookings({ onCancelRequest }: UpcomingBookingsProps) {
-  const { myBookings, selectedChildId } = useBookingContext();
+  const { myBookings, selectedChildId, settings } = useBookingContext();
+  const cutoffHour = settings?.cutoff_hour ?? 7;
   const filtered = myBookings.filter(b => !selectedChildId || b.child_id === selectedChildId);
   
   if (filtered.length === 0) return null;
@@ -30,7 +31,7 @@ export function UpcomingBookings({ onCancelRequest }: UpcomingBookingsProps) {
           const bkkHour = parseInt(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', hour: 'numeric', hour12: false }).format(now));
           
           const isPastDate = sDate < bkkDate;
-          const isCantCancelToday = sDate === bkkDate && bkkHour >= 7;
+          const isCantCancelToday = sDate === bkkDate && bkkHour >= cutoffHour;
           const canCancel = !isPastDate && !isCantCancelToday;
           
           const bDate = new Date(booking.session_date);

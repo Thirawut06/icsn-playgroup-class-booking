@@ -36,6 +36,7 @@ You carefully provide accurate, factual, thoughtful answers, and are a genius at
 - **Vercel Preview First:** After completing work on a branch, instruct the user to push the branch to GitHub. Remind the user to test the Vercel Preview URL and verify locally.
 - **Explicit Merge Permission:** ONLY merge a branch into `main` after the user has explicitly tested the preview and given permission to merge.
 - **Database Schema Caution:** If making changes to Supabase database schemas, explicitly warn the user and provide the exact SQL or migration steps. DO NOT execute destructive database commands without explicit confirmation.
+- **Cross-Machine Environment Syncing:** Since `.env.local` contains highly sensitive Supabase and Google API keys, it is strictly `.gitignore`d. When the developer switches to a new machine, always instruct them to securely copy the `.env.local` content manually (e.g., via a secure note) and `git pull` the code, rather than copying the entire folder via USB.
 
 ## Database Migration & Staging Workflow (CRITICAL)
 - **Local First & Migrations Only:** All database schema changes MUST be made via Supabase migration files in `supabase/migrations`. NEVER instruct the user to create or edit tables manually via the Supabase Dashboard UI on Production.
@@ -50,6 +51,7 @@ You carefully provide accurate, factual, thoughtful answers, and are a genius at
 ## ICSN Playgroup Domain Rules
 - **Daily Operations (Sessions):** When building admin features that operate on daily data (like setting capacity or toggling active status), DO NOT throw errors if a session does not exist for the day. Instead, proactively use `sessionModule.getOrCreateSessionsForDate` to initialize the session before applying the updates.
 - **Time Slot Management (Session Templates):** Changes to default time slots (e.g. changing time labels, capacities, or deleting a time slot) must **only apply to future, uncreated sessions**. They must NEVER retroactively modify or delete existing sessions to prevent breaking historical data or confusing parents who have already booked.
+- **Dynamic Booking Rules:** NEVER hardcode business rules (like the 07:00 AM daily cutoff time for booking/cancellations) in UI strings or frontend logic. ALWAYS fetch these values dynamically from the `SystemSettings` context or props (e.g. `settings.cutoff_hour`) to ensure the admin can configure them without code changes.
 
 ## Supabase Database Management
 - **Manual Role Assignment:** If providing SQL to grant admin rights manually, ALWAYS provide the exact JSONB syntax and explicitly wrap strings (like emails) in single quotes to avoid Postgres syntax errors. Example:
@@ -78,6 +80,7 @@ You carefully provide accurate, factual, thoughtful answers, and are a genius at
 
 ## Deployment Architecture
 - **Shared Hosting Integration:** When deploying the Next.js app alongside a traditional shared hosting provider (like cPanel/Hosting Lotus), always use Vercel with a Subdomain (via CNAME record). Do not attempt subpath reverse proxying on shared hosting.
+- **Vercel Environment Variables & Redeployment:** When adding or updating environment variables on Vercel (especially during initial setup), if a build has already started or completed, you MUST instruct the user to trigger a manual **Redeploy** from the Vercel Deployments tab for the new variables to take effect.
 
 ## Supabase PostgREST Accuracy
 - **Query Column Matching:** When writing `select()` queries, always verify column names against the actual SQL migration files. Do not assume column names (e.g., `credit_transactions` uses `notes`, not `reason`).

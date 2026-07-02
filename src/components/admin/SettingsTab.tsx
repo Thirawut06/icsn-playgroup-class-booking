@@ -95,7 +95,7 @@ export function SettingsTab() {
                 <Info className="w-4 h-4 shrink-0 mt-0.5 text-icsn-teal" />
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   เวลาที่จะไม่อนุญาตให้ผู้ปกครองทำรายการ "จอง" หรือ "ยกเลิก" คลาสของวันนี้<br />
-                  <span className="font-medium text-foreground">ตัวอย่าง:</span> หากตั้งไว้ที่ 07:00 น. ผู้ปกครองจะไม่สามารถกดยกเลิกคลาสของวันนี้ได้หลังจากเจ็ดโมงเช้าเป็นต้นไป
+                  <span className="font-medium text-foreground">ตัวอย่าง:</span> หากตั้งไว้ที่ {settings.cutoff_hour.toString().padStart(2, '0')}:00 น. ผู้ปกครองจะไม่สามารถกดยกเลิกคลาสของวันนี้ได้หลังจาก {settings.cutoff_hour.toString().padStart(2, '0')}:00 น. เป็นต้นไป
                 </p>
               </div>
             </div>
