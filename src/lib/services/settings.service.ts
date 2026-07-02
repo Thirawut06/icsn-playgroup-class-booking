@@ -18,7 +18,7 @@ export const SettingsService = {
   async getAllSettings(): Promise<SystemSettings> {
     const { data, error } = await supabase
       .from('system_settings')
-      .select('*');
+      .select('key, value, updated_at');
     
     if (error) throw error;
 

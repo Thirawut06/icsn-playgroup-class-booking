@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
@@ -47,7 +47,7 @@ async function resolveCreditsFromSlip(supabase: ReturnType<typeof createClient>,
   return creditsToAdd
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -90,7 +90,7 @@ serve(async (req) => {
     if (action === 'approve-slip') {
       const { slipId, creditsOverride } = payload as { slipId: string; creditsOverride?: number }
 
-      const { data: slip, error: sErr } = await supabase.from('slip_uploads').select('*').eq('id', slipId).single()
+      const { data: slip, error: sErr } = await supabase.from('slip_uploads').select('id, parent_id, package_id, file_url, non_refundable').eq('id', slipId).single()
       if (sErr) throw sErr
 
       const creditsToAdd = typeof creditsOverride === 'number' && creditsOverride > 0
@@ -106,7 +106,7 @@ serve(async (req) => {
       const packageType = slip.package_id || 'purchase'
       const { data: pkgs } = await supabase
         .from('packages')
-        .select('*')
+        .select('id, credits_remaining')
         .eq('parent_id', slip.parent_id)
         .order('created_at', { ascending: false })
         .limit(1)

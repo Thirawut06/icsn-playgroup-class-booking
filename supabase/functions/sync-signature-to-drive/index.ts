@@ -1,4 +1,4 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+
 import { JWT } from 'https://deno.land/x/djwt@v2.8/mod.ts';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -159,7 +159,7 @@ async function uploadFileToDrive(
 }
 
 // ─── Main handler ────────────────────────────────────────────────────────────
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Only admin-originated calls (validated via Supabase anon-key + caller check at API route level)
   if (req.method !== 'POST') {
     return new Response('Method Not Allowed', { status: 405 });

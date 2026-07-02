@@ -1,12 +1,11 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -35,7 +34,7 @@ serve(async (req) => {
     if (user.id !== parentId) throw new Error('Unauthorized to cancel this booking')
 
     // Verify booking belongs to parent
-    const { data: bk, error: bkErr } = await supabase.from('bookings').select('*').eq('id', bookingId).single()
+    const { data: bk, error: bkErr } = await supabase.from('bookings').select('parent_id, status, session_date').eq('id', bookingId).single()
     if (bkErr) throw bkErr
     if (bk.parent_id !== parentId) throw new Error("Unauthorized to cancel this booking")
     if (bk.status === 'cancelled') throw new Error("Booking is already cancelled")
@@ -61,13 +60,13 @@ serve(async (req) => {
     if (updateErr) throw updateErr
 
     // Refund Credit
-    const { data: pkgs } = await supabase.from('packages').select('*').eq('parent_id', parentId).order('created_at', { ascending: true })
+    const { data: pkgs } = await supabase.from('packages').select('id, credits_remaining').eq('parent_id', parentId).order('created_at', { ascending: true })
     if (pkgs && pkgs.length > 0) {
       await supabase.from('packages').update({ credits_remaining: pkgs[0].credits_remaining + 1 }).eq('id', pkgs[0].id)
     }
 
     // Decrement Capacity
-    const { data: sess } = await supabase.from('sessions').select('*').eq('session_date', bk.session_date).single()
+    const { data: sess } = await supabase.from('sessions').select('id, booked_count').eq('session_date', bk.session_date).single()
     if (sess && sess.booked_count > 0) {
       await supabase.from('sessions').update({ booked_count: sess.booked_count - 1 }).eq('id', sess.id)
     }

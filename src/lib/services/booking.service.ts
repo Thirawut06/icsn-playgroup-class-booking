@@ -7,7 +7,7 @@ export const BookingService = {
   async getSessions(startDate: string, endDate: string): Promise<Session[]> {
     const { data, error } = await supabase
       .from('sessions')
-      .select('*')
+      .select('id, session_date, time_label, total_capacity, booked_count, is_active, theme, activity_desc')
       .gte('session_date', startDate)
       .lte('session_date', endDate)
       .order('session_date', { ascending: true });
@@ -19,7 +19,7 @@ export const BookingService = {
   async getSchoolClosures(): Promise<import('@/types').SchoolClosure[]> {
     const { data, error } = await supabase
       .from('school_closures')
-      .select('*');
+      .select('id, start_date, end_date, reason, time_label, is_force_open');
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
     return data || [];
   },

@@ -91,16 +91,7 @@ export function usePendingSlips({ onRefresh }: UsePendingSlipsOptions = {}) {
         
       if (dbError) throw dbError;
       
-      // Trigger background upload to Google Drive for evidence
-      fetch('/api/google/upload-evidence', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          parentId: slips.find(s => s.id === slipId)?.parent_id || slipId.split('_')[0],
-          fileUrl: publicUrlData.publicUrl,
-          fileName: `admin_uploaded_slip_${Date.now()}.jpg`
-        })
-      }).catch(console.error);
+      // Background sync to Google Drive is now handled by Edge Functions/Webhooks.
 
       toast.success("อัปโหลดสลิปย้อนหลังเรียบร้อยแล้ว!");
       await loadSlips();

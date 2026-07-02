@@ -35,7 +35,7 @@ export function ClosureNotificationBanner() {
       
       const { data, error } = await supabase
         .from('school_closures')
-        .select('*')
+        .select('id, start_date, end_date, reason, time_label, is_force_open, created_at')
         .gte('end_date', today)
         .order('start_date', { ascending: true });
         

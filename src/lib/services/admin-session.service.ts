@@ -7,7 +7,7 @@ export const AdminSessionService = {
   async getSessionForDate(dateStr: string, timeLabel: string = CLASS_CONFIG.DEFAULT_TIME_LABEL): Promise<Session | null> {
     const { data, error } = await supabase
       .from('sessions')
-      .select('*')
+      .select('id, session_date, time_label, total_capacity, booked_count, is_active, theme, activity_desc')
       .eq('session_date', dateStr)
       .eq('time_label', timeLabel)
       .maybeSingle();
@@ -18,7 +18,7 @@ export const AdminSessionService = {
   async getBlockoutDates(): Promise<{ id: string; block_date: string; reason: string | null }[]> {
     const { data, error } = await supabase
       .from('blockout_dates')
-      .select('*')
+      .select('id, block_date, reason')
       .order('block_date', { ascending: true });
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
     return data || [];
@@ -27,7 +27,7 @@ export const AdminSessionService = {
   async getSchoolClosures(): Promise<{ id: string; start_date: string; end_date: string; reason: string; time_label: string | null }[]> {
     const { data, error } = await supabase
       .from('school_closures')
-      .select('*')
+      .select('id, start_date, end_date, reason, time_label')
       .order('start_date', { ascending: true });
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
     return data || [];
@@ -95,7 +95,7 @@ export const AdminSessionService = {
   async getSessionTemplates() {
     const { data, error } = await supabase
       .from('session_templates')
-      .select('*')
+      .select('id, time_label, capacity, is_active, created_at')
       .order('time_label', { ascending: true });
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
     return data;

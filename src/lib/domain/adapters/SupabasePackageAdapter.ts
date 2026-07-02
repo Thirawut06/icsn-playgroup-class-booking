@@ -7,7 +7,7 @@ export class SupabasePackageAdapter implements IPackageRepository {
   async getPackageOptions(): Promise<PackageOption[]> {
     const { data, error } = await supabase
       .from('package_options')
-      .select('*')
+      .select('id, name, price, credits, is_active')
       .order('credits', { ascending: false });
       
     if (error) throw error;
@@ -17,7 +17,7 @@ export class SupabasePackageAdapter implements IPackageRepository {
   async getPackages(parentId: string): Promise<Package[]> {
     const { data, error } = await supabase
       .from('packages')
-      .select('*')
+      .select('id, parent_id, type, credits_remaining, non_refundable, created_at')
       .eq('parent_id', parentId)
       .gt('credits_remaining', 0);
       
@@ -28,7 +28,7 @@ export class SupabasePackageAdapter implements IPackageRepository {
   async getLatestPackage(parentId: string): Promise<Package | null> {
     const { data, error } = await supabase
       .from('packages')
-      .select('*')
+      .select('id, parent_id, type, credits_remaining, non_refundable, created_at')
       .eq('parent_id', parentId)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -81,18 +81,7 @@ export class SupabasePackageAdapter implements IPackageRepository {
       .single();
     if (error) throw error;
 
-    // Trigger background upload to Google Drive for evidence
-    if (actualSlipUrl) {
-      fetch('/api/google/upload-evidence', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          parentId,
-          fileUrl: actualSlipUrl,
-          fileName: `payment_slip_${Date.now()}.jpg`
-        })
-      }).catch(console.error);
-    }
+    // Background sync to Google Drive is now handled by Database Webhooks automatically.
 
     return data;
   }

@@ -37,6 +37,7 @@ export function AdminHolidays() {
   
   // Local operating days for editing before save
   const [tempOperatingDays, setTempOperatingDays] = useState<number[]>([]);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -195,13 +196,17 @@ export function AdminHolidays() {
     }
   };
 
-  const handleDeleteClosure = async (id: string) => {
-    if (!confirm('ยืนยันลบการตั้งค่าวันหยุด/เปิดพิเศษนี้?')) return;
+  const handleDeleteClosure = (id: string) => {
+    setDeleteTargetId(id);
+  };
+
+  const confirmDeleteClosure = async () => {
+    if (!deleteTargetId) return;
     
     try {
-      await AdminService.deleteSchoolClosure(id);
+      await AdminService.deleteSchoolClosure(deleteTargetId);
       toast.success('ยกเลิกรายการเรียบร้อยแล้ว');
-      const deleted = closures.find(c => c.id === id);
+      const deleted = closures.find(c => c.id === deleteTargetId);
       if (deleted && deleted.start_date === rangeStart) {
         setRangeStart('');
         setRangeEnd('');
@@ -210,6 +215,8 @@ export function AdminHolidays() {
       await fetchData();
     } catch (err) {
       toast.error('ไม่สามารถยกเลิกได้');
+    } finally {
+      setDeleteTargetId(null);
     }
   };
 
@@ -744,6 +751,32 @@ export function AdminHolidays() {
           </div>
         </div>
       </AdminPanel>
+
+      {/* Delete Confirmation Modal */}
+      {deleteTargetId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-bold text-slate-900 mb-2">ยืนยันการลบการตั้งค่า</h3>
+            <p className="text-slate-500 mb-6 text-sm">
+              คุณต้องการยกเลิกการตั้งค่าวันหยุด/เปิดพิเศษนี้ใช่หรือไม่?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteTargetId(null)}
+                className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={confirmDeleteClosure}
+                className="px-4 py-2 text-sm font-medium text-white bg-error hover:bg-error/90 rounded-lg transition-colors shadow-sm"
+              >
+                ยืนยันการลบ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

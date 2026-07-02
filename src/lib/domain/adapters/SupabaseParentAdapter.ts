@@ -6,7 +6,7 @@ export class SupabaseParentAdapter implements IParentRepository {
   async getParentByPhone(phone: string): Promise<Parent | null> {
     const { data, error } = await supabase
       .from('parents')
-      .select('*')
+      .select('id, name, phone, email')
       .eq('phone', phone)
       .single();
       
@@ -17,7 +17,7 @@ export class SupabaseParentAdapter implements IParentRepository {
   async loginParent(phone: string): Promise<Parent> {
     const { data, error } = await supabase
       .from('parents')
-      .select('*')
+      .select('id, name, phone, email')
       .eq('phone', phone)
       .single();
 
@@ -87,7 +87,7 @@ export class SupabaseParentAdapter implements IParentRepository {
 
     const { data: parent, error: pError } = await supabase
       .from('parents')
-      .select('*')
+      .select('id, name, phone, email')
       .eq('id', data.user.id)
       .maybeSingle();
 
@@ -138,7 +138,7 @@ export class SupabaseParentAdapter implements IParentRepository {
   async getChildren(parentId: string): Promise<Child[]> {
     const { data, error } = await supabase
       .from('children')
-      .select('*')
+      .select('id, parent_id, nickname, full_name, dob, age, food_allergy, media_perm, no_photo_perm, parent_photo_url, photo_url, special_info')
       .eq('parent_id', parentId);
       
     if (error) throw error;
@@ -215,31 +215,7 @@ export class SupabaseParentAdapter implements IParentRepository {
 
     if (error) throw error;
 
-    // Trigger background upload to Google Drive for evidence
-    if (actualPhotoUrl) {
-      fetch('/api/google/upload-evidence', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          parentId,
-          childId: data.id,
-          fileUrl: actualPhotoUrl,
-          fileName: `child_profile_${Date.now()}.jpg`
-        })
-      }).catch(console.error); // Fire and forget
-    }
-
-    if (actualParentPhotoUrl) {
-      fetch('/api/google/upload-evidence', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          parentId,
-          fileUrl: actualParentPhotoUrl,
-          fileName: `parent_profile_${Date.now()}.jpg`
-        })
-      }).catch(console.error); // Fire and forget
-    }
+    // Background sync to Google Drive is now handled by Database Webhooks automatically.
 
     return data;
   }
