@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { CalendarDays, Users, LayoutDashboard, CalendarCheck, ReceiptText, CreditCard, Loader2 } from 'lucide-react';
+import { Users, CalendarCheck, ReceiptText, Loader2, CalendarOff } from 'lucide-react';
 import { CLASS_CONFIG } from '@/config/constants';
-import { AdminPanel, AdminPanelHeader } from '../admin-ui';
 import { AdminService, BookingService, SettingsService } from '@/lib/supabase';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 
 interface DashboardStats {
   todayBookings: number;
@@ -15,25 +13,7 @@ interface DashboardStats {
   activePackages: number;
 }
 
-// Mock Data for Charts
-const weeklyAttendanceData = [
-  { name: 'Mon', count: 12 },
-  { name: 'Tue', count: 15 },
-  { name: 'Wed', count: 10 },
-  { name: 'Thu', count: 18 },
-  { name: 'Fri', count: 14 },
-  { name: 'Sat', count: 25 },
-  { name: 'Sun', count: 20 },
-];
-
-const creditUsageData = [
-  { name: 'Week 1', used: 45, purchased: 60 },
-  { name: 'Week 2', used: 50, purchased: 40 },
-  { name: 'Week 3', used: 55, purchased: 70 },
-  { name: 'Week 4', used: 70, purchased: 50 },
-];
-
-export function AdminDashboard({ onRefresh }: { onRefresh?: () => void }) {
+export function AdminDashboard({ onRefresh, onNavigate }: { onRefresh?: () => void, onNavigate?: (tab: string) => void }) {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
@@ -77,51 +57,59 @@ export function AdminDashboard({ onRefresh }: { onRefresh?: () => void }) {
         <StatCard icon={Users} color="emerald" label="จำนวนเด็กในระบบ" description="ยอดนักเรียนรวมทั้งหมดในระบบ" value={`${stats?.totalChildren || 0} คน`} loading={statsLoading} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <AdminPanel className="no-print h-[400px] flex flex-col">
-          <AdminPanelHeader icon={LayoutDashboard} title="แนวโน้มการเข้าเรียน (Weekly Attendance)" />
-          <div className="p-4 flex-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={weeklyAttendanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0f766e" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#0f766e" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  labelStyle={{ fontWeight: 'bold', color: '#1e293b', marginBottom: '4px' }}
-                />
-                <Area type="monotone" dataKey="count" stroke="#0f766e" strokeWidth={3} fillOpacity={1} fill="url(#colorCount)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </AdminPanel>
+      {/* Quick Action Buttons */}
+      <div className="mt-8 pt-4">
+        <h3 className="text-lg font-bold text-slate-800 mb-4 font-outfit">
+          Quick Actions <span className="font-sarabun text-sm font-normal text-slate-500 ml-2">เมนูการจัดการด่วน</span>
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          
+          <button onClick={() => onNavigate?.('daily_ops')} className="bg-white border border-slate-200 hover:border-icsn-teal/50 hover:shadow-md transition-all p-5 rounded-2xl flex flex-col items-center justify-center gap-3 text-center group cursor-pointer">
+            <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-icsn-teal/10 transition-colors">
+              <CalendarCheck className="w-6 h-6 text-slate-600 group-hover:text-icsn-teal" />
+            </div>
+            <div>
+              <p className="font-bold text-slate-800 text-sm">จัดการรอบเรียนวันนี้</p>
+              <p className="text-xs text-slate-500 mt-0.5">เช็คอิน / เพิ่ม Walk-in</p>
+            </div>
+          </button>
 
-        <AdminPanel className="no-print h-[400px] flex flex-col">
-          <AdminPanelHeader icon={CreditCard} title="สรุปการใช้งานเครดิต (Credit Usage)" />
-          <div className="p-4 flex-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={creditUsageData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
-                <Tooltip 
-                  cursor={{ fill: '#f1f5f9' }}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  labelStyle={{ fontWeight: 'bold', color: '#1e293b', marginBottom: '4px' }}
-                />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                <Bar dataKey="used" name="ใช้งานแล้ว (Used)" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={24} />
-                <Bar dataKey="purchased" name="ซื้อใหม่ (Purchased)" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={24} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </AdminPanel>
+          <button onClick={() => onNavigate?.('slips')} className="bg-white border border-slate-200 hover:border-amber-400/50 hover:shadow-md transition-all p-5 rounded-2xl flex flex-col items-center justify-center gap-3 text-center group cursor-pointer relative">
+            {stats?.pendingSlips ? (
+              <span className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center justify-center min-w-[20px] h-5">
+                {stats.pendingSlips}
+              </span>
+            ) : null}
+            <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+              <ReceiptText className="w-6 h-6 text-slate-600 group-hover:text-amber-600" />
+            </div>
+            <div>
+              <p className="font-bold text-slate-800 text-sm">ตรวจสอบสลิปเงิน</p>
+              <p className="text-xs text-slate-500 mt-0.5">อนุมัติเครดิตแพ็กเกจใหม่</p>
+            </div>
+          </button>
+
+          <button onClick={() => onNavigate?.('users')} className="bg-white border border-slate-200 hover:border-blue-400/50 hover:shadow-md transition-all p-5 rounded-2xl flex flex-col items-center justify-center gap-3 text-center group cursor-pointer">
+            <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+              <Users className="w-6 h-6 text-slate-600 group-hover:text-blue-600" />
+            </div>
+            <div>
+              <p className="font-bold text-slate-800 text-sm">ฐานข้อมูลครอบครัว</p>
+              <p className="text-xs text-slate-500 mt-0.5">ดูรายชื่อและสถิติการจอง</p>
+            </div>
+          </button>
+
+          <button onClick={() => onNavigate?.('holidays')} className="bg-white border border-slate-200 hover:border-red-400/50 hover:shadow-md transition-all p-5 rounded-2xl flex flex-col items-center justify-center gap-3 text-center group cursor-pointer">
+            <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+              <CalendarOff className="w-6 h-6 text-slate-600 group-hover:text-red-600" />
+            </div>
+            <div>
+              <p className="font-bold text-slate-800 text-sm">ประกาศวันหยุด</p>
+              <p className="text-xs text-slate-500 mt-0.5">ตั้งค่าและแจ้งปิดคลาส</p>
+            </div>
+          </button>
+          
+        </div>
       </div>
     </div>
   );

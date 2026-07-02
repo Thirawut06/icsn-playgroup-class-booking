@@ -27,7 +27,7 @@ export function CalendarWidget({
   const { 
     sessions, 
     myBookings, 
-    blockoutDates, 
+    closures, 
     settings, 
     selectedChildId 
   } = useBookingContext();
@@ -97,8 +97,9 @@ export function CalendarWidget({
           // Check if any active session is open for booking on this day
           const hasOpenSession = dayObj.sessions.some(s => s.is_active && (s.total_capacity - (s.booked_count || 0)) > 0);
           
-          // Check if day is fundamentally bookable based on date/cutoff/blockouts
-          const isDateBookable = checkIsBookableDate(dayObj.dateStr, blockoutDates || [], cutoffHour);
+          // Check if day is fundamentally bookable based on date/cutoff/closures/operatingDays
+          const operatingDays = settings?.operating_days || [0, 1, 2, 3, 4, 5, 6];
+          const isDateBookable = checkIsBookableDate(dayObj.dateStr, closures, operatingDays, cutoffHour);
           
           // True if bookable AND has at least one open session
           const isBookable = isDateBookable && (dayObj.sessions.length === 0 || hasOpenSession);
@@ -131,16 +132,27 @@ export function CalendarWidget({
                 dotClass = "bg-foreground";
               }
             } else if (isFuture) {
-              // Future but not bookable (e.g., closed by admin, or fully booked)
+              const isBaseOperatingDay = operatingDays.includes(new Date(dayObj.dateStr).getDay());
+              const closureForDate = closures.find(c => dayObj.dateStr >= c.start_date && dayObj.dateStr <= c.end_date && !c.time_label);
+              const isExplicitlyClosed = (closureForDate && !closureForDate.is_force_open) || (!isBaseOperatingDay && closureForDate && !closureForDate.is_force_open);
               const hasClosedSession = dayObj.sessions.some(s => !s.is_active && s.theme);
-              if (hasClosedSession) {
-                 btnClass = "bg-destructive/10 text-destructive border border-destructive/20 cursor-not-allowed"; // Highlight closed days
+
+              if (isExplicitlyClosed || (isBaseOperatingDay && hasClosedSession)) {
+                // Explicitly closed by admin
+                btnClass = "bg-destructive/10 text-destructive border border-destructive/20 cursor-not-allowed";
+                dotClass = "bg-destructive";
+              } else if (isBaseOperatingDay) {
+                // Operating day but fully booked
+                btnClass = "bg-muted text-muted-foreground cursor-not-allowed";
+                dotClass = "bg-destructive";
               } else {
-                 btnClass = "bg-muted text-muted-foreground cursor-not-allowed";
+                // Normal weekend / non-operating day
+                btnClass = "bg-muted text-muted-foreground/60 cursor-not-allowed opacity-60";
+                dotClass = "bg-transparent";
               }
-              dotClass = "bg-destructive";
             } else {
               btnClass = "bg-muted text-muted-foreground cursor-not-allowed opacity-60";
+              dotClass = "bg-transparent";
             }
           }
 

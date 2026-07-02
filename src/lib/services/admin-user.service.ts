@@ -24,7 +24,8 @@ export const AdminUserService = {
         packages(
           credits_remaining,
           type
-        )
+        ),
+        bookings(status)
       `);
 
     if (error) throw error;
@@ -32,8 +33,10 @@ export const AdminUserService = {
     const mapped = (parents || []).map((p: any) => {
       const children = p.children || [];
       const packages = p.packages || [];
+      const bookings = p.bookings || [];
 
       const totalCredits = packages.reduce((sum: number, pkg: any) => sum + (pkg.credits_remaining || 0), 0);
+      const totalBookings = bookings.filter((b: any) => b.status === 'confirmed').length;
 
       let category: 'payment' | 'trial' | 'walk-in' = 'walk-in';
 
@@ -62,6 +65,7 @@ export const AdminUserService = {
         phone: p.phone,
         children_nicknames: children.map((c: { nickname: string }) => c.nickname).join(', '),
         total_credits: totalCredits,
+        total_bookings: totalBookings,
         category,
         latestActivity,
         raw_parent: p

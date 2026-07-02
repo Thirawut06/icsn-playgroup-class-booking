@@ -4,12 +4,14 @@ export interface SystemSettings {
   cutoff_hour: number;
   default_capacity: number;
   announcement_text: string;
+  operating_days: number[];
 }
 
 const DEFAULT_SETTINGS: SystemSettings = {
   cutoff_hour: 7,
   default_capacity: 12,
   announcement_text: '',
+  operating_days: [0, 1, 2, 3, 4, 5, 6],
 };
 
 export const SettingsService = {
@@ -31,6 +33,12 @@ export const SettingsService = {
           settingsObj.default_capacity = parseInt(row.value, 10);
         } else if (row.key === 'announcement_text') {
           settingsObj.announcement_text = row.value;
+        } else if (row.key === 'operating_days') {
+          try {
+            settingsObj.operating_days = JSON.parse(row.value);
+          } catch (e) {
+            console.error('Failed to parse operating_days', e);
+          }
         }
       }
     }
@@ -39,18 +47,11 @@ export const SettingsService = {
   },
 
   async updateSetting(key: string, value: string): Promise<void> {
-    // Upsert equivalent since we might not have the row yet.
-    // Supabase standard update might fail if row doesn't exist, so we use upsert
-    // But upsert requires knowing the Primary Key. If `key` is PK, we can upsert.
-    // Let's check table schema: it says `key character varying NOT NULL`. 
-    // We will just do a delete then insert or an upsert. 
-    // Actually, .upsert works well if `key` is unique.
     const { error } = await supabase
       .from('system_settings')
       .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
       
     if (error) {
-      // If upsert fails due to no unique constraint on key, fallback to delete + insert
       if (error.code === '42P10' || error.message.includes('unique constraint')) {
         await supabase.from('system_settings').delete().eq('key', key);
         await supabase.from('system_settings').insert({ key, value, updated_at: new Date().toISOString() });
@@ -72,6 +73,9 @@ export const SettingsService = {
     }
     if (settings.announcement_text !== undefined) {
       updates.push({ key: 'announcement_text', value: settings.announcement_text, updated_at: now });
+    }
+    if (settings.operating_days !== undefined) {
+      updates.push({ key: 'operating_days', value: JSON.stringify(settings.operating_days), updated_at: now });
     }
 
     if (updates.length > 0) {

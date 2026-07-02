@@ -40,7 +40,7 @@ function BookPageContent() {
     paymentPackages,
     sessions,
     myBookings,
-    blockoutDates,
+    closures,
     settings,
     loading,
     selectedChildId,
@@ -233,7 +233,8 @@ function BookPageContent() {
             bookingSuccess={bookingSuccess}
             bookingError={bookingError}
             onBookClass={handleBookClass}
-            blockoutDates={blockoutDates}
+            closures={closures}
+            operatingDays={settings?.operating_days}
             cutoffHour={settings?.cutoff_hour || 7}
           />
 

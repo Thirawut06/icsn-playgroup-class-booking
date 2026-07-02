@@ -24,7 +24,7 @@ export const AdminSessionService = {
     return data || [];
   },
 
-  async getSchoolClosures(): Promise<{ id: string; start_date: string; end_date: string; reason: string }[]> {
+  async getSchoolClosures(): Promise<{ id: string; start_date: string; end_date: string; reason: string; time_label: string | null }[]> {
     const { data, error } = await supabase
       .from('school_closures')
       .select('*')
@@ -33,14 +33,16 @@ export const AdminSessionService = {
     return data || [];
   },
 
-  async bulkCloseDays(startDate: string, endDate: string, reason: string): Promise<void> {
-    const { data, error } = await supabase.rpc('bulk_close_days', {
+  async setDateStatus(startDate: string, endDate: string, isOpen: boolean, reason?: string, timeLabel?: string): Promise<void> {
+    const { data, error } = await supabase.rpc('set_date_status', {
       p_start_date: startDate,
       p_end_date: endDate,
-      p_reason: reason
+      p_is_open: isOpen,
+      p_reason: reason || null,
+      p_time_label: timeLabel || null
     });
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
-    if (data && data.success === false) throw new Error(data.error || 'Bulk close failed');
+    if (data && data.success === false) throw new Error(data.error || 'Set date status failed');
   },
 
   async bulkReopenDays(startDate: string, endDate: string): Promise<void> {
@@ -49,6 +51,14 @@ export const AdminSessionService = {
       p_end_date: endDate
     });
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
+  },
+
+  async deleteSchoolClosure(id: string): Promise<void> {
+    const { data, error } = await supabase.rpc('delete_school_closure', {
+      p_closure_id: id
+    });
+    if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
+    if (data && data.success === false) throw new Error(data.error || 'Delete closure failed');
   },
 
   async addBlockoutDate(blockDate: string, reason?: string): Promise<void> {
@@ -70,6 +80,14 @@ export const AdminSessionService = {
     const { error } = await supabase
       .from('sessions')
       .update({ is_active: isActive })
+      .eq('id', sessionId);
+    if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
+  },
+
+  async updateSessionCapacity(sessionId: string, totalCapacity: number): Promise<void> {
+    const { error } = await supabase
+      .from('sessions')
+      .update({ total_capacity: totalCapacity })
       .eq('id', sessionId);
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
   },

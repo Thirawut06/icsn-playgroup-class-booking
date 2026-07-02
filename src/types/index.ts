@@ -146,6 +146,7 @@ export interface ClassifiedUser {
   phone: string;
   children_nicknames: string;
   total_credits: number;
+  total_bookings: number;
   category: 'payment' | 'trial' | 'walk-in';
   latestActivity: number;
   raw_parent?: any;
@@ -162,4 +163,13 @@ export interface SubmitChildPayload {
   info: string;
   mediaPerm: boolean;
   noPhotoPerm: boolean;
+}
+
+export interface SchoolClosure {
+  id: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  time_label?: string | null;
+  is_force_open?: boolean;
 }

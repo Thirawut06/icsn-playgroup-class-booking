@@ -14,7 +14,8 @@ interface BookingSummaryProps {
   bookingSuccess: boolean;
   bookingError: string;
   onBookClass: () => void;
-  blockoutDates: string[] | undefined;
+  closures: import('@/types').SchoolClosure[];
+  operatingDays?: number[];
   cutoffHour: number;
 }
 
@@ -32,7 +33,8 @@ export function BookingSummary({
   bookingSuccess,
   bookingError,
   onBookClass,
-  blockoutDates,
+  closures,
+  operatingDays = [0, 1, 2, 3, 4, 5, 6],
   cutoffHour
 }: BookingSummaryProps) {
   
@@ -68,7 +70,7 @@ export function BookingSummary({
             const dayNum = String(d.getDate());
             const monthName = getThaiMonthMin(d);
             
-            const dateAvailable = checkIsBookableDate(dateStr, blockoutDates || [], cutoffHour);
+            const dateAvailable = checkIsBookableDate(dateStr, closures, operatingDays, cutoffHour);
             const availableSessions = sessions
               .filter(s => s.session_date === dateStr)
               .sort((a, b) => {

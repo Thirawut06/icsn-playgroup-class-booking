@@ -16,7 +16,7 @@ interface BookingContextValue {
   paymentPackages: PackageOption[];
   sessions: Session[];
   myBookings: Booking[];
-  blockoutDates: string[];
+  closures: import('@/types').SchoolClosure[];
   settings: SystemSettings | null;
   loading: boolean;
   selectedChildId: string;
@@ -38,7 +38,7 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
   const [paymentPackages, setPaymentPackages] = useState<PackageOption[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [myBookings, setMyBookings] = useState<Booking[]>([]);
-  const [blockoutDates, setBlockoutDates] = useState<string[]>([]);
+  const [closures, setClosures] = useState<import('@/types').SchoolClosure[]>([]);
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedChildId, setSelectedChildId] = useState('');
@@ -69,8 +69,8 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
       const loadedSessions = await BookingService.getSessions(startDate, endDate);
       setSessions(loadedSessions);
 
-      const blockedDates = await BookingService.getBlockoutDates();
-      setBlockoutDates(blockedDates);
+      const fetchedClosures = await BookingService.getSchoolClosures();
+      setClosures(fetchedClosures);
 
       const bookings = await BookingService.getBookings(pId);
       setMyBookings(bookings);
@@ -106,7 +106,7 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
         paymentPackages,
         sessions,
         myBookings,
-        blockoutDates,
+        closures,
         settings,
         loading,
         selectedChildId,

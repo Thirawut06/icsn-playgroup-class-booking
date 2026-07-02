@@ -1,46 +1,79 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { CalendarCog, Plus, Trash2, Loader2, AlertTriangle, CalendarX } from 'lucide-react';
-import { AdminService, supabase } from '@/lib/supabase';
+import { CalendarCog, Loader2, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Settings, AlertTriangle, Save, RefreshCcw, CalendarX, Trash2, Plus, Clock, X } from 'lucide-react';
+import { AdminService, SettingsService, supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { COPY } from '@/config/copy';
 import { 
   AdminFieldLabel, 
   AdminPanel, 
   AdminPanelHeader,
-  AdminPrimaryButton,
-  AdminDataTable,
-  AdminModal
+  AdminPrimaryButton
 } from '../admin-ui';
-
-interface SchoolClosure {
-  id: string;
-  start_date: string;
-  end_date: string;
-  reason: string;
-}
+import { getThaiMonthName } from '@/utils/dateUtils';
+import type { SchoolClosure, Session } from '@/types';
 
 export function AdminHolidays() {
   const [closures, setClosures] = useState<SchoolClosure[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [operatingDays, setOperatingDays] = useState<number[]>([0,1,2,3,4,5,6]);
   const [loading, setLoading] = useState(true);
+  const [monthIndex, setMonthIndex] = useState(0);
 
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [reason, setReason] = useState('');
-  const [adding, setAdding] = useState(false);
+  // Selection State
+  const [selectionMode, setSelectionMode] = useState<'single' | 'range' | 'multi'>('single');
+  const [rangeStart, setRangeStart] = useState<string>('');
+  const [rangeEnd, setRangeEnd] = useState<string>('');
+  const [isPickingRangeEnd, setIsPickingRangeEnd] = useState(false);
+  const [multiDates, setMultiDates] = useState<string[]>([]);
+  
+  const [overrideStatus, setOverrideStatus] = useState<'open' | 'closed' | 'reset'>('closed');
+  const [overrideReason, setOverrideReason] = useState('');
+  
+  // Save states
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [savingOverride, setSavingOverride] = useState(false);
+  
+  // Local operating days for editing before save
+  const [tempOperatingDays, setTempOperatingDays] = useState<number[]>([]);
 
   useEffect(() => {
-    fetchClosures();
-  }, []);
+    fetchData();
+  }, [monthIndex]);
 
-  const fetchClosures = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await AdminService.getSchoolClosures();
-      setClosures(data);
+      const [closuresData, settingsData] = await Promise.all([
+        AdminService.getSchoolClosures(),
+        SettingsService.getAllSettings()
+      ]);
+      setClosures(closuresData);
+      
+      const ops = settingsData.operating_days || [0,1,2,3,4,5,6];
+      setOperatingDays(ops);
+      if (tempOperatingDays.length === 0) {
+        setTempOperatingDays(ops);
+      }
+
+      // Fetch sessions for the current view month
+      const currentViewDate = new Date();
+      currentViewDate.setMonth(currentViewDate.getMonth() + monthIndex);
+      const year = currentViewDate.getFullYear();
+      const month = currentViewDate.getMonth();
+      const startDate = new Date(year, month, 1).toISOString().split('T')[0];
+      const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
+      
+      const { data: sessionsData, error: sessionsErr } = await supabase
+        .from('sessions')
+        .select('*')
+        .gte('session_date', startDate)
+        .lte('session_date', endDate);
+      
+      if (sessionsErr) throw sessionsErr;
+      setSessions(sessionsData || []);
+
     } catch (err) {
       toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
     } finally {
@@ -48,234 +81,668 @@ export function AdminHolidays() {
     }
   };
 
-  const handleAdd = async () => {
-    if (!startDate || !endDate || !reason) {
-      toast.error("กรุณากรอกวันที่เริ่มต้น สิ้นสุด และเหตุผลให้ครบถ้วน");
-      return;
-    }
-    
-    if (new Date(endDate) < new Date(startDate)) {
-      toast.error("วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น");
-      return;
-    }
-
-    if (!confirm(`ยืนยันการตั้งค่าวันหยุดยาวตั้งแต่วันที่ ${startDate} ถึง ${endDate} ?\n\nคำเตือน: ระบบจะทำการยกเลิกคลาสที่ถูกจองไว้ในช่วงเวลานี้ และคืนเครดิตให้ผู้ปกครองโดยอัตโนมัติ (สำหรับลูกค้าโอนเงินสด แอดมินต้องทำการโอนคืนเอง)`)) {
-      return;
-    }
-
-    setAdding(true);
+  const handleSaveSettings = async () => {
+    setSavingSettings(true);
     try {
-      await AdminService.bulkCloseDays(startDate, endDate, reason);
-      toast.success("ตั้งค่าวันหยุดยาวเรียบร้อย ระบบได้ยกเลิกและคืนเครดิตให้ลูกค้าที่มีแพ็กเกจแล้ว");
-      setStartDate('');
-      setEndDate('');
-      setReason('');
-      setIsModalOpen(false);
-      await fetchClosures();
+      await SettingsService.updateAllSettings({ operating_days: tempOperatingDays });
+      setOperatingDays(tempOperatingDays);
+      toast.success('บันทึกวันทำการพื้นฐานเรียบร้อยแล้ว');
     } catch (err) {
-      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
+      toast.error('ไม่สามารถบันทึกการตั้งค่าได้');
     } finally {
-      setAdding(false);
+      setSavingSettings(false);
     }
   };
 
-  const handleRemove = async (id: string) => {
-    const closure = closures.find(c => c.id === id);
-    if (!closure) return;
+  const toggleTempDay = (day: number) => {
+    if (tempOperatingDays.includes(day)) {
+      setTempOperatingDays(tempOperatingDays.filter(d => d !== day));
+    } else {
+      setTempOperatingDays([...tempOperatingDays, day].sort());
+    }
+  };
 
-    if (!confirm('ยืนยันลบรายการวันหยุดยาวนี้? (การลบจะไม่ดึงคลาสที่ถูกยกเลิกไปแล้วกลับมา)')) return;
+  const handleDayClick = (dateStr: string, isCurrentlyOpen: boolean, existingClosure: SchoolClosure | undefined) => {
+    if (selectionMode === 'single') {
+      setRangeStart(dateStr);
+      setRangeEnd(dateStr);
+      setMultiDates([]);
+    } else if (selectionMode === 'range') {
+      if (!isPickingRangeEnd || !rangeStart) {
+        setRangeStart(dateStr);
+        setRangeEnd(dateStr);
+        setIsPickingRangeEnd(true);
+      } else {
+        if (dateStr >= rangeStart) {
+          setRangeEnd(dateStr);
+        } else {
+          setRangeStart(dateStr);
+          setRangeEnd(dateStr);
+        }
+        setIsPickingRangeEnd(false);
+      }
+    } else {
+      if (multiDates.includes(dateStr)) {
+        setMultiDates(multiDates.filter(d => d !== dateStr));
+      } else {
+        setMultiDates([...multiDates, dateStr].sort());
+      }
+    }
+
+    if (existingClosure) {
+      setOverrideStatus(existingClosure.is_force_open ? 'open' : 'closed');
+      setOverrideReason(existingClosure.reason || '');
+    } else {
+      setOverrideStatus('closed');
+      setOverrideReason('');
+    }
+  };
+
+  const handleSaveOverride = async () => {
+    setSavingOverride(true);
+    
     try {
-      // 1. ลบจาก school_closures
-      const { error } = await supabase.from('school_closures').delete().eq('id', id);
-      if (error) throw error;
+      if (overrideStatus === 'reset') {
+        const datesToReset: string[] = [];
+        if (selectionMode === 'range' || selectionMode === 'single') {
+          if (!rangeStart || !rangeEnd) { toast.error('กรุณาระบุช่วงวันที่'); setSavingOverride(false); return; }
+          let curr = new Date(rangeStart);
+          const end = new Date(rangeEnd);
+          while (curr <= end) {
+            datesToReset.push(curr.toISOString().split('T')[0]);
+            curr.setDate(curr.getDate() + 1);
+          }
+        } else {
+          datesToReset.push(...multiDates);
+        }
+        
+        if (datesToReset.length === 0) { toast.error('กรุณาเลือกวัน'); setSavingOverride(false); return; }
 
-      // 2. ปลดล็อค session กลับเป็นปกติ (is_active = true, theme = null) 
-      // โดยข้ามเสาร์-อาทิตย์ เพื่อให้สามารถเปิดจองได้ใหม่
-      try {
-        await AdminService.bulkReopenDays(closure.start_date, closure.end_date);
-        toast.success("ลบรายการสำเร็จ และเปิดคลาสในช่วงเวลานี้ให้จองได้ตามปกติ");
-      } catch (updateError) {
-        console.error("Failed to reactivate sessions:", updateError);
-        toast.error("ลบวันหยุดแล้ว แต่ไม่สามารถเปิดคลาสกลับมาได้อัตโนมัติ");
+        for (const date of datesToReset) {
+          const overlappingClosures = closures.filter(c => date >= c.start_date && date <= c.end_date);
+          await Promise.all(overlappingClosures.map(c => AdminService.deleteSchoolClosure(c.id)));
+          
+          await supabase.from('sessions')
+            .update({ is_active: true, theme: null })
+            .eq('session_date', date);
+        }
+        
+        toast.success('ยกเลิกการตั้งค่าเรียบร้อยแล้ว');
+      } else {
+        if (selectionMode === 'range' || selectionMode === 'single') {
+          if (!rangeStart || !rangeEnd) { toast.error('กรุณาระบุช่วงวันที่'); setSavingOverride(false); return; }
+          if (rangeStart > rangeEnd) { toast.error('วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด'); setSavingOverride(false); return; }
+          if (overrideStatus === 'closed' && !overrideReason) { toast.error('กรุณาระบุสาเหตุ'); setSavingOverride(false); return; }
+          
+          await AdminService.setDateStatus(rangeStart, rangeEnd, overrideStatus === 'open', overrideReason);
+        } else {
+          if (multiDates.length === 0) { toast.error('กรุณาเลือกอย่างน้อย 1 วัน'); setSavingOverride(false); return; }
+          if (overrideStatus === 'closed' && !overrideReason) { toast.error('กรุณาระบุสาเหตุ'); setSavingOverride(false); return; }
+          
+          await Promise.all(multiDates.map(date => 
+            AdminService.setDateStatus(date, date, overrideStatus === 'open', overrideReason)
+          ));
+        }
+        toast.success('บันทึกสำเร็จ');
       }
 
-      setClosures(curr => curr.filter(d => d.id !== id));
-    } catch (err) {
-      toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
+      setRangeStart(''); setRangeEnd(''); setIsPickingRangeEnd(false); setOverrideReason(''); setMultiDates([]);
+      fetchData();
+    } catch (err) { 
+      toast.error('เกิดข้อผิดพลาดในการบันทึก/ยกเลิก'); 
+    } finally { 
+      setSavingOverride(false); 
     }
   };
 
-  const formatDisplayDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('th-TH', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
+  const handleDeleteClosure = async (id: string) => {
+    if (!confirm('ยืนยันลบการตั้งค่าวันหยุด/เปิดพิเศษนี้?')) return;
+    
+    try {
+      await AdminService.deleteSchoolClosure(id);
+      toast.success('ยกเลิกรายการเรียบร้อยแล้ว');
+      // If the currently edited range matches what was deleted, clear the form
+      if (closures.find(c => c.id === id)?.start_date === overrideStartDate) {
+        setOverrideStartDate('');
+        setOverrideEndDate('');
+        setOverrideReason('');
+      }
+      await fetchData();
+    } catch (err) {
+      toast.error('ไม่สามารถยกเลิกได้');
+    }
   };
 
-  const today = new Date().toISOString().split('T')[0];
-  
-  // Sort closures: upcoming first, then by start_date desc
-  const sortedClosures = [...closures].sort((a, b) => {
-    const aUpcoming = a.end_date >= today;
-    const bUpcoming = b.end_date >= today;
-    if (aUpcoming && !bUpcoming) return -1;
-    if (!aUpcoming && bUpcoming) return 1;
-    return new Date(b.start_date).getTime() - new Date(a.start_date).getTime();
-  });
+  // Calendar logic
+  const currentViewDate = new Date();
+  currentViewDate.setMonth(currentViewDate.getMonth() + monthIndex);
+  const monthName = getThaiMonthName(currentViewDate);
+  const year = currentViewDate.getFullYear();
+  const month = currentViewDate.getMonth();
+
+  const getDaysInMonth = () => {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysArray = [];
+
+    for (let i = 0; i < firstDay; i++) {
+      daysArray.push(null);
+    }
+
+    for (let i = 1; i <= daysInMonth; i++) {
+      const d = new Date(year, month, i);
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      daysArray.push({
+        day: i,
+        dateStr: `${d.getFullYear()}-${mm}-${dd}`,
+      });
+    }
+
+    return daysArray;
+  };
+
+  const daysList = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+  const fullDaysList = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+
+  // Identify upcoming closures
+  const todayStr = new Date().toISOString().split('T')[0];
+  const upcomingClosures = closures
+    .filter(c => c.end_date >= todayStr && !c.time_label)
+    .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+
+  function formatDisplayDateStr(dateStr: string) {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <AdminPanel className="no-print">
         <AdminPanelHeader 
           icon={CalendarCog} 
-          title="ตั้งค่าวันหยุด (Holidays & Closures)" 
-          action={
-            <AdminPrimaryButton onClick={() => setIsModalOpen(true)}>
-              <Plus className="w-5 h-5 mr-1.5" />
-              เพิ่มวันหยุดใหม่
-            </AdminPrimaryButton>
-          }
+          title="จัดการวันเปิด-ปิด (Calendar & Holidays)" 
         />
+        
         <div className="p-6">
-          <AdminDataTable
-            headers={[
-              { label: 'ชื่อวันหยุด / สาเหตุ' },
-              { label: 'ช่วงเวลา', align: 'center' },
-              { label: 'สถานะ', align: 'center' },
-              { label: 'จัดการ', align: 'right' },
-            ]}
-          >
-            {loading ? (
-              <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
-                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-icsn-teal" />
-                </td>
-              </tr>
-            ) : sortedClosures.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
-                  <p>ยังไม่มีข้อมูลวันหยุด</p>
-                </td>
-              </tr>
-            ) : (
-              <>
-                {sortedClosures.map(c => {
-                  const isUpcoming = c.end_date >= today;
-                  return (
-                    <tr key={c.id} className={`hover:bg-muted/30 transition-colors ${!isUpcoming ? 'opacity-60' : ''}`}>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isUpcoming ? 'bg-error/10 text-error' : 'bg-gray-200 text-gray-500'}`}>
-                            <CalendarX className="w-4 h-4" />
-                          </div>
-                          <p className="font-bold text-icsn-navy">{c.reason}</p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center font-medium">
-                        {c.start_date === c.end_date 
-                          ? formatDisplayDate(c.start_date)
-                          : `${formatDisplayDate(c.start_date)} - ${formatDisplayDate(c.end_date)}`}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold ${
-                          isUpcoming ? 'bg-warning/10 text-warning border border-warning/20' : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {isUpcoming ? 'กำลังจะมาถึง' : 'ผ่านมาแล้ว'}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            {/* Left Column: Calendar (lg:col-span-7) */}
+            <div className="lg:col-span-7 relative">
+              <div className="px-0 sm:px-4 py-4 space-y-4">
+                {/* Calendar Header */}
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-icsn-navy flex items-center gap-1.5 text-base">
+                    <CalendarIcon className="w-5 h-5 text-icsn-teal" />
+                    <span>เลือกวันที่เพื่อตั้งค่า</span>
+                  </h3>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setMonthIndex(m => m - 1)}
+                      className="p-2 hover:bg-muted/80 rounded-xl transition text-icsn-navy"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <h4 className="text-sm font-bold text-icsn-navy bg-muted px-2.5 py-1.5 rounded-xl">
+                      {monthName}
+                    </h4>
+                    <button
+                      onClick={() => setMonthIndex(m => m + 1)}
+                      className="p-2 hover:bg-muted/80 rounded-xl transition text-icsn-navy"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Thai Week Names */}
+                <div className="grid grid-cols-7 text-center text-sm font-bold text-muted-foreground/70">
+                  {daysList.map((d, idx) => <div key={idx}>{d}</div>)}
+                </div>
+
+                {/* Calendar Grid */}
+                <div className="grid grid-cols-7 gap-1.5 text-center font-bold text-base">
+                  {getDaysInMonth().map((dayObj, i) => {
+                    if (!dayObj) return <div key={`empty-${i}`} className="py-2 text-transparent"></div>;
+
+                    // Sync with User View Logic
+                    const daySessions = sessions.filter(s => s.session_date === dayObj.dateStr);
+                    const closureForDate = closures.find(c => dayObj.dateStr >= c.start_date && dayObj.dateStr <= c.end_date && !c.time_label);
+                    const dayOfWeek = new Date(dayObj.dateStr).getDay();
+                    const isBaseOperatingDay = operatingDays.includes(dayOfWeek);
+                    
+                    // Determine if the day is fundamentally open (ignoring sessions)
+                    let isFundamentallyOpen = isBaseOperatingDay;
+                    if (closureForDate) {
+                      isFundamentallyOpen = !!closureForDate.is_force_open;
+                    }
+
+                    // Check if any active session is open for booking on this day
+                    const hasOpenSession = daySessions.some(s => s.is_active && (s.total_capacity - (s.booked_count || 0)) > 0);
+                    
+                    // It is "Bookable" (open) if it's fundamentally open AND (no sessions OR has open sessions)
+                    const isBookable = isFundamentallyOpen && (daySessions.length === 0 || hasOpenSession);
+
+                    // A date is "selected" visually if it falls within the override range or multi array
+                    const isSelected = (selectionMode === 'range' || selectionMode === 'single')
+                      ? !!(rangeStart && rangeEnd && dayObj.dateStr >= rangeStart && dayObj.dateStr <= rangeEnd)
+                      : multiDates.includes(dayObj.dateStr);
+                    
+                    const isBooked = false; // Admin view doesn't care about parent booking
+                    const isFuture = new Date(dayObj.dateStr) >= new Date(new Date().setHours(0, 0, 0, 0));
+
+                    // Exact same styling logic from CalendarWidget.tsx
+                    let btnClass = "text-muted-foreground/70 bg-muted/50";
+                    let dotClass = "bg-transparent";
+
+                    if (isBookable) {
+                      if (isSelected) {
+                        btnClass = "bg-primary text-primary-foreground shadow-md font-black scale-[1.05]";
+                        dotClass = "bg-white";
+                      } else {
+                        btnClass = "bg-background text-foreground border border-border hover:border-primary/30 hover:bg-primary/5";
+                        dotClass = "bg-primary";
+                      }
+                    } else {
+                      if (isSelected) {
+                        btnClass = "bg-foreground text-background shadow-md font-black scale-[1.05]";
+                        dotClass = "bg-background";
+                      } else if (isFuture) {
+                        const isExplicitlyClosed = (closureForDate && !closureForDate.is_force_open) || (!isBaseOperatingDay && closureForDate && !closureForDate.is_force_open);
+                        const hasClosedSession = daySessions.some(s => !s.is_active && s.theme);
+
+                        if (isExplicitlyClosed || (isBaseOperatingDay && hasClosedSession)) {
+                          btnClass = "bg-destructive/10 text-destructive border border-destructive/20 cursor-not-allowed";
+                          dotClass = "bg-destructive";
+                        } else if (isBaseOperatingDay) {
+                          btnClass = "bg-muted text-muted-foreground cursor-not-allowed";
+                          dotClass = "bg-destructive";
+                        } else {
+                          btnClass = "bg-muted text-muted-foreground/60 cursor-not-allowed opacity-60";
+                          dotClass = "bg-transparent";
+                        }
+                      } else {
+                        btnClass = "bg-muted text-muted-foreground cursor-not-allowed opacity-60";
+                        dotClass = "bg-transparent";
+                      }
+                    }
+                    
+                    // Highlight selected days even if they are unbookable
+                    if (isSelected && !isBookable) {
+                        btnClass = "bg-foreground text-background shadow-md font-black scale-[1.05]";
+                        dotClass = "bg-background";
+                    }
+
+                    return (
+                      <button
+                        key={dayObj.dateStr}
+                        onClick={() => handleDayClick(dayObj.dateStr, isBookable, closureForDate)}
+                        className={`py-3 rounded-xl transition-all flex flex-col items-center justify-center relative cursor-pointer active:scale-95 ${btnClass}`}
+                      >
+                        <span>{dayObj.day}</span>
+                        <span className={`w-1.5 h-1.5 rounded-full mt-1 ${dotClass}`}></span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Legend */}
+                <div className="pt-2 flex flex-wrap justify-center gap-4 text-xs text-muted-foreground font-medium">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 bg-muted border border-border rounded-full"></span>
+                    ผ่านไปแล้ว / วันหยุด
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 bg-primary rounded-full shadow-sm"></span>
+                    เปิดรับจอง
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 bg-destructive rounded-full shadow-sm"></span>
+                    ปิดรับจอง
+                  </span>
+                </div>
+              </div>
+              
+              {loading && (
+                <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded-2xl z-20">
+                  <Loader2 className="w-8 h-8 animate-spin text-icsn-teal" />
+                </div>
+              )}
+            </div>
+
+            {/* Right Column: Unified Config Panel (lg:col-span-5) */}
+            <div className="lg:col-span-5 space-y-4">
+              
+              {/* 1. Weekly Default Config */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-icsn-navy" />
+                    <h4 className="font-bold text-icsn-navy text-sm">วันทำการพื้นฐานรายสัปดาห์</h4>
+                  </div>
+                  <button 
+                    onClick={handleSaveSettings}
+                    disabled={savingSettings || JSON.stringify(operatingDays) === JSON.stringify(tempOperatingDays)}
+                    className="px-3 py-1.5 bg-icsn-navy text-white hover:bg-icsn-navy/90 rounded-lg text-xs font-bold disabled:opacity-50 transition-colors"
+                  >
+                    {savingSettings ? 'กำลังบันทึก...' : 'บันทึก'}
+                  </button>
+                </div>
+                <div className="flex gap-1 sm:gap-2 justify-between">
+                  {fullDaysList.map((dayName, index) => {
+                    const isSelected = tempOperatingDays.includes(index);
+                    const shortName = daysList[index];
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => toggleTempDay(index)}
+                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all ${
+                          isSelected ? 'bg-icsn-teal text-white shadow-sm ring-2 ring-offset-1 ring-icsn-teal' : 'bg-white text-slate-400 border border-slate-200 hover:bg-slate-100'
+                        }`}
+                        title={dayName}
+                      >
+                        {shortName}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* 2. Date Range Override Config */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
+                <h4 className="font-bold text-icsn-navy mb-4 flex items-center gap-2">
+                  <CalendarX className="w-5 h-5" />
+                  ตั้งค่าว้นหยุดพิเศษ / เปิดพิเศษ (Macro)
+                </h4>
+
+                <div className="flex bg-slate-100 p-1 rounded-lg mb-4">
+                  <button
+                    onClick={() => { setSelectionMode('single'); setMultiDates([]); setRangeStart(''); setRangeEnd(''); setIsPickingRangeEnd(false); }}
+                    className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${selectionMode === 'single' ? 'bg-white text-icsn-navy shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    เลือกวันเดียว (Single)
+                  </button>
+                  <button
+                    onClick={() => { setSelectionMode('range'); setMultiDates([]); setRangeStart(''); setRangeEnd(''); setIsPickingRangeEnd(false); }}
+                    className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${selectionMode === 'range' ? 'bg-white text-icsn-navy shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    เลือกแบบช่วง (Range)
+                  </button>
+                  <button
+                    onClick={() => { setSelectionMode('multi'); setMultiDates([]); setRangeStart(''); setRangeEnd(''); setIsPickingRangeEnd(false); }}
+                    className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${selectionMode === 'multi' ? 'bg-white text-icsn-navy shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    เลือกทีละวัน (Multi)
+                  </button>
+                </div>
+
+                {selectionMode === 'single' ? (
+                  <div className="mb-4">
+                    <AdminFieldLabel>วันที่เลือก</AdminFieldLabel>
+                    <div className="min-h-[42px] px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center text-sm font-bold text-icsn-navy">
+                      {rangeStart ? formatDisplayDateStr(rangeStart) : <span className="text-slate-400 font-normal">คลิกที่ปฏิทินเพื่อเลือกวัน</span>}
+                    </div>
+                  </div>
+                ) : selectionMode === 'range' ? (
+                  <div className="mb-4">
+                    {isPickingRangeEnd && (
+                      <div className="text-xs text-icsn-teal font-bold mb-2 flex items-center justify-center bg-icsn-teal/10 py-1.5 rounded-lg animate-pulse">
+                        👉 กรุณาคลิกเลือกวันที่สิ้นสุดบนปฏิทิน
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <AdminFieldLabel>วันที่เริ่มต้น</AdminFieldLabel>
+                      <input 
+                        type="date" 
+                        value={rangeStart}
+                        onChange={e => { 
+                          setRangeStart(e.target.value); 
+                          if(e.target.value > rangeEnd) setRangeEnd(e.target.value); 
+                        }}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:border-transparent transition-all text-sm"
+                      />
+                    </div>
+                    <div>
+                      <AdminFieldLabel>วันที่สิ้นสุด</AdminFieldLabel>
+                      <input 
+                        type="date" 
+                        value={rangeEnd}
+                        min={rangeStart}
+                        onChange={e => setRangeEnd(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:border-transparent transition-all text-sm"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-4">
+                    <AdminFieldLabel>วันที่เลือก ({multiDates.length} วัน)</AdminFieldLabel>
+                    <div className="min-h-[42px] p-2 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap gap-1">
+                      {multiDates.length > 0 ? multiDates.map(d => (
+                        <span key={d} className="bg-icsn-navy text-white text-[10px] font-bold px-2 py-1 rounded-md flex items-center gap-1">
+                          {formatDisplayDateStr(d)}
+                          <button onClick={() => setMultiDates(multiDates.filter(md => md !== d))} className="hover:text-error">
+                            <X className="w-3 h-3" />
+                          </button>
                         </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        {isUpcoming ? (
-                          <div className="flex justify-end">
+                      )) : (
+                        <span className="text-sm text-slate-400 p-1">คลิกที่ปฏิทินเพื่อเลือกวัน</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+                  <div className="flex bg-slate-100 p-1 rounded-lg">
+                    <button
+                      onClick={() => setOverrideStatus('closed')}
+                      className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
+                        overrideStatus === 'closed' 
+                          ? 'bg-white text-error shadow-sm ring-1 ring-slate-200' 
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      ปิดรับจอง
+                    </button>
+                    <button
+                      onClick={() => setOverrideStatus('open')}
+                      className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
+                        overrideStatus === 'open' 
+                          ? 'bg-white text-success shadow-sm ring-1 ring-slate-200' 
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      บังคับเปิด
+                    </button>
+                    <button
+                      onClick={() => { setOverrideStatus('reset'); setOverrideReason(''); }}
+                      className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
+                        overrideStatus === 'reset' 
+                          ? 'bg-white text-slate-700 shadow-sm ring-1 ring-slate-200' 
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      ยกเลิกค่า (Reset)
+                    </button>
+                  </div>
+
+                  {overrideStatus === 'closed' && (
+                    <div className="animate-in fade-in">
+                      <input
+                        type="text"
+                        value={overrideReason}
+                        onChange={e => setOverrideReason(e.target.value)}
+                        placeholder="สาเหตุการปิด (เช่น ปิดเทอมซัมเมอร์)"
+                        className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-1 focus:ring-icsn-teal outline-none"
+                      />
+                    </div>
+                  )}
+
+                  <div className="pt-2">
+                    <AdminPrimaryButton 
+                      onClick={handleSaveOverride} 
+                      disabled={savingOverride || (selectionMode === 'multi' ? multiDates.length === 0 : (!rangeStart || !rangeEnd))}
+                      className="w-full justify-center py-2 text-sm"
+                    >
+                      {savingOverride ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />}
+                      {overrideStatus === 'reset' ? 'บันทึกการยกเลิก' : 'บันทึกตั้งค่าช่วงวันที่'}
+                    </AdminPrimaryButton>
+                  </div>
+              </div>
+
+              {/* 3. Daily Command Center: Time Slots */}
+              {((selectionMode === 'single' && rangeStart) || 
+                (selectionMode === 'range' && rangeStart && rangeEnd && rangeStart === rangeEnd) || 
+                (selectionMode === 'multi' && multiDates.length === 1)) && (() => {
+                  const targetDate = selectionMode === 'multi' ? multiDates[0] : rangeStart;
+                  return (
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm animate-in fade-in slide-in-from-top-2">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-icsn-navy" />
+                      <h4 className="font-bold text-icsn-navy text-sm">รอบเวลาเรียน (วันที่ {formatDisplayDateStr(targetDate)})</h4>
+                    </div>
+                  </div>
+                  
+                  {sessions.filter(s => s.session_date === targetDate).length === 0 ? (
+                    <div className="text-center py-6 bg-slate-50 rounded-xl border border-slate-100">
+                      <p className="text-sm text-slate-500 mb-3">ยังไม่มีการสร้างรอบเวลาเรียนสำหรับวันนี้</p>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const { SupabaseSessionAdapter } = await import('@/lib/domain/adapters/SupabaseSessionAdapter');
+                            const adapter = new SupabaseSessionAdapter();
+                            await adapter.getOrCreateSessionsForDate(targetDate);
+                            toast.success('สร้างรอบเวลาเรียนเรียบร้อย');
+                            await fetchData();
+                          } catch (err: any) {
+                            toast.error(err.message || 'Error generating sessions');
+                          }
+                        }}
+                        className="px-4 py-2 bg-icsn-navy text-white text-xs font-bold rounded-lg hover:bg-icsn-navy/90 transition-colors"
+                      >
+                        สร้างรอบเวลาจาก Template
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {sessions
+                        .filter(s => s.session_date === targetDate)
+                        .sort((a, b) => a.time_label.localeCompare(b.time_label))
+                        .map(session => (
+                        <div key={session.id} className={`p-3 border rounded-xl flex items-center justify-between transition-colors ${
+                          session.is_active ? 'border-slate-200 bg-white' : 'border-error/20 bg-error/5'
+                        }`}>
+                          <div className="flex items-center gap-3">
+                            <div className="text-sm font-bold text-icsn-navy">
+                              {session.time_label}
+                            </div>
+                            {!session.is_active && (
+                              <span className="text-[10px] bg-error/10 text-error px-2 py-0.5 rounded-full font-bold">
+                                ปิดรับจอง
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+                              <span className="text-xs text-slate-500">รับ:</span>
+                              <input 
+                                type="number" 
+                                defaultValue={session.total_capacity}
+                                onBlur={async (e) => {
+                                  const newCap = parseInt(e.target.value);
+                                  if (newCap && newCap !== session.total_capacity) {
+                                    try {
+                                      await AdminService.updateSessionCapacity(session.id, newCap);
+                                      toast.success('อัปเดตจำนวนรับเรียบร้อย');
+                                      fetchData();
+                                    } catch (err: any) {
+                                      toast.error(err.message);
+                                      e.target.value = session.total_capacity.toString();
+                                    }
+                                  }
+                                }}
+                                disabled={!session.is_active}
+                                className="w-12 text-sm font-bold text-center bg-transparent outline-none disabled:opacity-50"
+                              />
+                              <span className="text-xs text-slate-500">คน</span>
+                            </div>
+                            
                             <button
-                              onClick={() => handleRemove(c.id)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50 transition-colors border border-transparent hover:border-red-200"
+                              onClick={async () => {
+                                try {
+                                  await AdminService.toggleSessionActive(session.id, !session.is_active);
+                                  toast.success(session.is_active ? 'ปิดรับจองรอบเวลานี้แล้ว' : 'เปิดรับจองรอบเวลานี้แล้ว');
+                                  fetchData();
+                                } catch (err: any) {
+                                  toast.error(err.message);
+                                }
+                              }}
+                              className={`p-1.5 rounded-md transition-colors ${
+                                session.is_active 
+                                  ? 'text-slate-400 hover:text-error hover:bg-error/10' 
+                                  : 'text-error hover:text-success hover:bg-success/10'
+                              }`}
+                              title={session.is_active ? "คลิกเพื่อปิดรับจอง" : "คลิกเพื่อเปิดรับจอง"}
                             >
-                              <Trash2 className="w-4 h-4" /> ลบ
+                              {session.is_active ? <X className="w-4 h-4" /> : <RefreshCcw className="w-4 h-4" />}
                             </button>
                           </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">-</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </>
-            )}
-          </AdminDataTable>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );})()}
+
+              {/* 4. Upcoming Closures List */}
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[300px]">
+                <div className="p-3 sm:p-4 border-b border-slate-200 bg-slate-50">
+                  <h4 className="font-bold text-icsn-navy text-sm flex items-center justify-between">
+                    รายการการตั้งค่าพิเศษที่กำลังจะมาถึง
+                    <span className="bg-icsn-navy text-white text-[10px] px-2 py-0.5 rounded-full">
+                      {upcomingClosures.length} รายการ
+                    </span>
+                  </h4>
+                </div>
+                <div className="overflow-y-auto flex-1 p-2">
+                  {upcomingClosures.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-slate-400 text-sm">
+                      <CalendarX className="w-8 h-8 mb-2 opacity-50" />
+                      ไม่มีรายการตั้งค่าพิเศษ
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {upcomingClosures.map(c => (
+                        <div key={c.id} className="p-3 border border-slate-100 bg-slate-50/50 rounded-lg flex items-center justify-between hover:bg-slate-50 hover:border-slate-200 transition-colors group">
+                          <div>
+                            <p className={`font-bold text-sm ${c.is_force_open ? 'text-success' : 'text-error'}`}>
+                              {c.is_force_open ? 'เปิดพิเศษ' : (c.reason || 'วันหยุด')}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                              {c.start_date === c.end_date 
+                                ? formatDisplayDateStr(c.start_date) 
+                                : `${formatDisplayDateStr(c.start_date)} - ${formatDisplayDateStr(c.end_date)}`}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleDeleteClosure(c.id)}
+                            className="p-1.5 text-slate-400 hover:text-error hover:bg-error/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+                            title="ลบรายการนี้"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
         </div>
       </AdminPanel>
-
-      <AdminModal
-        isOpen={isModalOpen}
-        onClose={() => !adding && setIsModalOpen(false)}
-        title="เพิ่มวันหยุดใหม่ (Add Holiday)"
-        maxWidth="max-w-lg"
-      >
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <AdminFieldLabel>วันที่เริ่มต้น (Start Date)</AdminFieldLabel>
-              <input
-                type="date"
-                value={startDate}
-                onChange={e => {
-                  setStartDate(e.target.value);
-                  if (!endDate || e.target.value > endDate) setEndDate(e.target.value);
-                }}
-                className="w-full px-4 py-3 bg-white border border-border rounded-xl focus:ring-2 focus:ring-icsn-teal/30 focus:border-icsn-teal/50 outline-none transition-all text-icsn-navy"
-              />
-            </div>
-            <div>
-              <AdminFieldLabel>ถึงวันที่ (End Date)</AdminFieldLabel>
-              <input
-                type="date"
-                value={endDate}
-                min={startDate}
-                onChange={e => setEndDate(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-border rounded-xl focus:ring-2 focus:ring-icsn-teal/30 focus:border-icsn-teal/50 outline-none transition-all text-icsn-navy"
-              />
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground">💡 หากต้องการหยุดเพียงวันเดียว ให้เลือกวันที่เริ่มต้นและสิ้นสุดเป็นวันเดียวกัน</p>
-          
-          <div className="pt-2">
-            <AdminFieldLabel>สาเหตุ / ชื่อวันหยุด (Reason)</AdminFieldLabel>
-            <input
-              type="text"
-              value={reason}
-              onChange={e => setReason(e.target.value)}
-              placeholder="เช่น ปิดเทอมซัมเมอร์, วันหยุดสงกรานต์..."
-              className="w-full px-4 py-3 bg-white border border-border rounded-xl focus:ring-2 focus:ring-icsn-teal/30 focus:border-icsn-teal/50 outline-none transition-all text-icsn-navy"
-            />
-          </div>
-          
-          <div className="flex items-center gap-2 mt-4 text-warning font-bold text-xs bg-warning/10 p-3 rounded-lg border border-warning/20">
-            <AlertTriangle className="w-5 h-5 shrink-0" />
-            <p>คำเตือน: การสั่งปิดจะส่งผลทันที และระบบจะคืนเครดิตให้กับลูกค้าที่จองคลาสในช่วงเวลานี้อัตโนมัติ</p>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              disabled={adding}
-              className="px-6 py-2.5 rounded-xl font-bold text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
-            >
-              ยกเลิก
-            </button>
-            <button
-              onClick={handleAdd}
-              disabled={adding || !startDate || !endDate || !reason}
-              className="flex items-center gap-2 px-8 py-2.5 bg-error hover:bg-error/90 text-white rounded-xl font-bold shadow-md transition-all disabled:opacity-50 hover:-translate-y-0.5 active:translate-y-0"
-            >
-              {adding ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-              {adding ? 'กำลังบันทึก...' : 'บันทึกวันหยุด'}
-            </button>
-          </div>
-        </div>
-      </AdminModal>
     </div>
   );
 }

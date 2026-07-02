@@ -54,9 +54,16 @@ export function formatThaiFullDate(date: Date): string {
  * @param dateStr The date string to check (YYYY-MM-DD)
  * @param blockoutDates Optional array of blocked date strings (YYYY-MM-DD)
  * @param cutoffHour Optional hour of the day (0-23) after which same-day booking is disallowed (default 7)
+ * @param closures Array of SchoolClosure objects
+ * @param operatingDays Array of operating days (0=Sunday, 6=Saturday)
  * @returns true if bookable, false otherwise
  */
-export function checkIsBookableDate(dateStr: string, blockoutDates: string[] = [], cutoffHour: number = 7): boolean {
+export function checkIsBookableDate(
+  dateStr: string, 
+  closures: import('@/types').SchoolClosure[] = [], 
+  operatingDays: number[] = [0,1,2,3,4,5,6], 
+  cutoffHour: number = 7
+): boolean {
   const today = new Date();
   
   // Format today as YYYY-MM-DD in local time
@@ -76,18 +83,20 @@ export function checkIsBookableDate(dateStr: string, blockoutDates: string[] = [
     return false;
   }
 
-  // 3. Cannot book on weekends
+  // 3. Determine base operating status
   const targetDate = new Date(dateStr);
   const dayOfWeek = targetDate.getDay();
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-  if (isWeekend) {
-    return false;
+  let isBookable = operatingDays.includes(dayOfWeek);
+
+  // 4. Check closures and overrides
+  const closureForDate = closures.find(c => dateStr >= c.start_date && dateStr <= c.end_date && !c.time_label);
+  if (closureForDate) {
+    if (closureForDate.is_force_open) {
+      isBookable = true;
+    } else {
+      isBookable = false;
+    }
   }
 
-  // 4. Cannot book on blockout dates
-  if (blockoutDates.includes(dateStr)) {
-    return false;
-  }
-
-  return true;
+  return isBookable;
 }

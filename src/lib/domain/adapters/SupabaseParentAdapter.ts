@@ -214,6 +214,33 @@ export class SupabaseParentAdapter implements IParentRepository {
       .single();
 
     if (error) throw error;
+
+    // Trigger background upload to Google Drive for evidence
+    if (actualPhotoUrl) {
+      fetch('/api/google/upload-evidence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          parentId,
+          childId: data.id,
+          fileUrl: actualPhotoUrl,
+          fileName: `child_profile_${Date.now()}.jpg`
+        })
+      }).catch(console.error); // Fire and forget
+    }
+
+    if (actualParentPhotoUrl) {
+      fetch('/api/google/upload-evidence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          parentId,
+          fileUrl: actualParentPhotoUrl,
+          fileName: `parent_profile_${Date.now()}.jpg`
+        })
+      }).catch(console.error); // Fire and forget
+    }
+
     return data;
   }
 }

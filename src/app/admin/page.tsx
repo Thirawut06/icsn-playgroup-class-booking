@@ -137,7 +137,7 @@ export default function AdminPage() {
 
         {/* Main Content Area */}
         <div className="flex-1 min-w-0 pb-12">
-          {activeTab === 'dashboard' ? <AdminDashboard onRefresh={refreshPendingCount} /> : null}
+          {activeTab === 'dashboard' ? <AdminDashboard onRefresh={refreshPendingCount} onNavigate={(tab) => setActiveTab(tab as AdminTab)} /> : null}
           {activeTab === 'daily_ops' ? <AdminDailyOps onRefresh={refreshPendingCount} /> : null}
           {activeTab === 'slips' ? <AdminSlips onRefresh={refreshPendingCount} /> : null}
           {activeTab === 'users' ? <AdminUsers /> : null}

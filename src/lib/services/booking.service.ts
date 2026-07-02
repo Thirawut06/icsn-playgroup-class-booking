@@ -16,12 +16,12 @@ export const BookingService = {
     return data || [];
   },
 
-  async getBlockoutDates(): Promise<string[]> {
+  async getSchoolClosures(): Promise<import('@/types').SchoolClosure[]> {
     const { data, error } = await supabase
-      .from('blockout_dates')
-      .select('block_date');
+      .from('school_closures')
+      .select('*');
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
-    return (data || []).map((d: { block_date: string }) => d.block_date);
+    return data || [];
   },
 
 

@@ -80,6 +80,20 @@ export class SupabasePackageAdapter implements IPackageRepository {
       .select()
       .single();
     if (error) throw error;
+
+    // Trigger background upload to Google Drive for evidence
+    if (actualSlipUrl) {
+      fetch('/api/google/upload-evidence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          parentId,
+          fileUrl: actualSlipUrl,
+          fileName: `payment_slip_${Date.now()}.jpg`
+        })
+      }).catch(console.error);
+    }
+
     return data;
   }
 }
