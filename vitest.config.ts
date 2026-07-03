@@ -8,7 +8,15 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
-    exclude: ['node_modules/**', '.next/**', 'e2e/**', 'playwright-report/**', 'test-results/**'],
+    exclude: [
+      'node_modules/**', 
+      '.next/**', 
+      'e2e/**', 
+      'playwright-report/**', 
+      'test-results/**',
+      // Exclude integration tests in CI environment since they need real DB access
+      ...(process.env.CI ? ['**/*.integration.test.ts'] : [])
+    ],
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
