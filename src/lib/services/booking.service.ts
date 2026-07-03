@@ -40,7 +40,7 @@ export const BookingService = {
       .order('session_date', { ascending: true });
       
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
-    return data || [];
+    return (data as unknown) as Booking[];
   },
 
 
