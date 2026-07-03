@@ -25,10 +25,6 @@ export const FILE_UPLOAD = {
   MAX_SIZE_BYTES: 10 * 1024 * 1024,
 } as const;
 
-export const BOOKING_RULES = {
-  CUTOFF_HOUR_MORNING: 7, // 07:00
-  START_HOUR_MORNING: 9,  // 09:00
-} as const;
 
 export const VALIDATION = {
   PHONE_MIN_LENGTH: 9,

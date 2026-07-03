@@ -80,16 +80,6 @@ export interface ConfirmedBookingRow {
   child_nickname: string;
 }
 
-export interface ExportCSVRow {
-  parent_name: string;
-  phone: string;
-  child_nickname: string;
-  age: string | number;
-  food_allergy: string;
-  credits_remaining: number;
-  booking_dates: string;
-  registration_date: string;
-}
 
 export interface ParentWithDetails extends Parent {
   children?: Child[];

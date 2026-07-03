@@ -125,8 +125,8 @@ export class SupabaseParentAdapter implements IParentRepository {
     const { data, error } = await supabase
       .from('parents')
       .select(`
-        *,
-        children (*)
+        id, name, phone, email, admin_notes, created_at,
+        children (id, parent_id, nickname, full_name, dob, age, food_allergy, media_perm, no_photo_perm, parent_photo_url, photo_url, special_info, created_at)
       `)
       .eq('id', parentId)
       .single();

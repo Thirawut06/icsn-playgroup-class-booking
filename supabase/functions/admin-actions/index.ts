@@ -97,49 +97,15 @@ Deno.serve(async (req) => {
         ? creditsOverride
         : await resolveCreditsFromSlip(supabase, slip)
 
-      const { error: suErr } = await supabase
-        .from('slip_uploads')
-        .update({ status: 'approved', reviewed_at: new Date().toISOString() })
-        .eq('id', slipId)
-      if (suErr) throw suErr
+      const { data: result, error: rpcErr } = await supabase.rpc('approve_slip', {
+        p_slip_id: slipId,
+        p_credits_to_add: creditsToAdd,
+        p_notes: `slip approved: ${slipId}`
+      })
+      if (rpcErr) throw rpcErr
 
-      const packageType = slip.package_id || 'purchase'
-      const { data: pkgs } = await supabase
-        .from('packages')
-        .select('id, credits_remaining')
-        .eq('parent_id', slip.parent_id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-
-      let pkgId: string | null = null
-      if (pkgs && pkgs.length > 0) {
-        pkgId = pkgs[0].id
-        const { error: refundErr } = await supabase
-          .from('packages')
-          .update({ credits_remaining: pkgs[0].credits_remaining + creditsToAdd })
-          .eq('id', pkgs[0].id)
-        if (refundErr) throw refundErr
-      } else {
-        const { data: newPkg, error: insErr } = await supabase
-          .from('packages')
-          .insert([{ parent_id: slip.parent_id, type: packageType, credits_remaining: creditsToAdd }])
-          .select('id')
-          .single()
-        if (insErr) throw insErr
-        pkgId = newPkg.id
-      }
-
-      await supabase.from('credit_transactions').insert([{
-        parent_id: slip.parent_id,
-        package_id: pkgId,
-        action_type: 'topup',
-        amount: creditsToAdd,
-        notes: `slip approved: ${slipId}`
-      }])
-
-      const { data: child } = await supabase.from('children').select('nickname').eq('parent_id', slip.parent_id).limit(1).maybeSingle()
-      const childNickname = child?.nickname || 'ไม่ระบุ'
-      await sendGoogleChat(`💰 ชำระเงินแล้ว: น้อง${childNickname} — approved (+${creditsToAdd} สิทธิ์)`)
+      const { child_nickname } = result as { success: boolean; credits_added: number; child_nickname: string }
+      await sendGoogleChat(`💰 ชำระเงินแล้ว: น้อง${child_nickname} — approved (+${creditsToAdd} สิทธิ์)`)
 
       return new Response(JSON.stringify({ success: true, creditsAdded: creditsToAdd, childNickname }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
