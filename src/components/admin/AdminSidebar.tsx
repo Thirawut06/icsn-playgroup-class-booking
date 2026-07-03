@@ -11,30 +11,22 @@ interface AdminSidebarProps {
   activeTab: AdminTab;
   onTabChange: (tab: AdminTab) => void;
   pendingSlipCount: number;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export function AdminSidebar({ activeTab, onTabChange, pendingSlipCount }: AdminSidebarProps) {
+export function AdminSidebar({ activeTab, onTabChange, pendingSlipCount, isOpen = false, onClose }: AdminSidebarProps) {
   const nav = TOKENS.COMPONENTS.ADMIN_NAV;
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
-  // Close drawer on resize to desktop
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) setDrawerOpen(false);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // Lock body scroll when drawer is open
   useEffect(() => {
-    document.body.style.overflow = drawerOpen ? 'hidden' : '';
+    document.body.style.overflow = isOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
-  }, [drawerOpen]);
+  }, [isOpen]);
 
   const handleTabClick = (tab: AdminTab) => {
     onTabChange(tab);
-    setDrawerOpen(false);
+    if (onClose) onClose();
   };
 
   // Group the navigation items
@@ -43,10 +35,6 @@ export function AdminSidebar({ activeTab, onTabChange, pendingSlipCount }: Admin
     acc[tab.group].push(tab);
     return acc;
   }, {} as Record<string, typeof ADMIN_NAV_SCHEMA>);
-
-  // Find current active tab info
-  const activeNavItem = ADMIN_NAV_SCHEMA.find(t => t.id === activeTab);
-  const ActiveIcon = activeNavItem?.icon;
 
   // Shared nav list renderer
   const renderNavList = (mobile?: boolean) => (
@@ -104,36 +92,13 @@ export function AdminSidebar({ activeTab, onTabChange, pendingSlipCount }: Admin
 
   return (
     <>
-      {/* ─── Mobile: Hamburger trigger bar ─── */}
-      <div className="md:hidden">
-        <button
-          type="button"
-          onClick={() => setDrawerOpen(true)}
-          className="w-full flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 rounded-xl shadow-sm text-left active:scale-[0.99] transition-all"
-        >
-          <Menu className="w-5 h-5 text-icsn-teal shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-icsn-navy truncate flex items-center gap-2">
-              {ActiveIcon && <ActiveIcon className="w-4 h-4 text-icsn-teal shrink-0" />}
-              {activeNavItem?.label || 'Menu'}
-            </p>
-            <p className="text-xs text-muted-foreground truncate">{activeNavItem?.description}</p>
-          </div>
-          {pendingSlipCount > 0 && (
-            <span className="min-w-[20px] h-[20px] flex items-center justify-center rounded-full text-[10px] font-black bg-red-500 text-white px-1.5">
-              {pendingSlipCount}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* ─── Mobile: Slide-out drawer overlay ─── */}
-      {drawerOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
+      {/* ─── Mobile/Tablet: Slide-out drawer overlay ─── */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 xl:hidden">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
-            onClick={() => setDrawerOpen(false)}
+            onClick={onClose}
           />
           {/* Drawer panel */}
           <div className="absolute inset-y-0 left-0 w-[300px] max-w-[85vw] bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-200">
@@ -141,7 +106,7 @@ export function AdminSidebar({ activeTab, onTabChange, pendingSlipCount }: Admin
               <h2 className="font-bold text-icsn-navy text-base">Admin Menu</h2>
               <button
                 type="button"
-                onClick={() => setDrawerOpen(false)}
+                onClick={onClose}
                 className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -154,8 +119,8 @@ export function AdminSidebar({ activeTab, onTabChange, pendingSlipCount }: Admin
         </div>
       )}
 
-      {/* ─── Tablet/Desktop: Vertical sidebar (unchanged) ─── */}
-      <nav className="hidden md:flex flex-col gap-6" aria-label="Admin sections">
+      {/* ─── Desktop: Vertical sidebar (unchanged) ─── */}
+      <nav className="hidden xl:flex flex-col gap-6" aria-label="Admin sections">
         {renderNavList(false)}
       </nav>
     </>

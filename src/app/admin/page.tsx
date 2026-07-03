@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { LogOut, Loader2 } from 'lucide-react';
+import { LogOut, Loader2, Menu } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { AdminLoginGate } from '@/components/admin/AdminLoginGate';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
@@ -31,6 +31,7 @@ export default function AdminPage() {
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [pendingSlipCount, setPendingSlipCount] = useState(0);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const refreshPendingCount = useCallback(async () => {
     try {
@@ -39,6 +40,15 @@ export default function AdminPage() {
     } catch {
       setPendingSlipCount(0);
     }
+  }, []);
+
+  // Close drawer on resize to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1280) setIsDrawerOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -81,28 +91,38 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col text-gray-800 font-sarabun">
       <header className="bg-white border-b border-gray-100 shadow-xs no-print sticky top-0 z-40">
-        <div className="max-w-[1600px] w-full mx-auto px-4 lg:px-8 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-12 h-auto shrink-0">
-              <Image
-                src="/main-logo-icsn.png"
-                alt="ICSN Admin"
-                width={48}
-                height={48}
-                className="w-full h-auto object-contain"
-              />
-            </div>
-            <div>
-              <h1 className="font-bold text-icsn-navy text-sm leading-none sm:text-base font-outfit">
-                Admin Backoffice
-                <br />
-                <span className="text-xs text-gray-500 font-normal mt-0.5 inline-block font-sarabun">
-                  ระบบหลังบ้านแอดมิน
-                </span>
-              </h1>
-              <p className="text-[9px] text-icsn-teal font-bold tracking-wider mt-0.5 font-outfit">
-                ICSN PLAYGROUP EXCELLENCE
-              </p>
+        <div className="max-w-[1600px] w-full mx-auto px-4 xl:px-8 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <button
+              type="button"
+              onClick={() => setIsDrawerOpen(prev => !prev)}
+              className="xl:hidden p-2 -ml-2 text-icsn-navy hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Toggle menu"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-12 h-auto shrink-0">
+                <Image
+                  src="/main-logo-icsn.png"
+                  alt="ICSN Admin"
+                  width={48}
+                  height={48}
+                  className="w-full h-auto object-contain"
+                />
+              </div>
+              <div>
+                <h1 className="font-bold text-icsn-navy text-sm leading-none sm:text-base font-outfit">
+                  Admin Backoffice
+                  <br />
+                  <span className="text-xs text-gray-500 font-normal mt-0.5 inline-block font-sarabun">
+                    ระบบหลังบ้านแอดมิน
+                  </span>
+                </h1>
+                <p className="text-[9px] text-icsn-teal font-bold tracking-wider mt-0.5 font-outfit hidden sm:block">
+                  ICSN PLAYGROUP EXCELLENCE
+                </p>
+              </div>
             </div>
           </div>
 
@@ -125,18 +145,20 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <main className="max-w-[1600px] w-full mx-auto px-4 lg:px-8 py-4 md:py-6 lg:py-8 flex-1 flex flex-col md:flex-row gap-4 md:gap-6 lg:gap-10 items-start">
-        {/* Sidebar: hamburger on mobile, sticky vertical on tablet/desktop */}
-        <div className="w-full md:w-64 shrink-0 sticky top-[65px] md:top-24 z-30 bg-gray-100 md:bg-transparent py-2 md:py-0 md:pb-6 md:max-h-[calc(100vh-8rem)] md:overflow-y-auto no-scrollbar">
+      <main className="max-w-[1600px] w-full mx-auto px-4 xl:px-8 py-4 xl:py-8 flex-1 flex flex-col xl:flex-row gap-4 xl:gap-10 items-start">
+        {/* Sidebar: hamburger on mobile/tablet, sticky vertical on desktop */}
+        <div className="w-full xl:w-64 shrink-0 sticky top-[65px] xl:top-24 z-50 xl:z-30 bg-gray-100 xl:bg-transparent py-2 xl:py-0 xl:pb-6 xl:max-h-[calc(100vh-8rem)] xl:overflow-y-auto no-scrollbar">
           <AdminSidebar
             activeTab={activeTab}
             onTabChange={setActiveTab}
             pendingSlipCount={pendingSlipCount}
+            isOpen={isDrawerOpen}
+            onClose={() => setIsDrawerOpen(false)}
           />
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 min-w-0 pb-12">
+        <div className="flex-1 min-w-0 overflow-hidden w-full pb-12">
           {activeTab === 'dashboard' ? <AdminDashboard onRefresh={refreshPendingCount} onNavigate={(tab) => setActiveTab(tab as AdminTab)} /> : null}
           {activeTab === 'daily_ops' ? <AdminDailyOps onRefresh={refreshPendingCount} /> : null}
           {activeTab === 'slips' ? <AdminSlips onRefresh={refreshPendingCount} /> : null}

@@ -107,10 +107,10 @@ export function UserDetailDrawer({ parentId, isOpen, onClose }: UserDetailDrawer
                       {data.phone}
                     </p>
                   </div>
-                  <div className="col-span-2 sm:col-span-1">
+                  <div className="col-span-2 sm:col-span-1 min-w-0">
                     <p className="text-sm text-muted-foreground mb-1">อีเมล</p>
-                    <p className="font-semibold text-foreground flex items-center gap-1">
-                      <Mail className="w-3 h-3 text-muted-foreground/70" />
+                    <p className="font-semibold text-foreground flex items-center gap-1 break-all">
+                      <Mail className="w-3 h-3 shrink-0 text-muted-foreground/70" />
                       {data.email || '-'}
                     </p>
                   </div>
