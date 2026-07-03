@@ -1,43 +1,4 @@
-import { SignJWT, importPKCS8 } from 'npm:jose';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-async function getGoogleAccessToken(serviceAccountJson: string, scope: string): Promise<string> {
-  const serviceAccount = JSON.parse(serviceAccountJson);
-  const now = Math.floor(Date.now() / 1000);
-
-  const payload = {
-    iss: serviceAccount.client_email,
-    scope: scope,
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600,
-  };
-
-  const privateKey = await importPKCS8(serviceAccount.private_key, 'RS256');
-
-  const jwt = await new SignJWT(payload)
-    .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
-    .setIssuer(payload.iss)
-    .setAudience(payload.aud)
-    .setIssuedAt(payload.iat)
-    .setExpirationTime(payload.exp)
-    .sign(privateKey);
-
-  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt,
-    }),
-  });
-
-  if (!tokenRes.ok) {
-    throw new Error(`Failed to get Google token: ${await tokenRes.text()}`);
-  }
-  const data = await tokenRes.json();
-  return data.access_token;
-}
 
 function resolveFetchUrl(fileUrl: string, supabaseUrl: string): string {
   if (!fileUrl) return fileUrl;
@@ -53,80 +14,55 @@ function resolveFetchUrl(fileUrl: string, supabaseUrl: string): string {
   return fileUrl;
 }
 
-
-async function getOrCreateFolder(folderName: string, token: string, parentFolderId?: string): Promise<string> {
-  let q = `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`;
-  if (parentFolderId) {
-    q += ` and '${parentFolderId}' in parents`;
+async function blobToBase64(blob: Blob): Promise<string> {
+  const buffer = await blob.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  // Chunking to ensure no call stack limits are hit
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunkSize)));
   }
-  const searchUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id)`;
-  
-  const searchRes = await fetch(searchUrl, { headers: { Authorization: `Bearer ${token}` } });
-  const searchData = await searchRes.json();
-  
-  if (searchData.files && searchData.files.length > 0) {
-    return searchData.files[0].id;
-  }
-  
-  const metadata: any = {
-    name: folderName,
-    mimeType: 'application/vnd.google-apps.folder'
-  };
-  if (parentFolderId) {
-    metadata.parents = [parentFolderId];
-  }
-
-  const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(metadata)
-  });
-  const createData = await createRes.json();
-  return createData.id;
+  return btoa(binary);
 }
 
-async function uploadFileToDrive(fileBlob: Blob, fileName: string, folderId: string, token: string) {
-  // Check if file already exists in the folder
-  const q = `name='${fileName}' and '${folderId}' in parents and trashed=false`;
-  const searchUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id)`;
-  const searchRes = await fetch(searchUrl, { headers: { Authorization: `Bearer ${token}` } });
-  const searchData = await searchRes.json();
-  
-  if (searchData.files && searchData.files.length > 0) {
-    console.log(`File ${fileName} already exists in folder, skipping upload.`);
-    return searchData.files[0];
-  }
+async function uploadToGasWebhook(blob: Blob, fileName: string, parentFolderName: string, gasWebhookUrl: string, driveParentFolderId?: string) {
+  const base64Data = await blobToBase64(blob);
+  const payload = {
+    action: 'sync_file',
+    driveParentFolderId: driveParentFolderId || '',
+    parentFolderName,
+    fileName,
+    mimeType: blob.type || 'application/octet-stream',
+    base64Data
+  };
 
-  const metadata = { name: fileName, parents: [folderId] };
-  
-  const form = new FormData();
-  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-  form.append('file', fileBlob);
-
-  const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+  const res = await fetch(gasWebhookUrl, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: form
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
   });
 
   if (!res.ok) {
-    throw new Error(`Upload failed: ${await res.text()}`);
+    throw new Error(`GAS Webhook failed: ${await res.text()}`);
   }
-  return await res.json();
+
+  const data = await res.json();
+  if (data.error) {
+    throw new Error(`GAS Error: ${data.error}`);
+  }
+  return data;
 }
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
 
-  const serviceAccountJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_JSON');
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const gasWebhookUrl = Deno.env.get('GOOGLE_APPS_SCRIPT_WEBHOOK_DRIVE');
 
-  if (!serviceAccountJson || !supabaseUrl || !supabaseServiceKey) {
-    console.error('Missing required env vars');
+  if (!gasWebhookUrl || !supabaseUrl || !supabaseServiceKey) {
+    console.error('Missing required env vars: GOOGLE_APPS_SCRIPT_WEBHOOK_DRIVE is required');
     return new Response('Config error', { status: 500 });
   }
 
@@ -157,7 +93,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    const token = await getGoogleAccessToken(serviceAccountJson, 'https://www.googleapis.com/auth/drive.file');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     let folderName = 'Unknown Parent';
@@ -187,15 +122,11 @@ Deno.serve(async (req) => {
     }
 
     const driveParentFolderId = Deno.env.get('DRIVE_PARENT_FOLDER_ID') || undefined;
-    const folderId = await getOrCreateFolder(folderName, token, driveParentFolderId);
 
     if (table === 'slip_uploads' && record.file_url) {
       const fetchUrl = resolveFetchUrl(record.file_url, supabaseUrl);
       const res = await fetch(fetchUrl);
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Could not fetch file from Supabase Storage. URL: ${fetchUrl}, Status: ${res.status}, Body: ${errText}`);
-      }
+      if (!res.ok) throw new Error(`Could not fetch file: ${res.status}`);
       
       const blob = await res.blob();
       const ext = record.file_url.split('?')[0].split('.').pop() || 'jpg';
@@ -203,7 +134,8 @@ Deno.serve(async (req) => {
       const dateStr = createdAt.toISOString().split('T')[0];
       const timeStr = createdAt.toISOString().split('T')[1].split('.')[0].replace(/:/g, '');
       const fileName = `สลิปโอนเงิน_${dateStr}_${timeStr}.${ext}`;
-      await uploadFileToDrive(blob, fileName, folderId, token);
+      
+      await uploadToGasWebhook(blob, fileName, folderName, gasWebhookUrl, driveParentFolderId);
       console.log(`Synced slip ${record.id} to folder: ${folderName}`);
     } 
     else if (table === 'children') {
@@ -215,9 +147,7 @@ Deno.serve(async (req) => {
           const ext = record.photo_url.split('?')[0].split('.').pop() || 'jpg';
           const createdAt = new Date(record.created_at || new Date());
           const dateStr = createdAt.toISOString().split('T')[0];
-          await uploadFileToDrive(blob, `รูปโปรไฟล์เด็ก_${dateStr}.${ext}`, folderId, token);
-        } else {
-          console.error(`Failed to fetch child photo: ${res.status} ${await res.text()}`);
+          await uploadToGasWebhook(blob, `รูปโปรไฟล์เด็ก_${dateStr}.${ext}`, folderName, gasWebhookUrl, driveParentFolderId);
         }
       }
       
@@ -229,9 +159,7 @@ Deno.serve(async (req) => {
           const ext = record.parent_photo_url.split('?')[0].split('.').pop() || 'jpg';
           const createdAt = new Date(record.created_at || new Date());
           const dateStr = createdAt.toISOString().split('T')[0];
-          await uploadFileToDrive(blob, `รูปโปรไฟล์ผู้ปกครอง_${dateStr}.${ext}`, folderId, token);
-        } else {
-          console.error(`Failed to fetch parent photo: ${res.status} ${await res.text()}`);
+          await uploadToGasWebhook(blob, `รูปโปรไฟล์ผู้ปกครอง_${dateStr}.${ext}`, folderName, gasWebhookUrl, driveParentFolderId);
         }
       }
       console.log(`Synced child photos for ${record.id} to folder: ${folderName}`);
@@ -239,10 +167,7 @@ Deno.serve(async (req) => {
     else if (table === 'bookings' && record.signature_url) {
       const fetchUrl = resolveFetchUrl(record.signature_url, supabaseUrl);
       const res = await fetch(fetchUrl);
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Could not fetch signature from Supabase Storage. URL: ${fetchUrl}, Status: ${res.status}, Body: ${errText}`);
-      }
+      if (!res.ok) throw new Error(`Could not fetch signature: ${res.status}`);
       
       const blob = await res.blob();
       const ext = record.signature_url.split('?')[0].split('.').pop() || 'png';
@@ -251,7 +176,7 @@ Deno.serve(async (req) => {
       const timeStr = checkinDate.toISOString().split('T')[1].split('.')[0].replace(/:/g, '');
       const fileName = `ลายเซ็นเช็คอิน_${dateStr}_${timeStr}.${ext}`;
       
-      await uploadFileToDrive(blob, fileName, folderId, token);
+      await uploadToGasWebhook(blob, fileName, folderName, gasWebhookUrl, driveParentFolderId);
       console.log(`Synced signature for booking ${record.id} to folder: ${folderName}`);
     }
 
