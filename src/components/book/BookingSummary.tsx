@@ -1,11 +1,12 @@
 import React from 'react';
-import { ReceiptText, Hand, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-
-import type { Child, Session } from '@/types';
+import { CalendarCheck, AlertCircle, Loader2 } from 'lucide-react';
+import { useDictionary } from '@/lib/i18n/dictionary-context';
+import type { Session, SchoolClosure } from '@/types';
+import { checkIsBookableDate } from '@/utils/dateUtils';
 
 interface BookingSummaryProps {
   selectedDates: string[];
-  selectedChildObj?: Child;
+  selectedChildObj?: any;
   creditsRemaining: number;
   sessions: Session[];
   selectedSessionsMap: Record<string, Session>;
@@ -14,19 +15,16 @@ interface BookingSummaryProps {
   bookingSuccess: boolean;
   bookingError: string;
   onBookClass: () => void;
-  closures: import('@/types').SchoolClosure[];
+  closures: SchoolClosure[];
   operatingDays?: number[];
   cutoffHour: number;
 }
-
-import { getThaiMonthMin, checkIsBookableDate } from '@/utils/dateUtils';
-import { COPY } from '@/config/copy';
 
 export function BookingSummary({
   selectedDates,
   selectedChildObj,
   creditsRemaining,
-  sessions = [],
+  sessions,
   selectedSessionsMap,
   onSelectSessionMap,
   isSubmitting,
@@ -34,170 +32,131 @@ export function BookingSummary({
   bookingError,
   onBookClass,
   closures,
-  operatingDays = [0, 1, 2, 3, 4, 5, 6],
-  cutoffHour
+  operatingDays = [0,1,2,3,4,5,6],
+  cutoffHour = 7
 }: BookingSummaryProps) {
-  
-  // Sort selected dates chronologically
-  const sortedDates = [...selectedDates].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+  const { dict, lang } = useDictionary();
 
-  // Check if ALL selected dates have a valid session selected
-  const isAllSessionsSelected = sortedDates.length > 0 && sortedDates.every(date => !!selectedSessionsMap[date]);
+  if (selectedDates.length === 0) return null;
+
+  const sortedDates = [...selectedDates].sort();
 
   return (
-    <div className="pb-6">
-      {/* Section label */}
-      <div className="px-4 pt-4 pb-3">
-        <h3 className="font-bold text-icsn-navy flex items-center gap-1.5 text-base">
-          <ReceiptText className="w-5 h-5 text-icsn-teal" />
-          <span>{COPY.BOOKING_FLOW.STEP_3}</span>
-        </h3>
+    <div className="px-4 py-6 border-t border-border bg-white mt-auto rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.03)] relative z-20">
+      <h3 className="font-bold text-icsn-navy mb-4 flex items-center gap-1.5 text-base">
+        <CalendarCheck className="w-5 h-5 text-icsn-teal" />
+        <span>{dict.book.step3}</span>
+      </h3>
+      
+      <div className="space-y-3 mb-6">
+        {sortedDates.map((dateStr, index) => {
+          // Format date based on locale
+          const d = new Date(dateStr);
+          const locale = lang === 'th' ? 'th-TH' : 'en-US';
+          const formattedDate = d.toLocaleDateString(locale, {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short'
+          });
+          
+          const sessionsForDate = sessions.filter(s => s.session_date === dateStr && s.is_active);
+          const selectedSession = selectedSessionsMap[dateStr] || sessionsForDate[0];
+
+          // Re-evaluate bookability specifically for this date's dropdown
+          const isBookable = checkIsBookableDate(dateStr, closures, operatingDays, cutoffHour);
+
+          return (
+            <div key={dateStr} className="bg-muted/30 border border-border rounded-xl p-3">
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-bold text-icsn-navy text-sm">
+                  {dict.book.classLabel} {index + 1} : {formattedDate}
+                </span>
+              </div>
+              
+              <div className="relative">
+                <select 
+                  className="w-full text-sm p-2.5 border border-border rounded-lg bg-white focus:outline-none focus:border-icsn-teal appearance-none disabled:bg-muted disabled:text-muted-foreground transition-colors"
+                  value={selectedSession?.id || ''}
+                  onChange={(e) => {
+                    const session = sessionsForDate.find(s => s.id === e.target.value);
+                    if (session) onSelectSessionMap(dateStr, session);
+                  }}
+                  disabled={!isBookable || sessionsForDate.length === 0}
+                >
+                  {!isBookable ? (
+                    <option value="">{dict.book.closedBooking}</option>
+                  ) : sessionsForDate.length === 0 ? (
+                    <option value="">{dict.book.closed}</option>
+                  ) : (
+                    sessionsForDate.map(session => {
+                      const bookedCount = session.booked_count || 0;
+                      const isFull = bookedCount >= session.total_capacity;
+                      return (
+                        <option key={session.id} value={session.id} disabled={isFull}>
+                          {session.time_label} {isFull ? `(${dict.book.full})` : `(${dict.book.available} ${session.total_capacity - bookedCount})`}
+                        </option>
+                      );
+                    })
+                  )}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-muted-foreground/70">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {sortedDates.length === 0 ? (
-        <div className="px-4 py-10 text-center space-y-2">
-          <div className="inline-flex p-4 text-icsn-teal/20">
-            <Hand className="w-10 h-10" />
-          </div>
-          <p className="text-base font-bold text-muted-foreground">{COPY.BOOKING_FLOW.SELECT_DATE_HINT}</p>
-          <p className="text-sm text-muted-foreground/70">{COPY.BOOKING_FLOW.ADVANCE_NOTICE}</p>
-        </div>
-      ) : (
+      <div className="flex justify-between items-end mb-4 px-1">
         <div>
-          {/* Date rows — flat, no card wrapper */}
-          {sortedDates.map((dateStr, index) => {
-            const d = new Date(dateStr);
-            const dayNum = String(d.getDate());
-            const monthName = getThaiMonthMin(d);
-            
-            const dateAvailable = checkIsBookableDate(dateStr, closures, operatingDays, cutoffHour);
-            const availableSessions = sessions
-              .filter(s => s.session_date === dateStr)
-              .sort((a, b) => {
-                const m1 = (a.time_label || '').match(/(\d{1,2})[.:]/);
-                const m2 = (b.time_label || '').match(/(\d{1,2})[.:]/);
-                return (m1 ? parseInt(m1[1], 10) : 0) - (m2 ? parseInt(m2[1], 10) : 0);
-              });
-
-            const selectedSession = selectedSessionsMap[dateStr];
-
-            return (
-              <div key={dateStr} className="px-4 py-4 border-b border-border/40 last:border-0 space-y-3">
-                {/* Metadata row */}
-                <div className="flex items-center gap-2 text-sm text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">
-                  <span className="font-bold text-icsn-navy text-base">{dayNum} {monthName}</span>
-                  <span>&middot;</span>
-                  {dateAvailable ? (
-                    <span className="font-medium">คลาสที่ {index + 1}</span>
-                  ) : (
-                    <span className="font-bold text-error">ปิดรับจอง</span>
-                  )}
-                  {selectedChildObj && (
-                    <>
-                      <span>&middot;</span>
-                      <span className="font-medium truncate min-w-0">น้อง {selectedChildObj.nickname}</span>
-                    </>
-                  )}
-                </div>
-
-                {/* Time Slots */}
-                {dateAvailable && (
-                  <div>
-                    {availableSessions.length > 0 ? (
-                      <div className="flex flex-col gap-1.5">
-                        {availableSessions.map((session) => {
-                          const availableSeats = Math.max(0, session.total_capacity - (session.booked_count || 0));
-                          const isFull = availableSeats <= 0;
-                          const isDisabled = !session.is_active || isFull;
-                          const isSelected = selectedSession?.id === session.id;
-                          
-                          return (
-                          <button
-                            key={session.id}
-                            onClick={() => !isDisabled && onSelectSessionMap(dateStr, session)}
-                            disabled={isDisabled}
-                            className={`w-full text-left px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex justify-between items-center cursor-pointer ${
-                              isDisabled
-                                ? 'bg-muted/40 text-muted-foreground/40 cursor-not-allowed border border-transparent'
-                                : isSelected
-                                  ? 'bg-icsn-teal text-white shadow-sm border border-icsn-teal active:scale-[0.99]'
-                                  : 'bg-background border border-border/80 text-icsn-navy hover:border-icsn-teal/40 hover:bg-muted/20 active:scale-[0.99]'
-                              }`}
-                          >
-                            <span>{session.time_label || COPY.BOOKING_FLOW.SESSION_MORNING}</span>
-                            <span className={`text-xs px-2 py-0.5 rounded-md ${
-                              isDisabled
-                                ? 'bg-transparent text-muted-foreground/40'
-                                : isSelected
-                                  ? 'bg-white/20 text-white font-medium'
-                                  : 'text-icsn-teal font-medium bg-icsn-teal/5 border border-icsn-teal/10'
-                              }`}>
-                              {!session.is_active ? (session.theme || 'ปิด') : isFull ? 'เต็มแล้ว' : `ว่าง ${availableSeats}`}
-                            </span>
-                          </button>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 py-2 text-muted-foreground text-sm">
-                        <Loader2 className="w-4 h-4 animate-spin text-icsn-teal/50" />
-                        <span>กำลังโหลด...</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {/* Error */}
-          {bookingError && (
-            <div className="mx-4 mt-2 bg-rose-50 text-rose-700 border border-rose-100 p-3 rounded-xl text-sm flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span className="font-bold">{bookingError}</span>
-            </div>
-          )}
-
-          {/* Summary Total */}
-          {sortedDates.length > 0 && (
-            <div className="mx-4 mt-6 flex items-center justify-between">
-               <span className="text-sm font-bold text-muted-foreground">รวมทั้งหมด</span>
-               <div className="text-right">
-                 <span className="text-lg font-black text-icsn-navy">{sortedDates.length} วัน</span>
-                 <p className="text-xs font-bold text-icsn-teal mt-0.5">ใช้ {sortedDates.length} เครดิต</p>
-               </div>
-            </div>
-          )}
-
-          {/* Action Button */}
-          <div className="px-4 pt-3 pb-2">
-            <button
-              onClick={onBookClass}
-              disabled={isSubmitting || bookingSuccess || sortedDates.length === 0 || creditsRemaining < sortedDates.length || !isAllSessionsSelected}
-              className="w-full bg-icsn-teal hover:bg-icsn-teal/90 text-white py-4 rounded-2xl font-bold shadow-md transition-all flex items-center justify-center gap-2 text-base disabled:opacity-40 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
-            >
-              {!isSubmitting ? (
-                <span>ยืนยันการจองสิทธิ์ {sortedDates.length > 0 ? `(หัก ${sortedDates.length} เครดิต)` : ''}</span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="animate-spin h-5 w-5" />
-                  กำลังทำรายการ...
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Warning rule — demoted to fine print so it doesn't compete with dynamic notices */}
-      {sortedDates.length > 0 && (
-        <div className="mx-4 mb-2 mt-4 flex items-start gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-warning" />
-          <p className="text-xs font-medium text-muted-foreground leading-relaxed">
-            {COPY.RULES.NO_CANCEL_AFTER_XAM(cutoffHour)}
+          <p className="text-sm font-bold text-muted-foreground leading-none mb-1">{dict.book.totalSummary}</p>
+          <p className="text-[22px] font-black text-icsn-navy leading-none">
+            {selectedDates.length} <span className="text-sm font-bold text-muted-foreground ml-0.5">{dict.book.daysUnit}</span>
           </p>
         </div>
+        <div className="text-right">
+          <p className="text-sm font-bold text-muted-foreground leading-none mb-1">{dict.book.useCredits}</p>
+          <p className="text-[22px] font-black text-icsn-teal leading-none">
+            {selectedDates.length} <span className="text-sm font-bold text-muted-foreground ml-0.5">{dict.book.credits}</span>
+          </p>
+        </div>
+      </div>
+
+      {bookingError && (
+        <div className="bg-error/10 text-error p-3 rounded-xl text-sm border border-error/20 flex items-start gap-2 mb-4">
+          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+          <p className="font-medium leading-relaxed">{bookingError}</p>
+        </div>
       )}
+
+      {bookingSuccess && (
+        <div className="bg-success/10 text-success p-3 rounded-xl text-sm border border-success/20 flex items-start gap-2 mb-4">
+          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+          <p className="font-medium leading-relaxed">{dict.book.confirmBooking} ✓</p>
+        </div>
+      )}
+
+      <button
+        onClick={onBookClass}
+        disabled={isSubmitting || selectedDates.length === 0 || !selectedChildObj}
+        className="w-full bg-icsn-teal hover:bg-icsn-teal/90 disabled:bg-foreground/10 disabled:text-muted-foreground disabled:cursor-not-allowed text-white py-4 px-4 rounded-full font-bold shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-lg"
+      >
+        {isSubmitting ? (
+          <>
+            <Loader2 className="w-5 h-5 animate-spin" />
+            {dict.book.processing}
+          </>
+        ) : (
+          dict.book.confirmBooking
+        )}
+      </button>
+
+      <p className="mt-5 text-center text-[13px] font-medium text-muted-foreground leading-relaxed">
+        {dict.book.noCancelAfterCutoff.replace('{hour}', String(cutoffHour).padStart(2, '0'))}
+      </p>
     </div>
   );
 }

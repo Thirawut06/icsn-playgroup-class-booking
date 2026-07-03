@@ -1,6 +1,8 @@
 import React from 'react';
 import Image from 'next/image';
 import { LogOut, Wallet } from 'lucide-react';
+import { useDictionary } from '@/lib/i18n/dictionary-context';
+import { LanguageSwitcherLight } from '@/components/ui/language-switcher';
 
 interface BookHeaderProps {
   parentName: string;
@@ -11,6 +13,8 @@ interface BookHeaderProps {
 }
 
 export function BookHeader({ parentName, creditsRemaining, parentPhotoUrl, onLogout, onTopUpClick }: BookHeaderProps) {
+  const { dict } = useDictionary();
+
   return (
     <>
       {/* Sticky Top Navbar */}
@@ -22,22 +26,25 @@ export function BookHeader({ parentName, creditsRemaining, parentPhotoUrl, onLog
             </div>
             <div>
               <h1 className="font-bold text-icsn-navy text-base leading-tight">
-                ICSN Panda Playgroup
+                {dict.common.brandName}
               </h1>
               <p className="text-xs text-icsn-teal font-bold tracking-wider">
-                PLAY &amp; LEARN
+                {dict.common.tagline}
               </p>
             </div>
           </div>
 
-          <button
-            onClick={onLogout}
-            className="w-11 h-11 flex items-center justify-center text-muted-foreground hover:text-error hover:bg-error/10 rounded-xl transition active:scale-95"
-            aria-label="ออกจากระบบ"
-            title="ออกจากระบบ"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            <LanguageSwitcherLight />
+            <button
+              onClick={onLogout}
+              className="w-11 h-11 flex items-center justify-center text-muted-foreground hover:text-error hover:bg-error/10 rounded-xl transition active:scale-95"
+              aria-label={dict.book.logout}
+              title={dict.book.logout}
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -58,12 +65,12 @@ export function BookHeader({ parentName, creditsRemaining, parentPhotoUrl, onLog
           {/* Name + Credits */}
           <div className="min-w-0">
             <p className="text-base font-bold text-icsn-navy truncate leading-tight">
-              {parentName || 'คุณพ่อ/คุณแม่'}
+              {parentName || dict.book.parentFallback}
             </p>
             <p className="text-sm text-muted-foreground leading-tight">
-              สิทธิ์เหลือ{' '}
+              {dict.book.creditsRemaining}{' '}
               <span className="font-black text-icsn-teal">{creditsRemaining}</span>
-              {' '}ครั้ง
+              {' '}{dict.common.creditsUnit}
             </p>
           </div>
         </div>
@@ -74,10 +81,9 @@ export function BookHeader({ parentName, creditsRemaining, parentPhotoUrl, onLog
           className="flex items-center gap-1.5 px-4 h-11 bg-icsn-navy text-white text-sm font-bold rounded-xl hover:bg-icsn-navy/90 transition active:scale-95 shrink-0"
         >
           <Wallet className="w-4 h-4" />
-          เติมสิทธิ์
+          {dict.book.topUp}
         </button>
       </div>
     </>
   );
 }
-

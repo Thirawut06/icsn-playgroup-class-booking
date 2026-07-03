@@ -125,9 +125,9 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <main className="max-w-[1600px] w-full mx-auto px-4 lg:px-8 py-6 lg:py-8 flex-1 flex flex-col md:flex-row gap-6 lg:gap-10 items-start">
-        {/* Sticky Sidebar Wrapper */}
-        <div className="w-full md:w-64 shrink-0 md:sticky md:top-24 md:max-h-[calc(100vh-8rem)] md:overflow-y-auto no-scrollbar pb-6">
+      <main className="max-w-[1600px] w-full mx-auto px-4 lg:px-8 py-4 md:py-6 lg:py-8 flex-1 flex flex-col md:flex-row gap-4 md:gap-6 lg:gap-10 items-start">
+        {/* Sidebar: hamburger on mobile, sticky vertical on tablet/desktop */}
+        <div className="w-full md:w-64 shrink-0 sticky top-[65px] md:top-24 z-30 bg-gray-100 md:bg-transparent py-2 md:py-0 md:pb-6 md:max-h-[calc(100vh-8rem)] md:overflow-y-auto no-scrollbar">
           <AdminSidebar
             activeTab={activeTab}
             onTabChange={setActiveTab}

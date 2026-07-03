@@ -3,7 +3,7 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-reac
 import type { Session } from '@/types';
 import { useBookingContext } from './BookingContext';
 import { getThaiMonthName, checkIsBookableDate } from '@/utils/dateUtils';
-import { COPY } from '@/config/copy';
+import { useDictionary } from '@/lib/i18n/dictionary-context';
 
 export interface DayObj {
   day: number;
@@ -24,6 +24,7 @@ export function CalendarWidget({
   selectedDates,
   onDateSelect,
 }: CalendarWidgetProps) {
+  const { dict, lang } = useDictionary();
   const { 
     sessions, 
     myBookings, 
@@ -35,7 +36,14 @@ export function CalendarWidget({
 
   const currentViewDate = new Date();
   currentViewDate.setMonth(currentViewDate.getMonth() + monthIndex);
-  const monthName = getThaiMonthName(currentViewDate);
+  
+  // Format month name based on locale
+  let monthName = '';
+  if (lang === 'th') {
+    monthName = getThaiMonthName(currentViewDate);
+  } else {
+    monthName = currentViewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
 
   const getDaysInMonth = (): (DayObj | null)[] => {
     const year = currentViewDate.getFullYear();
@@ -59,7 +67,7 @@ export function CalendarWidget({
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-bold text-icsn-navy flex items-center gap-1.5 text-base">
           <CalendarIcon className="w-5 h-5 text-icsn-teal" />
-          <span>{COPY.BOOKING_FLOW.STEP_2}</span>
+          <span>{dict.book.step2}</span>
         </h3>
 
         <div className="flex items-center gap-1">
@@ -77,16 +85,16 @@ export function CalendarWidget({
             onClick={() => onMonthChange(1)}
             className="p-2 hover:bg-muted/80 rounded-xl transition text-icsn-navy disabled:opacity-30 disabled:hover:bg-transparent"
             disabled={monthIndex === 1}
-            title="ดูรอบเรียนล่วงหน้า 2 เดือน"
+            title={dict.book.nextMonthTitle}
           >
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* Thai Week Names */}
+      {/* Week Names */}
       <div className="grid grid-cols-7 text-center text-sm font-bold text-muted-foreground/70">
-        <div>อา</div><div>จ</div><div>อ</div><div>พ</div><div>พฤ</div><div>ศ</div><div>ส</div>
+        {dict.book.weekDays.map(d => <div key={d}>{d}</div>)}
       </div>
 
       {/* Calendar Grid */}
@@ -178,15 +186,15 @@ export function CalendarWidget({
       <div className="pt-2 flex flex-wrap justify-center gap-4 text-xs text-muted-foreground font-medium">
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 bg-muted border border-border rounded-full"></span>
-          ผ่านไปแล้ว / วันหยุด
+          {dict.book.calendarLegendPast}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 bg-primary rounded-full shadow-sm"></span>
-          เปิดให้จอง
+          {dict.book.calendarLegendOpen}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 bg-destructive rounded-full shadow-sm"></span>
-          เต็มแล้ว / ปิดจอง
+          {dict.book.calendarLegendFull}
         </span>
       </div>
     </div>
