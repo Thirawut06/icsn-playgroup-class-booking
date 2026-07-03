@@ -32,6 +32,44 @@ export const AdminBookingService = {
     return data;
   },
 
+  async getRecentBookings(limit = 10): Promise<{
+    id: string;
+    created_at: string;
+    status: string;
+    session_date: string;
+    time_label: string | null;
+    child_nickname: string;
+    parent_name: string;
+    parent_phone: string;
+  }[]> {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select(`
+        id,
+        created_at,
+        status,
+        child_name_snapshot,
+        parent_phone_snapshot,
+        session:sessions(session_date, time_label),
+        child:children(nickname, full_name),
+        parent:parents(name, phone)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      created_at: row.created_at,
+      status: row.status,
+      session_date: row.session?.session_date || '',
+      time_label: row.session?.time_label || null,
+      child_nickname: row.child?.nickname || row.child?.full_name || row.child_name_snapshot || '(ไม่มีชื่อ)',
+      parent_name: row.parent?.name || '-',
+      parent_phone: row.parent?.phone || row.parent_phone_snapshot || '-',
+    }));
+  },
 
   async getDailyAttendance(sessionId: string): Promise<DailyAttendanceRow[]> {
     const { data, error } = await supabase

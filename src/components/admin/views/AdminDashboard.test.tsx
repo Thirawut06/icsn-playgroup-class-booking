@@ -20,6 +20,7 @@ vi.mock('@/lib/supabase', () => ({
     getAllParentsWithCredits: vi.fn().mockResolvedValue([]),
     getDailyAttendance: vi.fn().mockResolvedValue([]),
     getSessionForDate: vi.fn().mockResolvedValue(null),
+    getRecentBookings: vi.fn().mockResolvedValue([]),
   },
   BookingService: {
     getSessions: vi.fn().mockResolvedValue([]),
@@ -35,5 +36,12 @@ describe('AdminDashboard Component', () => {
     
     expect(await screen.findByText('0 / 12 คน')).toBeInTheDocument();
     expect(screen.getByText(/Quick Actions/i)).toBeInTheDocument();
+  });
+
+  it('renders the recent bookings section', async () => {
+    render(<AdminDashboard />);
+    
+    expect(await screen.findByText('การจองล่าสุด')).toBeInTheDocument();
+    expect(screen.getByText('ยังไม่มีการจองในระบบ')).toBeInTheDocument();
   });
 });

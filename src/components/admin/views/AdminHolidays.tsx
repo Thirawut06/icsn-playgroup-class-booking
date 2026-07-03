@@ -5,9 +5,9 @@ import { CalendarCog, Loader2, Calendar as CalendarIcon, ChevronLeft, ChevronRig
 import { AdminService, SettingsService, supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { COPY } from '@/config/copy';
-import { 
-  AdminFieldLabel, 
-  AdminPanel, 
+import {
+  AdminFieldLabel,
+  AdminPanel,
   AdminPanelHeader,
   AdminPrimaryButton
 } from '../admin-ui';
@@ -17,7 +17,7 @@ import type { SchoolClosure, Session } from '@/types';
 export function AdminHolidays() {
   const [closures, setClosures] = useState<SchoolClosure[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [operatingDays, setOperatingDays] = useState<number[]>([0,1,2,3,4,5,6]);
+  const [operatingDays, setOperatingDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [loading, setLoading] = useState(true);
   const [monthIndex, setMonthIndex] = useState(0);
 
@@ -27,14 +27,14 @@ export function AdminHolidays() {
   const [rangeEnd, setRangeEnd] = useState<string>('');
   const [isPickingRangeEnd, setIsPickingRangeEnd] = useState(false);
   const [multiDates, setMultiDates] = useState<string[]>([]);
-  
+
   const [overrideStatus, setOverrideStatus] = useState<'open' | 'closed' | 'reset'>('closed');
   const [overrideReason, setOverrideReason] = useState('');
-  
+
   // Save states
   const [savingSettings, setSavingSettings] = useState(false);
   const [savingOverride, setSavingOverride] = useState(false);
-  
+
   // Local operating days for editing before save
   const [tempOperatingDays, setTempOperatingDays] = useState<number[]>([]);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
@@ -51,8 +51,8 @@ export function AdminHolidays() {
         SettingsService.getAllSettings()
       ]);
       setClosures(closuresData);
-      
-      const ops = settingsData.operating_days || [0,1,2,3,4,5,6];
+
+      const ops = settingsData.operating_days || [0, 1, 2, 3, 4, 5, 6];
       setOperatingDays(ops);
       if (tempOperatingDays.length === 0) {
         setTempOperatingDays(ops);
@@ -65,13 +65,13 @@ export function AdminHolidays() {
       const month = currentViewDate.getMonth();
       const startDate = new Date(year, month, 1).toISOString().split('T')[0];
       const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
-      
+
       const { data: sessionsData, error: sessionsErr } = await supabase
         .from('sessions')
         .select('id, session_date, time_label, is_active, total_capacity, booked_count, theme')
         .gte('session_date', startDate)
         .lte('session_date', endDate);
-      
+
       if (sessionsErr) throw sessionsErr;
       setSessions(sessionsData || []);
 
@@ -141,7 +141,7 @@ export function AdminHolidays() {
 
   const handleSaveOverride = async () => {
     setSavingOverride(true);
-    
+
     try {
       if (overrideStatus === 'reset') {
         const datesToReset: string[] = [];
@@ -156,31 +156,31 @@ export function AdminHolidays() {
         } else {
           datesToReset.push(...multiDates);
         }
-        
+
         if (datesToReset.length === 0) { toast.error('กรุณาเลือกวัน'); setSavingOverride(false); return; }
 
         for (const date of datesToReset) {
           const overlappingClosures = closures.filter(c => date >= c.start_date && date <= c.end_date);
           await Promise.all(overlappingClosures.map(c => AdminService.deleteSchoolClosure(c.id)));
-          
+
           await supabase.from('sessions')
             .update({ is_active: true, theme: null })
             .eq('session_date', date);
         }
-        
+
         toast.success('ยกเลิกการตั้งค่าเรียบร้อยแล้ว');
       } else {
         if (selectionMode === 'range' || selectionMode === 'single') {
           if (!rangeStart || !rangeEnd) { toast.error('กรุณาระบุช่วงวันที่'); setSavingOverride(false); return; }
           if (rangeStart > rangeEnd) { toast.error('วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด'); setSavingOverride(false); return; }
           if (overrideStatus === 'closed' && !overrideReason) { toast.error('กรุณาระบุสาเหตุ'); setSavingOverride(false); return; }
-          
+
           await AdminService.setDateStatus(rangeStart, rangeEnd, overrideStatus === 'open', overrideReason);
         } else {
           if (multiDates.length === 0) { toast.error('กรุณาเลือกอย่างน้อย 1 วัน'); setSavingOverride(false); return; }
           if (overrideStatus === 'closed' && !overrideReason) { toast.error('กรุณาระบุสาเหตุ'); setSavingOverride(false); return; }
-          
-          await Promise.all(multiDates.map(date => 
+
+          await Promise.all(multiDates.map(date =>
             AdminService.setDateStatus(date, date, overrideStatus === 'open', overrideReason)
           ));
         }
@@ -189,10 +189,10 @@ export function AdminHolidays() {
 
       setRangeStart(''); setRangeEnd(''); setIsPickingRangeEnd(false); setOverrideReason(''); setMultiDates([]);
       fetchData();
-    } catch (err) { 
-      toast.error('เกิดข้อผิดพลาดในการบันทึก/ยกเลิก'); 
-    } finally { 
-      setSavingOverride(false); 
+    } catch (err) {
+      toast.error('เกิดข้อผิดพลาดในการบันทึก/ยกเลิก');
+    } finally {
+      setSavingOverride(false);
     }
   };
 
@@ -202,7 +202,7 @@ export function AdminHolidays() {
 
   const confirmDeleteClosure = async () => {
     if (!deleteTargetId) return;
-    
+
     try {
       await AdminService.deleteSchoolClosure(deleteTargetId);
       toast.success('ยกเลิกรายการเรียบร้อยแล้ว');
@@ -266,14 +266,14 @@ export function AdminHolidays() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <AdminPanel className="no-print">
-        <AdminPanelHeader 
-          icon={CalendarCog} 
-          title="จัดการวันเปิด-ปิด (Calendar & Holidays)" 
+        <AdminPanelHeader
+          icon={CalendarCog}
+          title="จัดการวันเปิด-ปิด (Calendar & Holidays)"
         />
-        
+
         <div className="p-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
+
             {/* Left Column: Calendar (lg:col-span-7) */}
             <div className="lg:col-span-7 lg:sticky lg:top-24 self-start relative">
               <div className="px-0 sm:px-4 py-4 space-y-4">
@@ -318,7 +318,7 @@ export function AdminHolidays() {
                     const closureForDate = closures.find(c => dayObj.dateStr >= c.start_date && dayObj.dateStr <= c.end_date && !c.time_label);
                     const dayOfWeek = new Date(dayObj.dateStr).getDay();
                     const isBaseOperatingDay = operatingDays.includes(dayOfWeek);
-                    
+
                     // Determine if the day is fundamentally open (ignoring sessions)
                     let isFundamentallyOpen = isBaseOperatingDay;
                     if (closureForDate) {
@@ -327,7 +327,7 @@ export function AdminHolidays() {
 
                     // Check if any active session is open for booking on this day
                     const hasOpenSession = daySessions.some(s => s.is_active && (s.total_capacity - (s.booked_count || 0)) > 0);
-                    
+
                     // It is "Bookable" (open) if it's fundamentally open AND (no sessions OR has open sessions)
                     const isBookable = isFundamentallyOpen && (daySessions.length === 0 || hasOpenSession);
 
@@ -335,7 +335,7 @@ export function AdminHolidays() {
                     const isSelected = (selectionMode === 'range' || selectionMode === 'single')
                       ? !!(rangeStart && rangeEnd && dayObj.dateStr >= rangeStart && dayObj.dateStr <= rangeEnd)
                       : multiDates.includes(dayObj.dateStr);
-                    
+
                     const isBooked = false; // Admin view doesn't care about parent booking
                     const isFuture = new Date(dayObj.dateStr) >= new Date(new Date().setHours(0, 0, 0, 0));
 
@@ -374,11 +374,11 @@ export function AdminHolidays() {
                         dotClass = "bg-transparent";
                       }
                     }
-                    
+
                     // Highlight selected days even if they are unbookable
                     if (isSelected && !isBookable) {
-                        btnClass = "bg-foreground text-background shadow-md font-black scale-[1.05]";
-                        dotClass = "bg-background";
+                      btnClass = "bg-foreground text-background shadow-md font-black scale-[1.05]";
+                      dotClass = "bg-background";
                     }
 
                     return (
@@ -410,7 +410,7 @@ export function AdminHolidays() {
                   </span>
                 </div>
               </div>
-              
+
               {loading && (
                 <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded-2xl z-20">
                   <Loader2 className="w-8 h-8 animate-spin text-icsn-teal" />
@@ -420,7 +420,7 @@ export function AdminHolidays() {
 
             {/* Right Column: Unified Config Panel (lg:col-span-5) */}
             <div className="lg:col-span-5 space-y-4">
-              
+
               {/* 1. Weekly Default Config */}
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
@@ -428,7 +428,7 @@ export function AdminHolidays() {
                     <Settings className="w-4 h-4 text-icsn-navy" />
                     <h4 className="font-bold text-icsn-navy text-sm">วันทำการพื้นฐานรายสัปดาห์</h4>
                   </div>
-                  <button 
+                  <button
                     onClick={handleSaveSettings}
                     disabled={savingSettings || JSON.stringify(operatingDays) === JSON.stringify(tempOperatingDays)}
                     className="px-3 py-1.5 bg-icsn-navy text-white hover:bg-icsn-navy/90 rounded-lg text-xs font-bold disabled:opacity-50 transition-colors"
@@ -444,9 +444,8 @@ export function AdminHolidays() {
                       <button
                         key={index}
                         onClick={() => toggleTempDay(index)}
-                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all ${
-                          isSelected ? 'bg-icsn-teal text-white shadow-sm ring-2 ring-offset-1 ring-icsn-teal' : 'bg-white text-slate-400 border border-slate-200 hover:bg-slate-100'
-                        }`}
+                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all ${isSelected ? 'bg-icsn-teal text-white shadow-sm ring-2 ring-offset-1 ring-icsn-teal' : 'bg-white text-slate-400 border border-slate-200 hover:bg-slate-100'
+                          }`}
                         title={dayName}
                       >
                         {shortName}
@@ -460,7 +459,7 @@ export function AdminHolidays() {
               <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
                 <h4 className="font-bold text-icsn-navy mb-4 flex items-center gap-2">
                   <CalendarX className="w-5 h-5" />
-                  ตั้งค่าว้นหยุดพิเศษ / เปิดพิเศษ (Macro)
+                  ตั้งค่าวันหยุดพิเศษ / เปิดพิเศษ (Macro)
                 </h4>
 
                 <div className="flex bg-slate-100 p-1 rounded-lg mb-4">
@@ -499,29 +498,29 @@ export function AdminHolidays() {
                       </div>
                     )}
                     <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <AdminFieldLabel>วันที่เริ่มต้น</AdminFieldLabel>
-                      <input 
-                        type="date" 
-                        value={rangeStart}
-                        onChange={e => { 
-                          setRangeStart(e.target.value); 
-                          if(e.target.value > rangeEnd) setRangeEnd(e.target.value); 
-                        }}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:border-transparent transition-all text-sm"
-                      />
+                      <div>
+                        <AdminFieldLabel>วันที่เริ่มต้น</AdminFieldLabel>
+                        <input
+                          type="date"
+                          value={rangeStart}
+                          onChange={e => {
+                            setRangeStart(e.target.value);
+                            if (e.target.value > rangeEnd) setRangeEnd(e.target.value);
+                          }}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:border-transparent transition-all text-sm"
+                        />
+                      </div>
+                      <div>
+                        <AdminFieldLabel>วันที่สิ้นสุด</AdminFieldLabel>
+                        <input
+                          type="date"
+                          value={rangeEnd}
+                          min={rangeStart}
+                          onChange={e => setRangeEnd(e.target.value)}
+                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:border-transparent transition-all text-sm"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <AdminFieldLabel>วันที่สิ้นสุด</AdminFieldLabel>
-                      <input 
-                        type="date" 
-                        value={rangeEnd}
-                        min={rangeStart}
-                        onChange={e => setRangeEnd(e.target.value)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:border-transparent transition-all text-sm"
-                      />
-                    </div>
-                  </div>
                   </div>
                 ) : (
                   <div className="mb-4">
@@ -540,168 +539,164 @@ export function AdminHolidays() {
                     </div>
                   </div>
                 )}
-                  <div className="flex bg-slate-100 p-1 rounded-lg">
-                    <button
-                      onClick={() => setOverrideStatus('closed')}
-                      className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
-                        overrideStatus === 'closed' 
-                          ? 'bg-white text-error shadow-sm ring-1 ring-slate-200' 
-                          : 'text-slate-500 hover:text-slate-700'
+                <div className="flex bg-slate-100 p-1 rounded-lg">
+                  <button
+                    onClick={() => setOverrideStatus('closed')}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${overrideStatus === 'closed'
+                        ? 'bg-white text-error shadow-sm ring-1 ring-slate-200'
+                        : 'text-slate-500 hover:text-slate-700'
                       }`}
-                    >
-                      ปิดรับจอง
-                    </button>
-                    <button
-                      onClick={() => setOverrideStatus('open')}
-                      className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
-                        overrideStatus === 'open' 
-                          ? 'bg-white text-success shadow-sm ring-1 ring-slate-200' 
-                          : 'text-slate-500 hover:text-slate-700'
+                  >
+                    ปิดรับจอง
+                  </button>
+                  <button
+                    onClick={() => setOverrideStatus('open')}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${overrideStatus === 'open'
+                        ? 'bg-white text-success shadow-sm ring-1 ring-slate-200'
+                        : 'text-slate-500 hover:text-slate-700'
                       }`}
-                    >
-                      บังคับเปิด
-                    </button>
-                    <button
-                      onClick={() => { setOverrideStatus('reset'); setOverrideReason(''); }}
-                      className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
-                        overrideStatus === 'reset' 
-                          ? 'bg-white text-slate-700 shadow-sm ring-1 ring-slate-200' 
-                          : 'text-slate-500 hover:text-slate-700'
+                  >
+                    บังคับเปิด
+                  </button>
+                  <button
+                    onClick={() => { setOverrideStatus('reset'); setOverrideReason(''); }}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${overrideStatus === 'reset'
+                        ? 'bg-white text-slate-700 shadow-sm ring-1 ring-slate-200'
+                        : 'text-slate-500 hover:text-slate-700'
                       }`}
-                    >
-                      ยกเลิกค่า (Reset)
-                    </button>
-                  </div>
+                  >
+                    ยกเลิกค่า (Reset)
+                  </button>
+                </div>
 
-                  {overrideStatus === 'closed' && (
-                    <div className="animate-in fade-in">
-                      <input
-                        type="text"
-                        value={overrideReason}
-                        onChange={e => setOverrideReason(e.target.value)}
-                        placeholder="สาเหตุการปิด (เช่น ปิดเทอมซัมเมอร์)"
-                        className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-1 focus:ring-icsn-teal outline-none"
-                      />
-                    </div>
-                  )}
-
-                  <div className="pt-2">
-                    <AdminPrimaryButton 
-                      onClick={handleSaveOverride} 
-                      disabled={savingOverride || (selectionMode === 'multi' ? multiDates.length === 0 : (!rangeStart || !rangeEnd))}
-                      className="w-full justify-center py-2 text-sm"
-                    >
-                      {savingOverride ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />}
-                      {overrideStatus === 'reset' ? 'บันทึกการยกเลิก' : 'บันทึกตั้งค่าช่วงวันที่'}
-                    </AdminPrimaryButton>
+                {overrideStatus === 'closed' && (
+                  <div className="animate-in fade-in">
+                    <input
+                      type="text"
+                      value={overrideReason}
+                      onChange={e => setOverrideReason(e.target.value)}
+                      placeholder="สาเหตุการปิด (เช่น ปิดเทอมซัมเมอร์)"
+                      className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-1 focus:ring-icsn-teal outline-none"
+                    />
                   </div>
+                )}
+
+                <div className="pt-2">
+                  <AdminPrimaryButton
+                    onClick={handleSaveOverride}
+                    disabled={savingOverride || (selectionMode === 'multi' ? multiDates.length === 0 : (!rangeStart || !rangeEnd))}
+                    className="w-full justify-center py-2 text-sm"
+                  >
+                    {savingOverride ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />}
+                    {overrideStatus === 'reset' ? 'บันทึกการยกเลิก' : 'บันทึกตั้งค่าช่วงวันที่'}
+                  </AdminPrimaryButton>
+                </div>
               </div>
 
               {/* 3. Daily Command Center: Time Slots */}
-              {((selectionMode === 'single' && rangeStart) || 
-                (selectionMode === 'range' && rangeStart && rangeEnd && rangeStart === rangeEnd) || 
+              {((selectionMode === 'single' && rangeStart) ||
+                (selectionMode === 'range' && rangeStart && rangeEnd && rangeStart === rangeEnd) ||
                 (selectionMode === 'multi' && multiDates.length === 1)) && (() => {
                   const targetDate = selectionMode === 'multi' ? multiDates[0] : rangeStart;
                   return (
-                <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm animate-in fade-in slide-in-from-top-2">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-icsn-navy" />
-                      <h4 className="font-bold text-icsn-navy text-sm">รอบเวลาเรียน (วันที่ {formatDisplayDateStr(targetDate)})</h4>
-                    </div>
-                  </div>
-                  
-                  {sessions.filter(s => s.session_date === targetDate).length === 0 ? (
-                    <div className="text-center py-6 bg-slate-50 rounded-xl border border-slate-100">
-                      <p className="text-sm text-slate-500 mb-3">ยังไม่มีการสร้างรอบเวลาเรียนสำหรับวันนี้</p>
-                      <button
-                        onClick={async () => {
-                          try {
-                            const { SupabaseSessionAdapter } = await import('@/lib/domain/adapters/SupabaseSessionAdapter');
-                            const adapter = new SupabaseSessionAdapter();
-                            await adapter.getOrCreateSessionsForDate(targetDate);
-                            toast.success('สร้างรอบเวลาเรียนเรียบร้อย');
-                            await fetchData();
-                          } catch (err: any) {
-                            toast.error(err.message || 'Error generating sessions');
-                          }
-                        }}
-                        className="px-4 py-2 bg-icsn-navy text-white text-xs font-bold rounded-lg hover:bg-icsn-navy/90 transition-colors"
-                      >
-                        สร้างรอบเวลาจาก Template
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {sessions
-                        .filter(s => s.session_date === targetDate)
-                        .sort((a, b) => (a.time_label ?? '').localeCompare(b.time_label ?? ''))
-                        .map(session => (
-                        <div key={session.id} className={`p-3 border rounded-xl flex items-center justify-between transition-colors ${
-                          session.is_active ? 'border-slate-200 bg-white' : 'border-error/20 bg-error/5'
-                        }`}>
-                          <div className="flex items-center gap-3">
-                            <div className="text-sm font-bold text-icsn-navy">
-                              {session.time_label}
-                            </div>
-                            {!session.is_active && (
-                              <span className="text-[10px] bg-error/10 text-error px-2 py-0.5 rounded-full font-bold">
-                                ปิดรับจอง
-                              </span>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
-                              <span className="text-xs text-slate-500">รับ:</span>
-                              <input 
-                                type="number" 
-                                defaultValue={session.total_capacity}
-                                onBlur={async (e) => {
-                                  const newCap = parseInt(e.target.value);
-                                  if (newCap && newCap !== session.total_capacity) {
-                                    try {
-                                      await AdminService.updateSessionCapacity(session.id, newCap);
-                                      toast.success('อัปเดตจำนวนรับเรียบร้อย');
-                                      fetchData();
-                                    } catch (err: any) {
-                                      toast.error(err.message);
-                                      e.target.value = session.total_capacity.toString();
-                                    }
-                                  }
-                                }}
-                                disabled={!session.is_active}
-                                className="w-12 text-sm font-bold text-center bg-transparent outline-none disabled:opacity-50"
-                              />
-                              <span className="text-xs text-slate-500">คน</span>
-                            </div>
-                            
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await AdminService.toggleSessionActive(session.id, !session.is_active);
-                                  toast.success(session.is_active ? 'ปิดรับจองรอบเวลานี้แล้ว' : 'เปิดรับจองรอบเวลานี้แล้ว');
-                                  fetchData();
-                                } catch (err: any) {
-                                  toast.error(err.message);
-                                }
-                              }}
-                              className={`p-1.5 rounded-md transition-colors ${
-                                session.is_active 
-                                  ? 'text-slate-400 hover:text-error hover:bg-error/10' 
-                                  : 'text-error hover:text-success hover:bg-success/10'
-                              }`}
-                              title={session.is_active ? "คลิกเพื่อปิดรับจอง" : "คลิกเพื่อเปิดรับจอง"}
-                            >
-                              {session.is_active ? <X className="w-4 h-4" /> : <RefreshCcw className="w-4 h-4" />}
-                            </button>
-                          </div>
+                    <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm animate-in fade-in slide-in-from-top-2">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-icsn-navy" />
+                          <h4 className="font-bold text-icsn-navy text-sm">รอบเวลาเรียน (วันที่ {formatDisplayDateStr(targetDate)})</h4>
                         </div>
-                      ))}
+                      </div>
+
+                      {sessions.filter(s => s.session_date === targetDate).length === 0 ? (
+                        <div className="text-center py-6 bg-slate-50 rounded-xl border border-slate-100">
+                          <p className="text-sm text-slate-500 mb-3">ยังไม่มีการสร้างรอบเวลาเรียนสำหรับวันนี้</p>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const { SupabaseSessionAdapter } = await import('@/lib/domain/adapters/SupabaseSessionAdapter');
+                                const adapter = new SupabaseSessionAdapter();
+                                await adapter.getOrCreateSessionsForDate(targetDate);
+                                toast.success('สร้างรอบเวลาเรียนเรียบร้อย');
+                                await fetchData();
+                              } catch (err: any) {
+                                toast.error(err.message || 'Error generating sessions');
+                              }
+                            }}
+                            className="px-4 py-2 bg-icsn-navy text-white text-xs font-bold rounded-lg hover:bg-icsn-navy/90 transition-colors"
+                          >
+                            สร้างรอบเวลาจาก Template
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {sessions
+                            .filter(s => s.session_date === targetDate)
+                            .sort((a, b) => (a.time_label ?? '').localeCompare(b.time_label ?? ''))
+                            .map(session => (
+                              <div key={session.id} className={`p-3 border rounded-xl flex items-center justify-between transition-colors ${session.is_active ? 'border-slate-200 bg-white' : 'border-error/20 bg-error/5'
+                                }`}>
+                                <div className="flex items-center gap-3">
+                                  <div className="text-sm font-bold text-icsn-navy">
+                                    {session.time_label}
+                                  </div>
+                                  {!session.is_active && (
+                                    <span className="text-[10px] bg-error/10 text-error px-2 py-0.5 rounded-full font-bold">
+                                      ปิดรับจอง
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+                                    <span className="text-xs text-slate-500">รับ:</span>
+                                    <input
+                                      type="number"
+                                      defaultValue={session.total_capacity}
+                                      onBlur={async (e) => {
+                                        const newCap = parseInt(e.target.value);
+                                        if (newCap && newCap !== session.total_capacity) {
+                                          try {
+                                            await AdminService.updateSessionCapacity(session.id, newCap);
+                                            toast.success('อัปเดตจำนวนรับเรียบร้อย');
+                                            fetchData();
+                                          } catch (err: any) {
+                                            toast.error(err.message);
+                                            e.target.value = session.total_capacity.toString();
+                                          }
+                                        }
+                                      }}
+                                      disabled={!session.is_active}
+                                      className="w-12 text-sm font-bold text-center bg-transparent outline-none disabled:opacity-50"
+                                    />
+                                    <span className="text-xs text-slate-500">คน</span>
+                                  </div>
+
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        await AdminService.toggleSessionActive(session.id, !session.is_active);
+                                        toast.success(session.is_active ? 'ปิดรับจองรอบเวลานี้แล้ว' : 'เปิดรับจองรอบเวลานี้แล้ว');
+                                        fetchData();
+                                      } catch (err: any) {
+                                        toast.error(err.message);
+                                      }
+                                    }}
+                                    className={`p-1.5 rounded-md transition-colors ${session.is_active
+                                        ? 'text-slate-400 hover:text-error hover:bg-error/10'
+                                        : 'text-error hover:text-success hover:bg-success/10'
+                                      }`}
+                                    title={session.is_active ? "คลิกเพื่อปิดรับจอง" : "คลิกเพื่อเปิดรับจอง"}
+                                  >
+                                    {session.is_active ? <X className="w-4 h-4" /> : <RefreshCcw className="w-4 h-4" />}
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              );})()}
+                  );
+                })()}
 
               {/* 4. Upcoming Closures List */}
               <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[300px]">
@@ -728,8 +723,8 @@ export function AdminHolidays() {
                               {c.is_force_open ? 'เปิดพิเศษ' : (c.reason || 'วันหยุด')}
                             </p>
                             <p className="text-xs text-slate-500 mt-0.5">
-                              {c.start_date === c.end_date 
-                                ? formatDisplayDateStr(c.start_date) 
+                              {c.start_date === c.end_date
+                                ? formatDisplayDateStr(c.start_date)
                                 : `${formatDisplayDateStr(c.start_date)} - ${formatDisplayDateStr(c.end_date)}`}
                             </p>
                           </div>
