@@ -39,14 +39,10 @@ export class SupabasePackageAdapter implements IPackageRepository {
   }
 
   async grantTrialPackage(parentId: string): Promise<void> {
-    const { error } = await supabase
-      .from('packages')
-      .insert([{
-        parent_id: parentId,
-        type: 'trial',
-        credits_remaining: 1,
-        non_refundable: true
-      }]);
+    const { error } = await supabase.rpc('grant_trial_package', {
+      target_parent_id: parentId
+    });
+    
     if (error) throw error;
   }
 
