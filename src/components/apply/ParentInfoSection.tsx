@@ -1,5 +1,6 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
+import { useDictionary } from '@/lib/i18n/dictionary-context';
 
 interface ParentInfoSectionProps {
   path: 'trial' | 'payment' | null;
@@ -18,21 +19,19 @@ export function ParentInfoSection({
   setParentPhone,
   isReturningParent
 }: ParentInfoSectionProps) {
+  const { dict } = useDictionary();
+
   return (
     <>
       <div className="border-b border-border pb-3">
         <h3 className="text-lg font-bold text-icsn-navy">
-          {path === 'trial' ? 'Further Information' : 'Personal Information'}
+          {path === 'trial' ? dict.apply.furtherInfo : dict.apply.personalInfo}
         </h3>
-        <p className="text-sm text-muted-foreground font-medium">
-          {path === 'trial' ? 'ข้อมูลเพิ่มเติม' : 'ข้อมูลส่วนบุคคล'}
-        </p>
       </div>
 
       <div>
         <label className="block mb-1.5">
-          <span className="text-base font-bold text-foreground">Parent&apos;s full name <span className="text-error">*</span></span>
-          <span className="block text-sm text-muted-foreground -mt-0.5">ชื่อ-นามสกุลผู้ปกครอง</span>
+          <span className="text-base font-bold text-foreground">{dict.apply.parentName} <span className="text-error">*</span></span>
         </label>
         <Input
           type="text"
@@ -46,8 +45,7 @@ export function ParentInfoSection({
 
       <div>
         <label className="block mb-1.5">
-          <span className="text-base font-bold text-foreground">Parent&apos;s telephone number <span className="text-error">*</span></span>
-          <span className="block text-sm text-muted-foreground -mt-0.5">หมายเลขโทรศัพท์ผู้ปกครอง</span>
+          <span className="text-base font-bold text-foreground">{dict.apply.parentPhone} <span className="text-error">*</span></span>
         </label>
         <Input
           type="tel"

@@ -1,5 +1,5 @@
 import React from 'react';
-import { COPY } from '@/config/copy';
+import { useDictionary } from '@/lib/i18n/dictionary-context';
 
 interface PhotoUploadSectionProps {
   path: 'trial' | 'payment' | null;
@@ -22,19 +22,19 @@ export function PhotoUploadSection({
   setChildPhotoFile,
   handleFile
 }: PhotoUploadSectionProps) {
+  const { dict } = useDictionary();
   if (path !== 'trial') return null;
 
   return (
     <>
       <div className="border-b border-border pb-3 mt-8">
-        <h3 className="text-lg font-bold text-icsn-navy">Photos (Trial Only)</h3>
-        <p className="text-sm text-muted-foreground font-medium">{COPY.APPLY_FLOW.PHOTO_TITLE}</p>
+        <h3 className="text-lg font-bold text-icsn-navy">{dict.apply.photosTitle}</h3>
       </div>
 
       <div>
         <label className="block mb-1.5">
-          <span className="text-base font-bold text-foreground">Individual Parent&apos;s Photo <span className="text-error">*</span></span>
-          <span className="block text-sm text-muted-foreground -mt-0.5">{COPY.APPLY_FLOW.PHOTO_PARENT_HINT}</span>
+          <span className="text-base font-bold text-foreground">{dict.apply.parentPhoto} <span className="text-error">*</span></span>
+          <span className="block text-sm text-muted-foreground -mt-0.5">{dict.apply.parentPhotoHint}</span>
         </label>
         <input
           type="file"
@@ -43,7 +43,7 @@ export function PhotoUploadSection({
           required
           className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-icsn-teal/10 file:text-icsn-teal hover:file:bg-icsn-teal/20 border border-border rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
         />
-        <span className="block text-xs text-muted-foreground/70">{COPY.APPLY_FLOW.UPLOAD_LIMIT}</span>
+        <span className="block text-xs text-muted-foreground/70">{dict.apply.uploadLimit}</span>
         {parentPhotoData && (
           <div className="mt-2 w-28 h-28 rounded-xl overflow-hidden border border-border bg-muted">
             <img src={parentPhotoData} alt="Preview" className="w-full h-full object-cover" />
@@ -53,8 +53,8 @@ export function PhotoUploadSection({
 
       <div>
         <label className="block mb-1.5">
-          <span className="text-base font-bold text-foreground">Individual Child&apos;s Photo <span className="text-error">*</span></span>
-          <span className="block text-sm text-muted-foreground -mt-0.5">{COPY.APPLY_FLOW.PHOTO_CHILD_HINT}</span>
+          <span className="text-base font-bold text-foreground">{dict.apply.childPhoto} <span className="text-error">*</span></span>
+          <span className="block text-sm text-muted-foreground -mt-0.5">{dict.apply.childPhotoHint}</span>
         </label>
         <input
           type="file"
@@ -63,7 +63,7 @@ export function PhotoUploadSection({
           required
           className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-icsn-teal/10 file:text-icsn-teal hover:file:bg-icsn-teal/20 border border-border rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
         />
-        <span className="block text-xs text-muted-foreground/70">{COPY.APPLY_FLOW.UPLOAD_LIMIT}</span>
+        <span className="block text-xs text-muted-foreground/70">{dict.apply.uploadLimit}</span>
         {childPhotoData && (
           <div className="mt-2 w-28 h-28 rounded-xl overflow-hidden border border-border bg-muted">
             <img src={childPhotoData} alt="Preview" className="w-full h-full object-cover" />

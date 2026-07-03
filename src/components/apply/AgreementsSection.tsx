@@ -1,4 +1,5 @@
 import React from 'react';
+import { useDictionary } from '@/lib/i18n/dictionary-context';
 
 interface AgreementsSectionProps {
   path: 'trial' | 'payment' | null;
@@ -19,7 +20,7 @@ export function AgreementsSection({
   nonRefundable,
   setNonRefundable
 }: AgreementsSectionProps) {
-  // We use different radio class based on path for UI consistency
+  const { dict } = useDictionary();
   const radioClass = path === 'payment' ? 'custom-radio-pink' : 'custom-radio';
   const checkboxClass = path === 'payment' ? 'custom-checkbox-pink' : 'custom-checkbox';
 
@@ -27,20 +28,17 @@ export function AgreementsSection({
     <div className="space-y-5 pt-4 border-t border-border">
       {/* Media Permission */}
       <div>
-        <span className="block text-[13.5px] font-bold text-foreground leading-relaxed mb-2">
-          I give permission for ICSN to use photos or videos (i.e. &quot;media&quot;) taken of my child in school-related academic and social activities. I understand and agree that this media may be used for promotional and marketing purposes without compensation. <span className="text-error">*</span><br />
-          <span className="text-xs text-muted-foreground font-normal mt-1 block leading-relaxed">
-            ข้าพเจ้าอนุญาตให้ ICSN ใช้รูปถ่ายหรือวิดีโอ (หรือที่เรียกว่า &quot;สื่อ&quot;) ที่ถ่ายจากกิจกรรมทางการศึกษาและสังคมของบุตรหลานข้าพเจ้าในโรงเรียน ข้าพเจ้าทราบและยอมรับว่าสื่อดังกล่าวอาจถูกนำไปใช้เพื่อการประชาสัมพันธ์และการตลาดโดยไม่ขอค่าตอบแทน
-          </span>
+        <span className="block text-[13.5px] font-medium text-foreground leading-relaxed mb-2">
+          {dict.apply.mediaPermission} <span className="text-error">*</span>
         </span>
         <div className="flex gap-6 mt-2 pb-1">
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="radio" value="Yes" checked={mediaPerm === 'Yes'} onChange={() => setMediaPerm('Yes')} className={radioClass} />
-            <span className="text-[13.5px] font-medium text-foreground">Yes</span>
+            <span className="text-[13.5px] font-medium text-foreground">{dict.apply.yes}</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="radio" value="No" checked={mediaPerm === 'No'} onChange={() => setMediaPerm('No')} className={radioClass} />
-            <span className="text-[13.5px] font-medium text-foreground">No</span>
+            <span className="text-[13.5px] font-medium text-foreground">{dict.apply.no}</span>
           </label>
         </div>
       </div>
@@ -57,10 +55,7 @@ export function AgreementsSection({
             />
             <div>
               <span className="block text-sm font-bold text-foreground leading-relaxed">
-                By checking this box, you agree that this payment is non-refundable. <span className="text-error">*</span>
-              </span>
-              <span className="block text-xs text-muted-foreground mt-1 leading-relaxed">
-                โดยการทำเครื่องหมายในช่องนี้ ถือว่าท่านยอมรับว่าการชำระเงินนี้ไม่สามารถขอคืนได้
+                {dict.apply.nonRefundable} <span className="text-error">*</span>
               </span>
             </div>
           </label>
@@ -78,10 +73,7 @@ export function AgreementsSection({
           />
           <div>
             <span className="block text-sm font-bold text-foreground leading-relaxed">
-              By checking the box, I agree not to take pictures of other students in the school for posting on social media. <span className="text-error">*</span>
-            </span>
-            <span className="block text-xs text-muted-foreground mt-1 leading-relaxed">
-              โดยการเลือกช่องนี้ ข้าพเจ้ายินยอมไม่ถ่ายรูปนักเรียนคนอื่นภายในโรงเรียนเพื่อโพสต์ในสื่อโซเชียล
+              {dict.apply.noPhotoAgreement} <span className="text-error">*</span>
             </span>
           </div>
         </label>

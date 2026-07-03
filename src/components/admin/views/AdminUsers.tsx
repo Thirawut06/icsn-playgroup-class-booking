@@ -107,25 +107,6 @@ export function AdminUsers() {
                   className="block w-full pl-10 pr-4 py-2.5 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-sm bg-muted/50"
                 />
               </div>
-              <button
-                onClick={async () => {
-                  const toastId = toast.loading('กำลังซิงค์ข้อมูลลง Google Sheets...');
-                  try {
-                    const res = await fetch('/api/google/sync-sheets', { method: 'POST' });
-                    const data = await res.json();
-                    if (data.success) {
-                      toast.success(`ซิงค์ข้อมูล ${data.rowsSynced} ครอบครัวเรียบร้อย`, { id: toastId });
-                    } else {
-                      throw new Error(data.error || 'Unknown error');
-                    }
-                  } catch (err: any) {
-                    toast.error('ซิงค์ข้อมูลล้มเหลว: ' + err.message, { id: toastId });
-                  }
-                }}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0f9d58] hover:bg-[#0b8043] text-white rounded-xl text-sm font-bold shadow-sm transition-colors whitespace-nowrap"
-              >
-                Sync to Sheets
-              </button>
             </div>
           </div>
 

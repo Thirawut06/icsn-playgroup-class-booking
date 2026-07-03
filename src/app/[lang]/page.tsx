@@ -5,8 +5,12 @@ import Link from 'next/link';
 import { UserPlus, LogIn, ChevronRight, Lock } from 'lucide-react';
 import Image from 'next/image';
 import { ROUTES } from '@/config/routes';
+import { useDictionary } from '@/lib/i18n/dictionary-context';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
 
 export default function HomePage() {
+  const { dict, lang } = useDictionary();
+
   return (
     <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)] pb-10 flex flex-col relative overflow-hidden">
       {/* Top banner with nice branding */}
@@ -16,6 +20,11 @@ export default function HomePage() {
       >
         {/* Dark overlay for high contrast readability */}
         <div className="absolute inset-0 bg-black/45 pointer-events-none"></div>
+
+        {/* Language Switcher */}
+        <div className="absolute top-3 right-3 z-20">
+          <LanguageSwitcher />
+        </div>
 
         <div className="inline-flex items-center justify-center mx-auto w-14 sm:w-16 h-auto mb-1 relative z-10 animate-fade-in">
           <Image
@@ -29,7 +38,7 @@ export default function HomePage() {
           />
         </div>
         <h1 className="text-lg sm:text-xl font-bold tracking-tight relative z-10 text-white drop-shadow-md">
-          ICSN Panda Playgroup
+          {dict.common.brandName}
         </h1>
       </div>
 
@@ -37,15 +46,14 @@ export default function HomePage() {
       <div className="p-6 sm:p-8 space-y-6">
         <div className="text-center">
           <h2 className="text-icsn-navy font-extrabold text-lg leading-tight">
-            Please select your status to continue<br />
-            <span className="text-sm text-muted-foreground font-normal block mt-1">กรุณาเลือกสถานะเพื่อดำเนินการต่อ</span>
+            {dict.home.selectStatus}
           </h2>
         </div>
 
         <div className="space-y-4 px-1">
           {/* Option 1: New Parents */}
           <Link
-            href={ROUTES.LOGIN('signup')}
+            href={ROUTES.LOGIN(lang, 'signup')}
             className="group flex items-center justify-between w-full bg-white border border-border hover:border-icsn-teal hover:bg-icsn-teal/5 rounded-2xl p-4 sm:p-5 transition-all duration-300 shadow-sm active:scale-[0.98]"
           >
             <div className="flex items-center gap-4">
@@ -55,12 +63,12 @@ export default function HomePage() {
               <div className="text-left space-y-0.5">
                 <div className="flex items-center gap-2 -mt-0.5">
                   <span className="font-bold text-foreground text-lg">
-                    New Parent
+                    {dict.home.newParent}
                   </span>
-                  <span className="px-2 py-0.5 bg-icsn-pink/10 text-icsn-pink text-xs font-bold rounded-full uppercase tracking-widest mt-0.5">New</span>
+                  <span className="px-2 py-0.5 bg-icsn-pink/10 text-icsn-pink text-xs font-bold rounded-full uppercase tracking-widest mt-0.5">{dict.home.newBadge}</span>
                 </div>
                 <div className="font-semibold text-muted-foreground text-sm">
-                  สมัครสมาชิกใหม่
+                  {dict.home.newParentSub}
                 </div>
               </div>
             </div>
@@ -71,7 +79,7 @@ export default function HomePage() {
 
           {/* Option 2: Existing Parents */}
           <Link
-            href={ROUTES.LOGIN('login')}
+            href={ROUTES.LOGIN(lang, 'login')}
             className="group flex items-center justify-between w-full bg-white border border-border hover:border-icsn-navy hover:bg-icsn-navy/5 rounded-2xl p-4 sm:p-5 transition-all duration-300 shadow-sm active:scale-[0.98]"
           >
             <div className="flex items-center gap-4">
@@ -80,10 +88,10 @@ export default function HomePage() {
               </div>
               <div className="text-left space-y-0.5">
                 <div className="font-bold text-foreground text-lg -mt-0.5">
-                  Sign In
+                  {dict.home.signIn}
                 </div>
                 <div className="font-semibold text-muted-foreground text-sm">
-                  เข้าสู่ระบบเดิม
+                  {dict.home.signInSub}
                 </div>
               </div>
             </div>
@@ -96,18 +104,17 @@ export default function HomePage() {
         {/* Footer Admin section with a neat badge styling */}
         <div className="pt-6 border-t border-border flex items-center justify-between text-xs text-muted-foreground/70 px-1">
           <div>
-            © ICSN Panda Playgroup
+            {dict.common.copyright}
           </div>
           <Link
             href={ROUTES.ADMIN}
             className="font-semibold text-muted-foreground/70 hover:text-icsn-pink transition-colors flex items-center gap-1 bg-muted hover:bg-muted/80 px-2.5 py-1 rounded-lg border border-border"
           >
             <Lock className="w-3 h-3" />
-            Admin (สำหรับเจ้าหน้าที่)
+            {dict.common.admin}
           </Link>
         </div>
       </div>
     </div>
   );
 }
-

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ChevronDown, ChevronUp, X, Megaphone } from 'lucide-react';
+import { useDictionary } from '@/lib/i18n/dictionary-context';
 
 interface Closure {
   id: string;
@@ -14,6 +15,7 @@ interface Closure {
 }
 
 export function ClosureNotificationBanner() {
+  const { dict, lang } = useDictionary();
   const [closures, setClosures] = useState<Closure[]>([]);
   const [expanded, setExpanded] = useState(false);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
@@ -68,7 +70,7 @@ export function ClosureNotificationBanner() {
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2 text-slate-800">
           <Megaphone className="w-4.5 h-4.5 text-amber-500 shrink-0" />
-          <h4 className="font-bold text-sm">ประกาศวันหยุด</h4>
+          <h4 className="font-bold text-sm">{dict.book.closureTitle}</h4>
         </div>
         <button 
           onClick={handleDismiss}
@@ -83,17 +85,17 @@ export function ClosureNotificationBanner() {
       <div className="flex flex-col gap-2.5 px-2">
         {displayClosures.map((c) => {
           const isFullDay = !c.time_label;
+          const locale = lang === 'th' ? 'th-TH' : 'en-US';
           
-          // Format dates simply: "6–10 ก.ค." or "10 ก.ค."
           const formatShortDate = (dateStr: string) => {
             const d = new Date(dateStr);
-            return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+            return d.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
           };
           
           const sDate = formatShortDate(c.start_date);
           const eDate = formatShortDate(c.end_date);
           const dateDisplay = c.start_date === c.end_date ? sDate : `${sDate} – ${eDate}`;
-          const timeStr = c.time_label ? `หยุดรอบ ${c.time_label}` : 'หยุดทั้งวัน';
+          const timeStr = c.time_label ? `${dict.book.closureSession} ${c.time_label}` : dict.book.closureFullDay;
 
           return (
             <div 
@@ -102,9 +104,9 @@ export function ClosureNotificationBanner() {
             >
               <span className="shrink-0 mt-2 h-1.5 w-1.5 rounded-full bg-slate-400"></span>
               <p className="break-words text-slate-700">
-                วันที่ <span className="font-bold text-slate-900">{dateDisplay}</span>{' '}
+                {dict.book.closureDateLabel} <span className="font-bold text-slate-900">{dateDisplay}</span>{' '}
                 <span className="font-bold text-slate-900">{timeStr}</span>{' '}
-                เนื่องจาก <span className="text-slate-800">{c.reason}</span>
+                {dict.book.closureBecause} <span className="text-slate-800">{c.reason}</span>
               </p>
             </div>
           );
@@ -118,9 +120,13 @@ export function ClosureNotificationBanner() {
           className="w-full flex items-center justify-center gap-1.5 py-1 text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors mt-1"
         >
           {expanded ? (
-            <>ย่อการแจ้งเตือน <ChevronUp className="w-3.5 h-3.5" /></>
+            <>
+              {dict.book.closureCollapse} <ChevronUp className="w-3.5 h-3.5" />
+            </>
           ) : (
-            <>แสดงอีก {visibleClosures.length - 1} รายการ <ChevronDown className="w-3.5 h-3.5" /></>
+            <>
+              {dict.book.closureShowMore.replace('{count}', String(visibleClosures.length - 1))} <ChevronDown className="w-3.5 h-3.5" />
+            </>
           )}
         </button>
       )}

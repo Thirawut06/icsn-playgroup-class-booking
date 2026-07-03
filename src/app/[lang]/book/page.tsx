@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import type { Session } from '@/types';
@@ -18,6 +18,8 @@ import { useBookingActions } from '@/hooks/useBookingActions';
 import { checkIsBookableDate } from '@/utils/dateUtils';
 import { sessionModule } from '@/lib/domain';
 import { supabase } from '@/lib/supabase';
+import { useDictionary } from '@/lib/i18n/dictionary-context';
+import { ROUTES } from '@/config/routes';
 
 export default function Book() {
   return (
@@ -27,9 +29,27 @@ export default function Book() {
   );
 }
 
+const bookCache: Record<string, any> = {};
+
+function useCachedState<T>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
+  const [state, setState] = useState<T>(() => {
+    if (key in bookCache) {
+      return bookCache[key];
+    }
+    return defaultValue;
+  });
+
+  useEffect(() => {
+    bookCache[key] = state;
+  }, [key, state]);
+
+  return [state, setState];
+}
+
 function BookPageContent() {
   const router = useRouter();
-  
+  const { dict, lang } = useDictionary();
+
   // ─── Data & State via Custom Hooks ───────────────────────────
   const {
     parentId,
@@ -48,11 +68,11 @@ function BookPageContent() {
     mergeSessionsForDate
   } = useBookingContext();
 
-  const [monthIndex, setMonthIndex] = useState(0); 
-  
+  const [monthIndex, setMonthIndex] = useCachedState('monthIndex', 0);
+
   // Selection State
-  const [selectedDates, setSelectedDates] = useState<string[]>([]);
-  const [selectedSessionsMap, setSelectedSessionsMap] = useState<Record<string, Session>>({});
+  const [selectedDates, setSelectedDates] = useCachedState<string[]>('selectedDates', []);
+  const [selectedSessionsMap, setSelectedSessionsMap] = useCachedState<Record<string, Session>>('selectedSessionsMap', {});
 
   // Modals / Status State
   const [bookingSuccess, setBookingSuccess] = useState(false);
@@ -96,7 +116,7 @@ function BookPageContent() {
   const handleLogout = async () => {
     localStorage.clear();
     await supabase.auth.signOut();
-    router.push('/login');
+    router.push(ROUTES.LOGIN(lang));
   };
 
   const handleDateSelect = async (dayObj: any) => {
@@ -117,7 +137,7 @@ function BookPageContent() {
 
     // Toggle ON
     if (creditsRemaining <= 0) {
-      toast.error("เครดิตของคุณหมดแล้ว กรุณาเติมแพ็คเกจ");
+      toast.error(dict.book.outOfCredits);
       return;
     }
 
@@ -127,7 +147,7 @@ function BookPageContent() {
     if (updatedDates.length >= creditsRemaining) {
       removedDate = updatedDates.shift() || null;
     }
-    
+
     updatedDates.push(dateStr);
     setSelectedDates(updatedDates);
 
@@ -161,7 +181,7 @@ function BookPageContent() {
 
   const handleBookClass = () => {
     if (selectedDates.length === 0 || !selectedChildId || packages.length === 0) {
-      setBookingError("กรุณาเลือกน้อง เลือกวันที่ และตรวจสอบเครดิตคงเหลือ");
+      setBookingError(dict.book.selectChildDateCredits);
       return;
     }
     setBookingError('');
@@ -174,22 +194,31 @@ function BookPageContent() {
   // ─── Render ──────────────────────────────────────────────────
 
   if (loading) {
-    return <div className="min-h-screen bg-white flex items-center justify-center text-icsn-teal font-bold">Loading...</div>;
+    return <div className="min-h-screen bg-white flex items-center justify-center text-icsn-teal font-bold">{dict.common.loading}</div>;
   }
+
+  // Build locale-aware date label for confirm modal
+  const dateLocale = lang === 'th' ? 'th-TH' : 'en-US';
+  const dateLabel = selectedDates.length === 1
+    ? new Date(selectedDates[0]).toLocaleDateString(dateLocale, { weekday: 'short', day: 'numeric', month: 'short' })
+    : `${dict.book.allDays} ${selectedDates.length} ${dict.book.daysUnit}`;
+  const timeLabel = selectedDates.length === 1
+    ? (selectedSessionsMap[selectedDates[0]]?.time_label || '')
+    : dict.book.asSelected;
 
   return (
     <div className="bg-white flex flex-col min-h-screen pb-16">
       <div className="max-w-[480px] mx-auto w-full bg-white min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)] flex flex-col relative overflow-hidden">
-        
+
         {(() => {
           const parentPhotoUrl = children.find(c => c.parent_photo_url)?.parent_photo_url || '';
           return (
-            <BookHeader 
-              parentName={parentName} 
-              creditsRemaining={creditsRemaining} 
+            <BookHeader
+              parentName={parentName}
+              creditsRemaining={creditsRemaining}
               parentPhotoUrl={parentPhotoUrl}
-              onLogout={handleLogout} 
-              onTopUpClick={() => setShowTopUpModal(true)} 
+              onLogout={handleLogout}
+              onTopUpClick={() => setShowTopUpModal(true)}
             />
           );
         })()}
@@ -201,7 +230,7 @@ function BookPageContent() {
                 <span className="text-xl leading-none mt-0.5">📢</span>
                 <div>
                   <p className="text-xs font-bold text-blue-800/70 uppercase tracking-wider mb-0.5">
-                    ประกาศจากทีม admissions
+                    {dict.book.announcementLabel}
                   </p>
                   <p className="text-sm font-medium whitespace-pre-wrap leading-relaxed">{settings.announcement_text}</p>
                 </div>
@@ -241,11 +270,11 @@ function BookPageContent() {
           <ClosureNotificationBanner />
         </main>
 
-        <TopUpModal 
-          isOpen={showTopUpModal} 
-          onClose={() => setShowTopUpModal(false)} 
-          parentId={parentId} 
-          paymentPackages={paymentPackages} 
+        <TopUpModal
+          isOpen={showTopUpModal}
+          onClose={() => setShowTopUpModal(false)}
+          parentId={parentId}
+          paymentPackages={paymentPackages}
         />
 
         <CancelConfirmModal
@@ -264,8 +293,8 @@ function BookPageContent() {
           isOpen={showBookingConfirm}
           isSubmitting={isSubmitting}
           childName={selectedChildObj?.nickname || ''}
-          dateLabel={selectedDates.length === 1 ? new Date(selectedDates[0]).toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short' }) : `ทั้งหมด ${selectedDates.length} วัน`}
-          timeLabel={selectedDates.length === 1 ? (selectedSessionsMap[selectedDates[0]]?.time_label || '') : 'ตามรอบที่เลือกไว้'}
+          dateLabel={dateLabel}
+          timeLabel={timeLabel}
           creditsToDeduct={selectedDates.length}
           onClose={() => setShowBookingConfirm(false)}
           onConfirm={confirmBookClass}
