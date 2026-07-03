@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -13,7 +13,7 @@ export function ApplyHeader({ showSuccess, path, setPath }: ApplyHeaderProps) {
 
   return (
     <div 
-      className="bg-icsn-navy px-6 py-8 text-white text-center relative overflow-hidden bg-cover bg-center"
+      className="bg-icsn-navy w-full aspect-[2000/560] text-white text-center relative overflow-hidden bg-cover bg-center flex flex-col items-center justify-center"
       style={{ backgroundImage: 'url("/playgroup-banner-icsn.png")' }}
     >
       <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
@@ -33,13 +33,13 @@ export function ApplyHeader({ showSuccess, path, setPath }: ApplyHeaderProps) {
         </button>
       )}
 
-      <div className="inline-flex items-center justify-center w-20 h-auto mb-3 relative z-10">
+      <div className="inline-flex items-center justify-center w-12 sm:w-14 h-auto mb-1 relative z-10">
         <img src="/white-main-logo-icsn.png" alt="ICSN Logo" className="w-full h-auto object-contain drop-shadow-sm" />
       </div>
-      <h1 className="text-[22px] font-bold text-white relative z-10 drop-shadow-md">
+      <h1 className="text-sm sm:text-base font-bold text-white relative z-10 drop-shadow-md leading-tight">
         ICSN Panda Playgroup
       </h1>
-      <p className="text-sm font-medium text-white/90 mt-0.5 relative z-10 drop-shadow-md">
+      <p className="text-[10px] sm:text-xs font-medium text-white/90 mt-0.5 relative z-10 drop-shadow-md">
         Registration Form (แบบฟอร์มลงทะเบียนเรียน)
       </p>
     </div>

@@ -1,5 +1,5 @@
 import { supabase } from '../supabase';
-import { DailyAttendanceRow, PendingSlipRow, ExportCSVRow, Session } from '../../types';
+import { DailyAttendanceRow, PendingSlipRow, Session } from '../../types';
 import { BOOKING_STATUS } from '@/config/constants';
 import { AuthState } from '../auth/rbac';
 
@@ -123,9 +123,4 @@ export const AdminBookingService = {
     });
     return result.creditsRemaining;
   },
-
-
-  async getExportCSVData(): Promise<ExportCSVRow[]> {
-    return [];
-  }
 };
