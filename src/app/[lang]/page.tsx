@@ -25,18 +25,18 @@ export default function HomePage() {
       </div>
 
       {/* Brand Header Section */}
-      <div className="flex flex-col items-center pt-6 pb-2 text-center px-4">
+      <div className="flex flex-col items-center pt-6 pb-6 text-center px-4 bg-icsn-navy text-white shadow-[inset_0_-2px_10px_rgba(0,0,0,0.1)]">
         <div className="w-16 sm:w-20 h-auto mb-2 animate-fade-in">
           <Image
-            src="/main-logo-icsn.png"
+            src="/white-main-logo-icsn.png"
             alt="ICSN Logo"
             width={80}
             height={80}
-            className="w-full h-auto object-contain"
+            className="w-full h-auto object-contain drop-shadow-md"
             priority
           />
         </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-icsn-navy">
+        <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight drop-shadow-sm">
           {dict.common.brandName}
         </h1>
       </div>
