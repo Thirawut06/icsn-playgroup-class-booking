@@ -65,14 +65,15 @@ export function ChildInfoSection({
         <>
           <div>
             <label className="block mb-1.5">
-              <span className="text-base font-bold text-foreground">Allergy (if any)</span>
+              <span className="text-base font-bold text-foreground">Allergy <span className="text-error">*</span></span>
               <span className="block text-sm text-muted-foreground -mt-0.5">มีข้อมูลการแพ้อาหารหรือสิ่งอื่นหรือไม่</span>
             </label>
             <Input
               type="text"
               value={allergy}
               onChange={(e) => setAllergy(e.target.value)}
-              placeholder="ระบุอาการแพ้เพื่อความปลอดภัย (หากไม่มีสามารถเว้นว่างได้)"
+              placeholder="ระบุอาการแพ้เพื่อความปลอดภัย (หากไม่มีกรุณากรอกว่า 'ไม่มี' หรือ 'None')"
+              required
               className="w-full h-12 rounded-xl bg-muted/50"
             />
           </div>

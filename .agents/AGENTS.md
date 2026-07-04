@@ -40,6 +40,9 @@ You carefully provide accurate, factual, thoughtful answers, and are a genius at
 
 ## Database Migration & Staging Workflow (CRITICAL)
 - **Local First & Migrations Only:** All database schema changes MUST be made via Supabase migration files in `supabase/migrations`. NEVER instruct the user to create or edit tables manually via the Supabase Dashboard UI on Production.
+- **Supabase Project References:**
+  - Production: `psusuyesaxuhiondxqie`
+  - Staging: `ykyifdoufyadgtemkhdd`
 - **Docker Requirement:** Supabase CLI commands like `db pull` and `db push` require Docker Desktop on Windows. Always remind the user that Docker is mandatory for a professional database workflow.
 - **Environment Isolation:** Always ensure the `.env.local` file points to the Staging Database for local development and Preview testing. NEVER connect the local environment directly to the Production Database.
 - **Syncing Staging (Creating a Baseline):** If Production was historically modified via the UI (resulting in missing initial migrations), a new Staging DB cannot be created from the local `supabase/migrations` folder alone. The developer MUST use Docker Desktop to pull a baseline:
@@ -47,6 +50,12 @@ You carefully provide accurate, factual, thoughtful answers, and are a genius at
   2. `npx supabase db pull` (Generates the baseline schema)
   3. `npx supabase link --project-ref <staging_ref>`
   4. `npx supabase db push` (Replicates Production to Staging)
+  If `db pull` fails due to local migration history conflicts, create a clean baseline by backing up and clearing the local migrations directory, running `npx supabase db dump -f supabase/migrations/<timestamp>_baseline.sql` from production, and then pushing to staging.
+  Always run `npx supabase link --project-ref ykyifdoufyadgtemkhdd` after any production tasks to reset the active project to Staging.
+
+- **Edge Functions Deployments:**
+  - To deploy functions to Staging: `npx supabase functions deploy --project-ref ykyifdoufyadgtemkhdd`
+  - To deploy functions to Production: `npx supabase functions deploy --project-ref psusuyesaxuhiondxqie`
 
 ## ICSN Playgroup Domain Rules
 - **Daily Operations (Sessions):** When building admin features that operate on daily data (like setting capacity or toggling active status), DO NOT throw errors if a session does not exist for the day. Instead, proactively use `sessionModule.getOrCreateSessionsForDate` to initialize the session before applying the updates.

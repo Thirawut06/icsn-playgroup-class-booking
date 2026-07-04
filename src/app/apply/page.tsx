@@ -141,6 +141,10 @@ export default function Apply() {
         throw new Error("กรุณายืนยันข้อตกลงการไม่ถ่ายรูปนักเรียนคนอื่น");
       }
 
+      if (path === 'trial' && !allergy.trim()) {
+        throw new Error("กรุณากรอกข้อมูลการแพ้อาหาร (หากไม่มีกรุณากรอกว่า 'ไม่มี' หรือ 'None')");
+      }
+
       await ParentService.submitNewChild({
         parentId,
         childName,
