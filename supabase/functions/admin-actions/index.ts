@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
         ? creditsOverride
         : await resolveCreditsFromSlip(supabase, slip)
 
-      const { data: result, error: rpcErr } = await supabase.rpc('approve_slip', {
+      const { data: result, error: rpcErr } = await userClient.rpc('approve_slip', {
         p_slip_id: slipId,
         p_credits_to_add: creditsToAdd,
         p_notes: `slip approved: ${slipId}`
@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
       const { child_nickname } = result as { success: boolean; credits_added: number; child_nickname: string }
       await sendGoogleChat(`💰 ชำระเงินแล้ว: น้อง${child_nickname} — approved (+${creditsToAdd} สิทธิ์)`)
 
-      return new Response(JSON.stringify({ success: true, creditsAdded: creditsToAdd, childNickname }), {
+      return new Response(JSON.stringify({ success: true, creditsAdded: creditsToAdd, childNickname: child_nickname }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       })
@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
     if (action === 'cancel-booking') {
       const { bookingId, cancelReason } = payload as { bookingId: string; cancelReason?: string }
 
-      const { data, error } = await supabase.rpc('cancel_booking', {
+      const { data, error } = await userClient.rpc('cancel_booking', {
         p_booking_id: bookingId,
         p_package_id: null,
         p_cancelled_by: 'admin',
@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
 
     if (action === 'adjust-credits') {
       const { parentId, amount, reason } = payload as { parentId: string; amount: number; reason: string }
-      const { data, error } = await supabase.rpc('adjust_credits', {
+      const { data, error } = await userClient.rpc('adjust_credits', {
         p_parent_id: parentId,
         p_amount: amount,
         p_reason: reason

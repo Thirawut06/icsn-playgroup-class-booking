@@ -160,6 +160,10 @@ export default function Apply() {
         throw new Error(dict.apply.confirmNoPhoto);
       }
 
+      if (path === 'trial' && !allergy.trim()) {
+        throw new Error("กรุณากรอกข้อมูลการแพ้อาหาร (หากไม่มีกรุณากรอกว่า 'ไม่มี' หรือ 'None')");
+      }
+
       await ParentService.submitNewChild({
         parentId,
         childName,

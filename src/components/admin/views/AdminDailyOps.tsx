@@ -256,7 +256,7 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
                           <button
                             type="button"
                             onClick={() => handleCancel(row.id)}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded text-sm font-bold text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded text-sm font-bold text-error hover:bg-error/10 border border-transparent hover:border-error/30 transition-colors"
                             title="ยกเลิกจอง"
                           >
                             <XCircle className="w-4 h-4" /> ยกเลิก

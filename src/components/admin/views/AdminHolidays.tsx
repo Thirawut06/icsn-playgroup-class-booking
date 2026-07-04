@@ -162,11 +162,8 @@ export function AdminHolidays() {
         for (const date of datesToReset) {
           const overlappingClosures = closures.filter(c => date >= c.start_date && date <= c.end_date);
           await Promise.all(overlappingClosures.map(c => AdminService.deleteSchoolClosure(c.id)));
-
-          await supabase.from('sessions')
-            .update({ is_active: true, theme: null })
-            .eq('session_date', date);
         }
+        await AdminService.bulkReopenSpecificDays(datesToReset);
 
         toast.success('ยกเลิกการตั้งค่าเรียบร้อยแล้ว');
       } else {
@@ -422,7 +419,7 @@ export function AdminHolidays() {
             <div className="lg:col-span-5 space-y-4">
 
               {/* 1. Weekly Default Config */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
+              <div className="bg-muted/50 border border-border rounded-2xl p-4 sm:p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Settings className="w-4 h-4 text-icsn-navy" />
@@ -444,7 +441,7 @@ export function AdminHolidays() {
                       <button
                         key={index}
                         onClick={() => toggleTempDay(index)}
-                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all ${isSelected ? 'bg-icsn-teal text-white shadow-sm ring-2 ring-offset-1 ring-icsn-teal' : 'bg-white text-slate-400 border border-slate-200 hover:bg-slate-100'
+                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all ${isSelected ? 'bg-icsn-teal text-white shadow-sm ring-2 ring-offset-1 ring-icsn-teal' : 'bg-white text-muted-foreground/70 border border-border hover:bg-muted'
                           }`}
                         title={dayName}
                       >
@@ -456,28 +453,28 @@ export function AdminHolidays() {
               </div>
 
               {/* 2. Date Range Override Config */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
+              <div className="bg-white border border-border rounded-2xl p-4 sm:p-5 shadow-sm">
                 <h4 className="font-bold text-icsn-navy mb-4 flex items-center gap-2">
                   <CalendarX className="w-5 h-5" />
                   ตั้งค่าวันหยุดพิเศษ / เปิดพิเศษ (Macro)
                 </h4>
 
-                <div className="flex bg-slate-100 p-1 rounded-lg mb-4">
+                <div className="flex bg-muted p-1 rounded-lg mb-4">
                   <button
                     onClick={() => { setSelectionMode('single'); setMultiDates([]); setRangeStart(''); setRangeEnd(''); setIsPickingRangeEnd(false); }}
-                    className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${selectionMode === 'single' ? 'bg-white text-icsn-navy shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${selectionMode === 'single' ? 'bg-white text-icsn-navy shadow-sm' : 'text-muted-foreground hover:text-foreground/90'}`}
                   >
                     เลือกวันเดียว (Single)
                   </button>
                   <button
                     onClick={() => { setSelectionMode('range'); setMultiDates([]); setRangeStart(''); setRangeEnd(''); setIsPickingRangeEnd(false); }}
-                    className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${selectionMode === 'range' ? 'bg-white text-icsn-navy shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${selectionMode === 'range' ? 'bg-white text-icsn-navy shadow-sm' : 'text-muted-foreground hover:text-foreground/90'}`}
                   >
                     เลือกแบบช่วง (Range)
                   </button>
                   <button
                     onClick={() => { setSelectionMode('multi'); setMultiDates([]); setRangeStart(''); setRangeEnd(''); setIsPickingRangeEnd(false); }}
-                    className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${selectionMode === 'multi' ? 'bg-white text-icsn-navy shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${selectionMode === 'multi' ? 'bg-white text-icsn-navy shadow-sm' : 'text-muted-foreground hover:text-foreground/90'}`}
                   >
                     เลือกทีละวัน (Multi)
                   </button>
@@ -486,8 +483,8 @@ export function AdminHolidays() {
                 {selectionMode === 'single' ? (
                   <div className="mb-4">
                     <AdminFieldLabel>วันที่เลือก</AdminFieldLabel>
-                    <div className="min-h-[42px] px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center text-sm font-bold text-icsn-navy">
-                      {rangeStart ? formatDisplayDateStr(rangeStart) : <span className="text-slate-400 font-normal">คลิกที่ปฏิทินเพื่อเลือกวัน</span>}
+                    <div className="min-h-[42px] px-3 py-2 bg-muted/50 border border-border rounded-xl flex items-center justify-center text-sm font-bold text-icsn-navy">
+                      {rangeStart ? formatDisplayDateStr(rangeStart) : <span className="text-muted-foreground/70 font-normal">คลิกที่ปฏิทินเพื่อเลือกวัน</span>}
                     </div>
                   </div>
                 ) : selectionMode === 'range' ? (
@@ -507,7 +504,7 @@ export function AdminHolidays() {
                             setRangeStart(e.target.value);
                             if (e.target.value > rangeEnd) setRangeEnd(e.target.value);
                           }}
-                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:border-transparent transition-all text-sm"
+                          className="w-full px-3 py-2 bg-muted/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:border-transparent transition-all text-sm"
                         />
                       </div>
                       <div>
@@ -517,7 +514,7 @@ export function AdminHolidays() {
                           value={rangeEnd}
                           min={rangeStart}
                           onChange={e => setRangeEnd(e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:border-transparent transition-all text-sm"
+                          className="w-full px-3 py-2 bg-muted/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:border-transparent transition-all text-sm"
                         />
                       </div>
                     </div>
@@ -525,7 +522,7 @@ export function AdminHolidays() {
                 ) : (
                   <div className="mb-4">
                     <AdminFieldLabel>วันที่เลือก ({multiDates.length} วัน)</AdminFieldLabel>
-                    <div className="min-h-[42px] p-2 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap gap-1">
+                    <div className="min-h-[42px] p-2 bg-muted/50 border border-border rounded-xl flex flex-wrap gap-1">
                       {multiDates.length > 0 ? multiDates.map(d => (
                         <span key={d} className="bg-icsn-navy text-white text-[10px] font-bold px-2 py-1 rounded-md flex items-center gap-1">
                           {formatDisplayDateStr(d)}
@@ -534,17 +531,17 @@ export function AdminHolidays() {
                           </button>
                         </span>
                       )) : (
-                        <span className="text-sm text-slate-400 p-1">คลิกที่ปฏิทินเพื่อเลือกวัน</span>
+                        <span className="text-sm text-muted-foreground/70 p-1">คลิกที่ปฏิทินเพื่อเลือกวัน</span>
                       )}
                     </div>
                   </div>
                 )}
-                <div className="flex bg-slate-100 p-1 rounded-lg">
+                <div className="flex bg-muted p-1 rounded-lg">
                   <button
                     onClick={() => setOverrideStatus('closed')}
                     className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${overrideStatus === 'closed'
-                        ? 'bg-white text-error shadow-sm ring-1 ring-slate-200'
-                        : 'text-slate-500 hover:text-slate-700'
+                        ? 'bg-white text-error shadow-sm ring-1 ring-border'
+                        : 'text-muted-foreground hover:text-foreground/90'
                       }`}
                   >
                     ปิดรับจอง
@@ -552,8 +549,8 @@ export function AdminHolidays() {
                   <button
                     onClick={() => setOverrideStatus('open')}
                     className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${overrideStatus === 'open'
-                        ? 'bg-white text-success shadow-sm ring-1 ring-slate-200'
-                        : 'text-slate-500 hover:text-slate-700'
+                        ? 'bg-white text-success shadow-sm ring-1 ring-border'
+                        : 'text-muted-foreground hover:text-foreground/90'
                       }`}
                   >
                     บังคับเปิด
@@ -561,8 +558,8 @@ export function AdminHolidays() {
                   <button
                     onClick={() => { setOverrideStatus('reset'); setOverrideReason(''); }}
                     className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${overrideStatus === 'reset'
-                        ? 'bg-white text-slate-700 shadow-sm ring-1 ring-slate-200'
-                        : 'text-slate-500 hover:text-slate-700'
+                        ? 'bg-white text-foreground/90 shadow-sm ring-1 ring-border'
+                        : 'text-muted-foreground hover:text-foreground/90'
                       }`}
                   >
                     ยกเลิกค่า (Reset)
@@ -576,7 +573,7 @@ export function AdminHolidays() {
                       value={overrideReason}
                       onChange={e => setOverrideReason(e.target.value)}
                       placeholder="สาเหตุการปิด (เช่น ปิดเทอมซัมเมอร์)"
-                      className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-1 focus:ring-icsn-teal outline-none"
+                      className="w-full px-3 py-2 text-sm bg-muted/50 border border-border/80 rounded-lg focus:ring-1 focus:ring-icsn-teal outline-none"
                     />
                   </div>
                 )}
@@ -599,7 +596,7 @@ export function AdminHolidays() {
                 (selectionMode === 'multi' && multiDates.length === 1)) && (() => {
                   const targetDate = selectionMode === 'multi' ? multiDates[0] : rangeStart;
                   return (
-                    <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm animate-in fade-in slide-in-from-top-2">
+                    <div className="bg-white border border-border rounded-2xl p-4 sm:p-5 shadow-sm animate-in fade-in slide-in-from-top-2">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-icsn-navy" />
@@ -608,8 +605,8 @@ export function AdminHolidays() {
                       </div>
 
                       {sessions.filter(s => s.session_date === targetDate).length === 0 ? (
-                        <div className="text-center py-6 bg-slate-50 rounded-xl border border-slate-100">
-                          <p className="text-sm text-slate-500 mb-3">ยังไม่มีการสร้างรอบเวลาเรียนสำหรับวันนี้</p>
+                        <div className="text-center py-6 bg-muted/50 rounded-xl border border-border/50">
+                          <p className="text-sm text-muted-foreground mb-3">ยังไม่มีการสร้างรอบเวลาเรียนสำหรับวันนี้</p>
                           <button
                             onClick={async () => {
                               try {
@@ -633,7 +630,7 @@ export function AdminHolidays() {
                             .filter(s => s.session_date === targetDate)
                             .sort((a, b) => (a.time_label ?? '').localeCompare(b.time_label ?? ''))
                             .map(session => (
-                              <div key={session.id} className={`p-3 border rounded-xl flex items-center justify-between transition-colors ${session.is_active ? 'border-slate-200 bg-white' : 'border-error/20 bg-error/5'
+                              <div key={session.id} className={`p-3 border rounded-xl flex items-center justify-between transition-colors ${session.is_active ? 'border-border bg-white' : 'border-error/20 bg-error/5'
                                 }`}>
                                 <div className="flex items-center gap-3">
                                   <div className="text-sm font-bold text-icsn-navy">
@@ -647,8 +644,8 @@ export function AdminHolidays() {
                                 </div>
 
                                 <div className="flex items-center gap-3">
-                                  <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
-                                    <span className="text-xs text-slate-500">รับ:</span>
+                                  <div className="flex items-center gap-2 bg-muted/50 border border-border rounded-lg px-2 py-1">
+                                    <span className="text-xs text-muted-foreground">รับ:</span>
                                     <input
                                       type="number"
                                       defaultValue={session.total_capacity}
@@ -668,7 +665,7 @@ export function AdminHolidays() {
                                       disabled={!session.is_active}
                                       className="w-12 text-sm font-bold text-center bg-transparent outline-none disabled:opacity-50"
                                     />
-                                    <span className="text-xs text-slate-500">คน</span>
+                                    <span className="text-xs text-muted-foreground">คน</span>
                                   </div>
 
                                   <button
@@ -682,7 +679,7 @@ export function AdminHolidays() {
                                       }
                                     }}
                                     className={`p-1.5 rounded-md transition-colors ${session.is_active
-                                        ? 'text-slate-400 hover:text-error hover:bg-error/10'
+                                        ? 'text-muted-foreground/70 hover:text-error hover:bg-error/10'
                                         : 'text-error hover:text-success hover:bg-success/10'
                                       }`}
                                     title={session.is_active ? "คลิกเพื่อปิดรับจอง" : "คลิกเพื่อเปิดรับจอง"}
@@ -699,8 +696,8 @@ export function AdminHolidays() {
                 })()}
 
               {/* 4. Upcoming Closures List */}
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[300px]">
-                <div className="p-3 sm:p-4 border-b border-slate-200 bg-slate-50">
+              <div className="bg-white border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col h-[300px]">
+                <div className="p-3 sm:p-4 border-b border-border bg-muted/50">
                   <h4 className="font-bold text-icsn-navy text-sm flex items-center justify-between">
                     รายการการตั้งค่าพิเศษที่กำลังจะมาถึง
                     <span className="bg-icsn-navy text-white text-[10px] px-2 py-0.5 rounded-full">
@@ -710,19 +707,19 @@ export function AdminHolidays() {
                 </div>
                 <div className="overflow-y-auto flex-1 p-2">
                   {upcomingClosures.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-slate-400 text-sm">
+                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground/70 text-sm">
                       <CalendarX className="w-8 h-8 mb-2 opacity-50" />
                       ไม่มีรายการตั้งค่าพิเศษ
                     </div>
                   ) : (
                     <div className="space-y-2">
                       {upcomingClosures.map(c => (
-                        <div key={c.id} className="p-3 border border-slate-100 bg-slate-50/50 rounded-lg flex items-center justify-between hover:bg-slate-50 hover:border-slate-200 transition-colors group">
+                        <div key={c.id} className="p-3 border border-border/50 bg-muted/50/50 rounded-lg flex items-center justify-between hover:bg-muted/50 hover:border-border transition-colors group">
                           <div>
                             <p className={`font-bold text-sm ${c.is_force_open ? 'text-success' : 'text-error'}`}>
                               {c.is_force_open ? 'เปิดพิเศษ' : (c.reason || 'วันหยุด')}
                             </p>
-                            <p className="text-xs text-slate-500 mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                               {c.start_date === c.end_date
                                 ? formatDisplayDateStr(c.start_date)
                                 : `${formatDisplayDateStr(c.start_date)} - ${formatDisplayDateStr(c.end_date)}`}
@@ -730,7 +727,7 @@ export function AdminHolidays() {
                           </div>
                           <button
                             onClick={() => handleDeleteClosure(c.id)}
-                            className="p-1.5 text-slate-400 hover:text-error hover:bg-error/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+                            className="p-1.5 text-muted-foreground/70 hover:text-error hover:bg-error/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"
                             title="ลบรายการนี้"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -749,16 +746,16 @@ export function AdminHolidays() {
 
       {/* Delete Confirmation Modal */}
       {deleteTargetId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-icsn-navy/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-bold text-slate-900 mb-2">ยืนยันการลบการตั้งค่า</h3>
-            <p className="text-slate-500 mb-6 text-sm">
+            <h3 className="text-lg font-bold text-foreground mb-2">ยืนยันการลบการตั้งค่า</h3>
+            <p className="text-muted-foreground mb-6 text-sm">
               คุณต้องการยกเลิกการตั้งค่าวันหยุด/เปิดพิเศษนี้ใช่หรือไม่?
             </p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setDeleteTargetId(null)}
-                className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-foreground/80 bg-muted hover:bg-muted/80 rounded-lg transition-colors"
               >
                 ยกเลิก
               </button>

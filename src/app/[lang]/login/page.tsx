@@ -39,10 +39,10 @@ function LoginFormContent() {
           <LanguageSwitcher />
         </div>
         <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
-        <div className="inline-flex items-center justify-center w-14 sm:w-16 h-auto mb-1 relative z-10">
-          <Image src="/white-main-logo-icsn.png" alt="ICSN Logo" width={64} height={64} className="w-full h-auto object-contain drop-shadow-md" style={{ width: 'auto', height: 'auto' }} priority />
+        <div className="inline-flex items-center justify-center mx-auto w-16 sm:w-18 h-auto mb-1 relative z-10 animate-fade-in">
+          <Image src="/white-main-logo-icsn.png" alt="ICSN Logo" width={72} height={72} className="w-full h-auto object-contain drop-shadow-md" priority />
         </div>
-        <h1 className="text-lg sm:text-xl font-bold tracking-tight relative z-10 text-white drop-shadow-md">
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight relative z-10 text-white drop-shadow-md">
           {dict.common.brandName}
         </h1>
       </div>

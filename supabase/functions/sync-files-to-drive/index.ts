@@ -26,12 +26,22 @@ async function blobToBase64(blob: Blob): Promise<string> {
   return btoa(binary);
 }
 
-async function uploadToGasWebhook(blob: Blob, fileName: string, parentFolderName: string, gasWebhookUrl: string, driveParentFolderId?: string) {
+async function uploadToGasWebhook(
+  blob: Blob, 
+  fileName: string, 
+  parentFolderName: string, 
+  subFolderName: string,
+  parentPhone: string,
+  gasWebhookUrl: string, 
+  driveParentFolderId?: string
+) {
   const base64Data = await blobToBase64(blob);
   const payload = {
     action: 'sync_file',
     driveParentFolderId: driveParentFolderId || '',
     parentFolderName,
+    subFolderName,
+    parentPhone,
     fileName,
     mimeType: blob.type || 'application/octet-stream',
     base64Data
@@ -52,6 +62,69 @@ async function uploadToGasWebhook(blob: Blob, fileName: string, parentFolderName
     throw new Error(`GAS Error: ${data.error}`);
   }
   return data;
+}
+
+// Helpers for Date Formatting (DD-MM-YYYY)
+function getFormattedDateStr(date: Date): string {
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = date.getFullYear();
+  return `${d}-${m}-${y}`;
+}
+
+function getFormattedTimeStr(date: Date): string {
+  const h = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  const s = String(date.getSeconds()).padStart(2, '0');
+  return `${h}${min}${s}`;
+}
+
+async function resolveFolderInfo(table: string, record: any, supabase: any) {
+  let folderName = 'Unknown Parent';
+  let parentPhone = '';
+  let childNickname = '';
+
+  if (record.parent_id) {
+    const { data: parent } = await supabase
+      .from('parents')
+      .select('name, phone, children(nickname)')
+      .eq('id', record.parent_id)
+      .single();
+      
+    if (parent) {
+      parentPhone = parent.phone || '';
+      const childNicknames = parent.children?.map((c: any) => c.nickname).filter(Boolean).join(', ');
+      const childStr = childNicknames ? ` (${childNicknames})` : '';
+      folderName = `${parent.name}${childStr} ${parentPhone}`.trim();
+      
+      if (table === 'children') {
+        const fn = record.full_name ? record.full_name.trim() : '';
+        const nn = record.nickname ? record.nickname.trim() : '';
+        if (fn && nn) childNickname = `${fn} (${nn})`;
+        else if (fn) childNickname = fn;
+        else if (nn) childNickname = nn;
+      }
+    }
+  } else if (table === 'bookings' && record.child_id) {
+    const { data: child } = await supabase
+      .from('children')
+      .select('nickname, full_name, parents(id, name, phone)')
+      .eq('id', record.child_id)
+      .single();
+      
+    if (child && child.parents) {
+      parentPhone = child.parents.phone || '';
+      const fn = child.full_name ? child.full_name.trim() : '';
+      const nn = child.nickname ? child.nickname.trim() : '';
+      if (fn && nn) childNickname = `${fn} (${nn})`;
+      else if (fn) childNickname = fn;
+      else if (nn) childNickname = nn;
+      
+      folderName = `${child.parents.name} (${child.nickname}) ${parentPhone}`.trim();
+    }
+  }
+
+  return { folderName, parentPhone, childNickname };
 }
 
 Deno.serve(async (req) => {
@@ -75,15 +148,17 @@ Deno.serve(async (req) => {
       return new Response('Ignored', { status: 200 });
     }
     
-    // For UPDATEs, only process if the file URL changed OR status changed to approved
-    if (type === 'UPDATE') {
-      const fileUrlChanged = record.file_url !== old_record?.file_url;
-      const justApproved = record.status === 'approved' && old_record?.status !== 'approved';
-      
-      if (table === 'slip_uploads' && !fileUrlChanged && !justApproved) {
-        return new Response('Ignored', { status: 200 });
+    if (table === 'slip_uploads') {
+      if (type === 'INSERT') {
+        return new Response('Ignored - Slips only uploaded upon approval', { status: 200 });
       }
-      
+      if (type === 'UPDATE') {
+        const justApproved = record.status === 'approved' && old_record?.status !== 'approved';
+        if (!justApproved) {
+          return new Response('Ignored - Slip status did not change to approved', { status: 200 });
+        }
+      }
+    } else if (type === 'UPDATE') {
       if (table === 'children' && record.photo_url === old_record?.photo_url && record.parent_photo_url === old_record?.parent_photo_url) {
         return new Response('Ignored', { status: 200 });
       }
@@ -94,32 +169,7 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    let folderName = 'Unknown Parent';
-    if (record.parent_id) {
-      const { data: parent } = await supabase
-        .from('parents')
-        .select('name, phone, children(nickname)')
-        .eq('id', record.parent_id)
-        .single();
-        
-      if (parent) {
-        const childNicknames = parent.children?.map((c: any) => c.nickname).filter(Boolean).join(', ');
-        const childStr = childNicknames ? ` (น้อง${childNicknames})` : '';
-        folderName = `${parent.name}${childStr} ${parent.phone || ''}`.trim();
-      }
-    } else if (table === 'bookings' && record.child_id) {
-      // For bookings, we might not have parent_id directly on the record, so fetch via child
-      const { data: child } = await supabase
-        .from('children')
-        .select('nickname, parents(id, name, phone)')
-        .eq('id', record.child_id)
-        .single();
-        
-      if (child && child.parents) {
-        folderName = `${child.parents.name} (น้อง${child.nickname}) ${child.parents.phone || ''}`.trim();
-      }
-    }
+    const { folderName, parentPhone, childNickname } = await resolveFolderInfo(table, record, supabase);
 
     const driveParentFolderId = Deno.env.get('DRIVE_PARENT_FOLDER_ID') || undefined;
 
@@ -131,11 +181,10 @@ Deno.serve(async (req) => {
       const blob = await res.blob();
       const ext = record.file_url.split('?')[0].split('.').pop() || 'jpg';
       const createdAt = new Date(record.created_at || new Date());
-      const dateStr = createdAt.toISOString().split('T')[0];
-      const timeStr = createdAt.toISOString().split('T')[1].split('.')[0].replace(/:/g, '');
-      const fileName = `สลิปโอนเงิน_${dateStr}_${timeStr}.${ext}`;
+      const dateStr = getFormattedDateStr(createdAt);
+      const fileName = `slip_${dateStr}.${ext}`;
       
-      await uploadToGasWebhook(blob, fileName, folderName, gasWebhookUrl, driveParentFolderId);
+      await uploadToGasWebhook(blob, fileName, folderName, 'สลิป', parentPhone, gasWebhookUrl, driveParentFolderId);
       console.log(`Synced slip ${record.id} to folder: ${folderName}`);
     } 
     else if (table === 'children') {
@@ -146,8 +195,10 @@ Deno.serve(async (req) => {
           const blob = await res.blob();
           const ext = record.photo_url.split('?')[0].split('.').pop() || 'jpg';
           const createdAt = new Date(record.created_at || new Date());
-          const dateStr = createdAt.toISOString().split('T')[0];
-          await uploadToGasWebhook(blob, `รูปโปรไฟล์เด็ก_${dateStr}.${ext}`, folderName, gasWebhookUrl, driveParentFolderId);
+          const dateStr = getFormattedDateStr(createdAt);
+          const fileName = `profile_${dateStr}.${ext}`;
+          
+          await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl, driveParentFolderId);
         }
       }
       
@@ -158,8 +209,10 @@ Deno.serve(async (req) => {
           const blob = await res.blob();
           const ext = record.parent_photo_url.split('?')[0].split('.').pop() || 'jpg';
           const createdAt = new Date(record.created_at || new Date());
-          const dateStr = createdAt.toISOString().split('T')[0];
-          await uploadToGasWebhook(blob, `รูปโปรไฟล์ผู้ปกครอง_${dateStr}.${ext}`, folderName, gasWebhookUrl, driveParentFolderId);
+          const dateStr = getFormattedDateStr(createdAt);
+          const fileName = `parent_profile_${dateStr}.${ext}`;
+          
+          await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl, driveParentFolderId);
         }
       }
       console.log(`Synced child photos for ${record.id} to folder: ${folderName}`);
@@ -172,11 +225,11 @@ Deno.serve(async (req) => {
       const blob = await res.blob();
       const ext = record.signature_url.split('?')[0].split('.').pop() || 'png';
       const checkinDate = record.checkin_at ? new Date(record.checkin_at) : new Date();
-      const dateStr = checkinDate.toISOString().split('T')[0];
-      const timeStr = checkinDate.toISOString().split('T')[1].split('.')[0].replace(/:/g, '');
-      const fileName = `ลายเซ็นเช็คอิน_${dateStr}_${timeStr}.${ext}`;
+      const dateStr = getFormattedDateStr(checkinDate);
+      const timeStr = getFormattedTimeStr(checkinDate);
+      const fileName = `signature_${dateStr}_${timeStr}.${ext}`;
       
-      await uploadToGasWebhook(blob, fileName, folderName, gasWebhookUrl, driveParentFolderId);
+      await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl, driveParentFolderId);
       console.log(`Synced signature for booking ${record.id} to folder: ${folderName}`);
     }
 

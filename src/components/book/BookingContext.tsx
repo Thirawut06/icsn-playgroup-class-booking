@@ -7,6 +7,23 @@ import type { Child, Package, Session, PackageOption, Booking } from '@/types';
 import type { SystemSettings } from '@/lib/services/settings.service';
 import { STORAGE_KEYS } from '@/config/constants';
 
+const bookCache: Record<string, any> = {};
+
+function useCachedState<T>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
+  const [state, setState] = useState<T>(() => {
+    if (key in bookCache) {
+      return bookCache[key];
+    }
+    return defaultValue;
+  });
+
+  useEffect(() => {
+    bookCache[key] = state;
+  }, [key, state]);
+
+  return [state, setState];
+}
+
 interface BookingContextValue {
   parentId: string;
   parentName: string;
@@ -21,8 +38,9 @@ interface BookingContextValue {
   loading: boolean;
   selectedChildId: string;
   setSelectedChildId: (id: string) => void;
-  refreshData: () => Promise<void>;
+  refreshData: (showLoading?: boolean) => Promise<void>;
   mergeSessionsForDate: (dateStr: string, updatedSessions: Session[]) => void;
+  hasPendingSlip: boolean;
 }
 
 const BookingContext = createContext<BookingContextValue | undefined>(undefined);
@@ -30,21 +48,35 @@ const BookingContext = createContext<BookingContextValue | undefined>(undefined)
 export function BookingProvider({ children: reactChildren }: { children: React.ReactNode }) {
   const router = useRouter();
   
-  const [parentId, setParentId] = useState('');
-  const [parentName, setParentName] = useState('');
-  const [creditsRemaining, setCreditsRemaining] = useState(0);
-  const [children, setChildren] = useState<Child[]>([]);
-  const [packages, setPackages] = useState<Package[]>([]);
-  const [paymentPackages, setPaymentPackages] = useState<PackageOption[]>([]);
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [myBookings, setMyBookings] = useState<Booking[]>([]);
-  const [closures, setClosures] = useState<import('@/types').SchoolClosure[]>([]);
-  const [settings, setSettings] = useState<SystemSettings | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedChildId, setSelectedChildId] = useState('');
+  const [parentId, setParentId] = useCachedState('book_parentId', '');
+  const [parentName, setParentName] = useCachedState('book_parentName', '');
+  const [creditsRemaining, setCreditsRemaining] = useCachedState('book_creditsRemaining', 0);
+  const [children, setChildren] = useCachedState<Child[]>('book_children', []);
+  const [packages, setPackages] = useCachedState<Package[]>('book_packages', []);
+  const [paymentPackages, setPaymentPackages] = useCachedState<PackageOption[]>('book_paymentPackages', []);
+  const [sessions, setSessions] = useCachedState<Session[]>('book_sessions', []);
+  const [myBookings, setMyBookings] = useCachedState<Booking[]>('book_myBookings', []);
+  const [closures, setClosures] = useCachedState<import('@/types').SchoolClosure[]>('book_closures', []);
+  const [settings, setSettings] = useCachedState<SystemSettings | null>('book_settings', null);
+  const [loading, setLoading] = useCachedState('book_loading', true);
+  const [selectedChildId, setSelectedChildId] = useCachedState('book_selectedChildId', '');
+  const [hasPendingSlip, setHasPendingSlip] = useCachedState('book_hasPendingSlip', false);
 
-  const loadData = async (pId: string) => {
-    setLoading(true);
+  const checkPendingSlips = async (pId: string) => {
+    try {
+      const { data } = await supabase
+        .from('slip_uploads')
+        .select('id')
+        .eq('parent_id', pId)
+        .eq('status', 'pending');
+      setHasPendingSlip((data || []).length > 0);
+    } catch (e) {
+      console.error('Error checking pending slips:', e);
+    }
+  };
+
+  const loadData = async (pId: string, showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const parent = await ParentService.getParentDetails(pId);
       if (parent) {
@@ -77,10 +109,12 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
 
       const sysSettings = await SettingsService.getAllSettings();
       setSettings(sysSettings);
+
+      await checkPendingSlips(pId);
     } catch (e) {
       console.error(e);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -91,9 +125,37 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
         return;
       }
       setParentId(user.id);
-      loadData(user.id);
+      
+      // If we already have this user cached, do a background fetch without showing the loading screen
+      const hasCache = bookCache['book_parentId'] === user.id;
+      loadData(user.id, !hasCache);
     });
   }, [router]);
+
+  useEffect(() => {
+    if (!parentId) return;
+
+    const channel = supabase
+      .channel('realtime-slips')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'slip_uploads',
+          filter: `parent_id=eq.${parentId}`
+        },
+        () => {
+          checkPendingSlips(parentId);
+          loadData(parentId, false);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [parentId]);
 
   return (
     <BookingContext.Provider
@@ -111,13 +173,14 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
         loading,
         selectedChildId,
         setSelectedChildId,
-  refreshData: () => loadData(parentId),
+  refreshData: (showLoading = true) => loadData(parentId, showLoading),
   mergeSessionsForDate: (dateStr: string, updatedSessions: Session[]) => {
     setSessions(prev => [
       ...prev.filter(s => s.session_date !== dateStr),
       ...updatedSessions,
     ]);
   },
+  hasPendingSlip,
       }}
     >
       {reactChildren}

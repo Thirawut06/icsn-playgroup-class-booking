@@ -200,14 +200,14 @@ export function AdminPackages() {
                       <div className="flex items-center justify-end gap-2">
                         <button 
                           onClick={() => startEdit(pkg)} 
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold text-blue-600 hover:bg-blue-50 transition-colors border border-transparent hover:border-blue-200"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold text-info hover:bg-info/10 transition-colors border border-transparent hover:border-info/30"
                         >
                           <Edit2 className="w-4 h-4" /> แก้ไข
                         </button>
                         <button 
                           onClick={() => deletePackage(pkg)} 
                           disabled={isProcessing} 
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50 transition-colors border border-transparent hover:border-red-200 disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold text-error hover:bg-error/10 transition-colors border border-transparent hover:border-error/30 disabled:opacity-50"
                         >
                           <Trash2 className="w-4 h-4" /> ลบ
                         </button>

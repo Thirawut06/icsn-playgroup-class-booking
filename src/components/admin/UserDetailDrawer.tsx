@@ -135,7 +135,7 @@ export function UserDetailDrawer({ parentId, isOpen, onClose }: UserDetailDrawer
                           {child.photo_url ? (
                             <img src={child.photo_url} alt="Child" className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-lg border-2 border-white shadow-sm">
+                            <div className="w-12 h-12 rounded-full bg-info/20 text-info flex items-center justify-center font-bold text-lg border-2 border-white shadow-sm">
                               {child.nickname?.[0]?.toUpperCase()}
                             </div>
                           )}

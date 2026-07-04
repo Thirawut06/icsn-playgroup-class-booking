@@ -64,13 +64,14 @@ export function ChildInfoSection({
         <>
           <div>
             <label className="block mb-1.5">
-              <span className="text-base font-bold text-foreground">{dict.apply.allergy}</span>
+              <span className="text-base font-bold text-foreground">{dict.apply.allergy} <span className="text-error">*</span></span>
             </label>
             <Input
               type="text"
               value={allergy}
               onChange={(e) => setAllergy(e.target.value)}
               placeholder={dict.apply.allergyPlaceholder}
+              required
               className="w-full h-12 rounded-xl bg-muted/50"
             />
           </div>

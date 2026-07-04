@@ -4,6 +4,7 @@ import { PackageService } from '@/lib/supabase';
 import { FILE_UPLOAD } from '@/config/constants';
 import type { PackageOption } from '@/types';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
+import { useBookingContext } from './BookingContext';
 
 interface TopUpModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ interface TopUpModalProps {
 
 export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUpModalProps) {
   const { dict } = useDictionary();
+  const { refreshData } = useBookingContext();
   const [packageType, setPackageType] = useState('');
   const [paymentSlipData, setPaymentSlipData] = useState('');
   const [paymentSlipFile, setPaymentSlipFile] = useState<File | null>(null);
@@ -57,6 +59,7 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
     
     try {
       await PackageService.submitTopUp(parentId, packageType, paymentSlipFile, true);
+      await refreshData(false);
       setShowSuccess(true);
     } catch (e: any) {
       setErrorMsg(e.message || dict.apply.genericError);
@@ -121,7 +124,7 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
               </p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <p className="text-sm font-medium text-muted-foreground">
                 {dict.topUp.title}
               </p>
@@ -149,9 +152,7 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
 
               <div>
                 <label className="block text-sm font-bold text-foreground mb-2">{dict.topUp.paymentMethod} <span className="text-error">*</span></label>
-                <div className="bg-muted p-4 rounded-xl border border-border">
-                  <img src="/New_Kbank_QR_acc-no.png" alt="Payment details" className="w-full max-w-[280px] mx-auto rounded-lg shadow-sm" />
-                </div>
+                <img src="/New_Kbank_QR_acc-no.png" alt="Payment details" className="w-full rounded-xl shadow-md" />
               </div>
 
               <div>

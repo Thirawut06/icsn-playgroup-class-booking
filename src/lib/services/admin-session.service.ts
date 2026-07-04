@@ -2,6 +2,7 @@ import { supabase } from '../supabase';
 import { Session } from '../../types';
 import { CLASS_CONFIG } from '@/config/constants';
 import { AppError } from '../utils';
+import { sessionModule } from '../domain';
 
 export const AdminSessionService = {
   async getSessionForDate(dateStr: string, timeLabel: string = CLASS_CONFIG.DEFAULT_TIME_LABEL): Promise<Session | null> {
@@ -53,6 +54,15 @@ export const AdminSessionService = {
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
   },
 
+  async bulkReopenSpecificDays(dates: string[]): Promise<void> {
+    if (dates.length === 0) return;
+    const { error } = await supabase
+      .from('sessions')
+      .update({ is_active: true, theme: null })
+      .in('session_date', dates);
+    if (error) throw new AppError(error.message || 'Failed to update sessions', error.code, error);
+  },
+
   async deleteSchoolClosure(id: string): Promise<void> {
     const { data, error } = await supabase.rpc('delete_school_closure', {
       p_closure_id: id
@@ -77,19 +87,11 @@ export const AdminSessionService = {
   },
 
   async toggleSessionActive(sessionId: string, isActive: boolean): Promise<void> {
-    const { error } = await supabase
-      .from('sessions')
-      .update({ is_active: isActive })
-      .eq('id', sessionId);
-    if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
+    await sessionModule.toggleSessionActive(sessionId, isActive);
   },
 
   async updateSessionCapacity(sessionId: string, totalCapacity: number): Promise<void> {
-    const { error } = await supabase
-      .from('sessions')
-      .update({ total_capacity: totalCapacity })
-      .eq('id', sessionId);
-    if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
+    await sessionModule.updateSessionCapacity(sessionId, totalCapacity);
   },
 
   async getSessionTemplates() {

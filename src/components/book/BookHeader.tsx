@@ -28,7 +28,7 @@ export function BookHeader({ parentName, creditsRemaining, parentPhotoUrl, onLog
               <h1 className="font-bold text-icsn-navy text-base leading-tight">
                 {dict.common.brandName}
               </h1>
-              <p className="text-xs text-icsn-teal font-bold tracking-wider">
+              <p className="text-xs text-icsn-teal font-medium">
                 {dict.common.tagline}
               </p>
             </div>
@@ -64,10 +64,10 @@ export function BookHeader({ parentName, creditsRemaining, parentPhotoUrl, onLog
 
           {/* Name + Credits */}
           <div className="min-w-0">
-            <p className="text-base font-bold text-icsn-navy truncate leading-tight">
+            <p className="text-base font-bold text-icsn-navy truncate leading-normal mb-0.5">
               {parentName || dict.book.parentFallback}
             </p>
-            <p className="text-sm text-muted-foreground leading-tight">
+            <p className="text-sm text-muted-foreground leading-normal">
               {dict.book.creditsRemaining}{' '}
               <span className="font-black text-icsn-teal">{creditsRemaining}</span>
               {' '}{dict.common.creditsUnit}

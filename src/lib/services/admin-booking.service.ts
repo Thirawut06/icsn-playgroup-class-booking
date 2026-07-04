@@ -19,7 +19,15 @@ export const AdminBookingService = {
     return data;
   },
 
-  async adminProcessWalkin(phone: string, childId: string | null, childName: string, sessionId: string, paymentType: 'deduct' | 'paid' | 'trial' | 'paid_package', packageName?: string): Promise<any> {
+  async adminProcessWalkin(options: {
+    phone: string;
+    childId: string | null;
+    childName: string;
+    sessionId: string;
+    paymentType: 'deduct' | 'paid' | 'trial' | 'paid_package';
+    packageName?: string;
+  }): Promise<any> {
+    const { phone, childId, childName, sessionId, paymentType, packageName } = options;
     const { data, error } = await supabase.rpc('admin_process_walkin', {
       p_phone: phone,
       p_child_id: childId,

@@ -70,7 +70,7 @@ export function PaymentSection({
           type="file"
           accept="image/*,.heic,.heif"
           onChange={(e) => handleFile(e, setPaymentSlipData as any, setPaymentSlipFile as any)}
-          required
+          required={!paymentSlipData}
           className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-icsn-pink/10 file:text-icsn-pink hover:file:bg-icsn-pink/20 border border-border rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
         />
         <span className="block text-xs text-muted-foreground/70 mb-2">{dict.apply.uploadLimit}</span>
