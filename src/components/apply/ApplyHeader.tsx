@@ -16,43 +16,41 @@ export function ApplyHeader({ showSuccess, path, setPath }: ApplyHeaderProps) {
   const { dict, lang } = useDictionary();
 
   return (
-    <>
-      <div 
-        className="w-full aspect-[2000/560] relative overflow-hidden bg-cover bg-center bg-[#00adb7]"
-        style={{ backgroundImage: 'url("/playgroup-banner-icsn.png")' }}
-      >
-        <div className="absolute top-3 right-3 z-20">
-          <LanguageSwitcher />
-        </div>
+    <div 
+      className="bg-[#00adb7] w-full aspect-[16/9] text-white text-center relative overflow-hidden bg-cover bg-center flex flex-col items-center justify-center"
+      style={{ backgroundImage: 'url("/playgroup-banner-icsn.png")' }}
+    >
+      <div className="absolute inset-0 bg-[#00adb7]/60 pointer-events-none"></div>
 
-        {(!showSuccess && path) ? (
-          <button onClick={() => setPath(null)} className="absolute top-4 left-4 z-20 text-white bg-black/30 hover:bg-black/50 p-1.5 rounded-full cursor-pointer transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        ) : (
-          <button onClick={() => {
-            if (typeof window !== 'undefined' && localStorage.getItem('icsn_parent_id')) {
-              router.push(ROUTES.BOOK(lang));
-            } else {
-              router.push(ROUTES.HOME(lang));
-            }
-          }} className="absolute top-4 left-4 z-20 text-white bg-black/30 hover:bg-black/50 p-1.5 rounded-full cursor-pointer transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        )}
+      <div className="absolute top-3 right-3 z-20">
+        <LanguageSwitcher />
       </div>
 
-      <div className="flex flex-col items-center pt-6 pb-2 text-center px-4 border-b border-border">
-        <div className="w-14 sm:w-16 h-auto mb-2">
-          <img src="/main-logo-icsn.png" alt="ICSN Logo" className="w-full h-auto object-contain" />
-        </div>
-        <h1 className="text-lg sm:text-xl font-bold text-icsn-navy leading-tight">
-          {dict.common.brandName}
-        </h1>
-        <p className="text-xs sm:text-sm font-semibold text-muted-foreground mt-0.5">
-          {dict.apply.headerSubtitle}
-        </p>
+      {(!showSuccess && path) ? (
+        <button onClick={() => setPath(null)} className="absolute top-4 left-4 z-20 text-white hover:text-muted-foreground cursor-pointer">
+          <ArrowLeft className="w-6 h-6" />
+        </button>
+      ) : (
+        <button onClick={() => {
+          if (typeof window !== 'undefined' && localStorage.getItem('icsn_parent_id')) {
+            router.push(ROUTES.BOOK(lang));
+          } else {
+            router.push(ROUTES.HOME(lang));
+          }
+        }} className="absolute top-4 left-4 z-20 text-white hover:text-muted-foreground cursor-pointer">
+          <ArrowLeft className="w-6 h-6" />
+        </button>
+      )}
+
+      <div className="inline-flex items-center justify-center mx-auto w-28 sm:w-32 h-auto mb-2 relative z-10 animate-fade-in">
+        <img src="/white-main-logo-icsn.png" alt="ICSN Logo" className="w-full h-auto object-contain drop-shadow-md" />
       </div>
-    </>
+      <h1 className="text-xl sm:text-2xl font-black tracking-tight relative z-10 text-white drop-shadow-md">
+        {dict.common.brandName}
+      </h1>
+      <p className="text-sm sm:text-base font-semibold text-white/95 mt-1 relative z-10 drop-shadow-md">
+        {dict.apply.headerSubtitle}
+      </p>
+    </div>
   );
 }

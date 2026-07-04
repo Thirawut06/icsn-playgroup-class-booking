@@ -15,28 +15,28 @@ export default function HomePage() {
     <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)] pb-10 flex flex-col relative overflow-hidden">
       {/* Top banner with nice branding */}
       <div
-        className="w-full aspect-[2000/560] relative overflow-hidden bg-cover bg-center bg-[#00adb7]"
+        className="bg-[#00adb7] w-full aspect-[16/9] text-white text-center relative overflow-hidden bg-cover bg-center flex flex-col items-center justify-center"
         style={{ backgroundImage: "url('/playgroup-banner-icsn.png')" }}
       >
+        {/* Cyan overlay for high contrast readability and tinting */}
+        <div className="absolute inset-0 bg-[#00adb7]/60 pointer-events-none"></div>
+
         {/* Language Switcher */}
         <div className="absolute top-3 right-3 z-20">
           <LanguageSwitcher />
         </div>
-      </div>
 
-      {/* Brand Header Section */}
-      <div className="flex flex-col items-center pt-6 pb-2 text-center px-4">
-        <div className="w-16 sm:w-20 h-auto mb-2 animate-fade-in">
+        <div className="inline-flex items-center justify-center mx-auto w-28 sm:w-32 h-auto mb-2 relative z-10 animate-fade-in">
           <Image
-            src="/main-logo-icsn.png"
+            src="/white-main-logo-icsn.png"
             alt="ICSN Logo"
-            width={80}
-            height={80}
-            className="w-full h-auto object-contain"
+            width={128}
+            height={128}
+            className="w-full h-auto object-contain drop-shadow-md"
             priority
           />
         </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-icsn-navy">
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight relative z-10 text-white drop-shadow-md">
           {dict.common.brandName}
         </h1>
       </div>

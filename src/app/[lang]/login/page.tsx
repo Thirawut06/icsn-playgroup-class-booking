@@ -29,7 +29,7 @@ function LoginFormContent() {
     <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)] pb-10 flex flex-col relative overflow-hidden">
       {/* Top banner */}
       <div
-        className="bg-icsn-navy w-full aspect-[2000/560] text-white text-center relative overflow-hidden bg-cover bg-center flex flex-col items-center justify-center"
+        className="bg-[#00adb7] w-full aspect-[16/9] text-white text-center relative overflow-hidden bg-cover bg-center flex flex-col items-center justify-center"
         style={{ backgroundImage: 'url("/playgroup-banner-icsn.png")' }}
       >
         <Link href={ROUTES.HOME(lang)} className="absolute top-4 left-4 text-white/80 hover:text-white transition-colors cursor-pointer z-20">
@@ -38,11 +38,11 @@ function LoginFormContent() {
         <div className="absolute top-3 right-3 z-20">
           <LanguageSwitcher />
         </div>
-        <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
-        <div className="inline-flex items-center justify-center w-14 sm:w-16 h-auto mb-1 relative z-10">
-          <Image src="/white-main-logo-icsn.png" alt="ICSN Logo" width={64} height={64} className="w-full h-auto object-contain drop-shadow-md" style={{ width: 'auto', height: 'auto' }} priority />
+        <div className="absolute inset-0 bg-[#00adb7]/60 pointer-events-none"></div>
+        <div className="inline-flex items-center justify-center mx-auto w-28 sm:w-32 h-auto mb-2 relative z-10 animate-fade-in">
+          <Image src="/white-main-logo-icsn.png" alt="ICSN Logo" width={128} height={128} className="w-full h-auto object-contain drop-shadow-md" priority />
         </div>
-        <h1 className="text-lg sm:text-xl font-bold tracking-tight relative z-10 text-white drop-shadow-md">
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight relative z-10 text-white drop-shadow-md">
           {dict.common.brandName}
         </h1>
       </div>
