@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { bookingModule } from '@/lib/domain';
 import type { Session, Package } from '@/types';
+import { useDictionary } from '@/lib/i18n/dictionary-context';
 
 interface UseBookingActionsProps {
   parentId: string;
@@ -21,6 +22,7 @@ export function useBookingActions({
   onSuccess,
   clearSelection
 }: UseBookingActionsProps) {
+  const { dict } = useDictionary();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
@@ -34,18 +36,16 @@ export function useBookingActions({
     try {
       const sessionIds = selectedDates.map(date => {
         const s = selectedSessionsMap[date];
-        if (!s) throw new Error(`กรุณาเลือกรอบเวลาสำหรับวันที่ ${date}`);
+        if (!s) throw new Error(`${dict.book.selectSessionFor} ${date}`);
         return s.id;
       });
 
-      // We don't manually check duplicates here anymore, we let the RPC handle the batch transaction
-      // and fail entirely if there's an issue. It's atomic.
       await bookingModule.bookClassesBatch(parentId, selectedChildId, sessionIds);
       
       clearSelection();
       onSuccess();
     } catch (e: unknown) {
-      setBookingError("ไม่สามารถจองได้: " + (e instanceof Error ? e.message : String(e)));
+      setBookingError(dict.book.bookingFailed + " " + (e instanceof Error ? e.message : String(e)));
     } finally {
       setIsSubmitting(false);
     }
@@ -63,7 +63,7 @@ export function useBookingActions({
       setCancelSuccess(true);
       onSuccess(); // Re-fetch data
     } catch (e: unknown) {
-      setCancelError(e instanceof Error && e.message ? e.message : "ไม่สามารถยกเลิกการจองได้");
+      setCancelError(e instanceof Error && e.message ? e.message : dict.book.cancelFailed);
     } finally {
       setIsCancelling(false);
     }

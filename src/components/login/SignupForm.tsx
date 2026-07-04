@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { Mail, Lock, User, Phone, AlertCircle, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ParentService } from '@/lib/supabase';
-import { STORAGE_KEYS } from '@/config/constants';
-import { COPY } from '@/config/copy';
+import { useDictionary } from '@/lib/i18n/dictionary-context';
+import { ROUTES } from '@/config/routes';
 
 export function SignupForm() {
   const router = useRouter();
+  const { dict, lang } = useDictionary();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [parentName, setParentName] = useState('');
@@ -22,20 +23,20 @@ export function SignupForm() {
     try {
       const cleanPhone = phone.trim().replace(/\D/g, "");
       if (cleanPhone.length < 9 || cleanPhone.length > 10) {
-        throw new Error("กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง (9-10 หลัก)");
+        throw new Error(dict.auth.phoneInvalid);
       }
       if (password.length < 6) {
-        throw new Error("รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร");
+        throw new Error(dict.auth.passwordTooShort);
       }
       if (!parentName.trim()) {
-        throw new Error("กรุณากรอกชื่อผู้ปกครอง");
+        throw new Error(dict.auth.nameRequired);
       }
 
-      const parent = await ParentService.signUp(email.trim(), password, parentName.trim(), cleanPhone);
+      await ParentService.signUp(email.trim(), password, parentName.trim(), cleanPhone);
       
-      router.push('/apply');
+      router.push(ROUTES.APPLY(lang));
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error && error.message ? error.message : "เกิดข้อผิดพลาดในการสมัครสมาชิก");
+      setErrorMessage(error instanceof Error && error.message ? error.message : dict.auth.signupFailed);
     } finally {
       setLoading(false);
     }
@@ -45,9 +46,8 @@ export function SignupForm() {
     <form onSubmit={submitSignUp} className="space-y-6">
       <div className="space-y-4">
         <div>
-          <label className="block mb-1.5">
-            <span className="text-base font-bold text-foreground">Email Address</span>
-            <span className="text-sm text-muted-foreground font-normal ml-1">{COPY.AUTH.EMAIL_LABEL}</span>
+          <label className="block mb-1.5 text-base font-bold text-foreground">
+            {dict.auth.emailLabel}
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground/70 z-10">
@@ -58,16 +58,15 @@ export function SignupForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="your.email@example.com"
+              placeholder={dict.auth.emailPlaceholder}
               className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
             />
           </div>
         </div>
 
         <div>
-          <label className="block mb-1.5">
-            <span className="text-base font-bold text-foreground">Password</span>
-            <span className="text-sm text-muted-foreground font-normal ml-1">{COPY.AUTH.PASSWORD_LABEL}</span>
+          <label className="block mb-1.5 text-base font-bold text-foreground">
+            {dict.auth.passwordLabel}
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground/70 z-10">
@@ -79,16 +78,15 @@ export function SignupForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              placeholder="อย่างน้อย 6 ตัวอักษร"
+              placeholder={dict.auth.passwordMinLength}
               className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
             />
           </div>
         </div>
 
         <div>
-          <label className="block mb-1.5">
-            <span className="text-base font-bold text-foreground">Parent&apos;s Full Name</span>
-            <span className="text-sm text-muted-foreground font-normal ml-1">{COPY.AUTH.NAME_LABEL}</span>
+          <label className="block mb-1.5 text-base font-bold text-foreground">
+            {dict.auth.nameLabel}
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground/70 z-10">
@@ -99,16 +97,15 @@ export function SignupForm() {
               value={parentName}
               onChange={(e) => setParentName(e.target.value)}
               required
-              placeholder="เช่น คุณแม่ พิมพ์ชนก"
+              placeholder={dict.auth.nameExample}
               className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
             />
           </div>
         </div>
 
         <div>
-          <label className="block mb-1.5">
-            <span className="text-base font-bold text-foreground">Phone Number</span>
-            <span className="text-sm text-muted-foreground font-normal ml-1">{COPY.AUTH.PHONE_LABEL}</span>
+          <label className="block mb-1.5 text-base font-bold text-foreground">
+            {dict.auth.phoneLabel}
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground/70 z-10">
@@ -119,7 +116,7 @@ export function SignupForm() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               required
-              placeholder="e.g., 0812345678"
+              placeholder={dict.auth.phonePlaceholder}
               className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
             />
           </div>
@@ -140,16 +137,15 @@ export function SignupForm() {
       >
         {!loading ? (
           <div className="flex items-center gap-2 justify-center w-full">
-            <span>{COPY.AUTH.SIGN_UP_BTN}</span>
+            <span>{dict.auth.signUpBtn}</span>
           </div>
         ) : (
           <div className="flex items-center gap-2">
             <Loader2 className="animate-spin h-5 w-5 text-white" />
-            <span>{COPY.AUTH.SIGNING_UP}</span>
+            <span>{dict.auth.signingUp}</span>
           </div>
         )}
       </button>
     </form>
   );
 }
-

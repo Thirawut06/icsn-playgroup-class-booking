@@ -26,13 +26,13 @@ export const BookingService = {
 
 
   async getBookings(parentId: string): Promise<Booking[]> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
     const { data, error } = await supabase
       .from('bookings')
       .select(`
-        *,
-        session:sessions!inner(*),
-        child:children!inner(*)
+        id, session_id, child_id, parent_id, session_date, status, booking_date, child_name_snapshot, parent_phone_snapshot,
+        session:sessions!inner(id, session_date, time_label, total_capacity, booked_count, is_active, theme, activity_desc),
+        child:children!inner(id, parent_id, nickname, full_name, dob, age, food_allergy, media_perm, no_photo_perm, parent_photo_url, photo_url, special_info)
       `)
       .eq('parent_id', parentId)
       .eq('status', BOOKING_STATUS.CONFIRMED)
@@ -40,7 +40,7 @@ export const BookingService = {
       .order('session_date', { ascending: true });
       
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
-    return data || [];
+    return (data as unknown) as Booking[];
   },
 
 
@@ -68,7 +68,7 @@ export const BookingService = {
   },
 
   async getAllActiveBookings(): Promise<ConfirmedBookingRow[]> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
     const { data, error } = await supabase
       .from('bookings')
       .select(`
@@ -93,7 +93,7 @@ export const BookingService = {
   },
 
   async searchActiveBookings(searchTerm: string): Promise<ConfirmedBookingRow[]> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
     
     const { data: parents } = await supabase
       .from('parents')

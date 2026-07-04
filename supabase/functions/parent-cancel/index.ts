@@ -33,15 +33,19 @@ Deno.serve(async (req) => {
     if (userErr || !user) throw new Error('Unauthorized: Invalid token')
     if (user.id !== parentId) throw new Error('Unauthorized to cancel this booking')
 
-    // Verify booking belongs to parent
-    const { data: bk, error: bkErr } = await supabase.from('bookings').select('parent_id, status, session_date').eq('id', bookingId).single()
+    // Verify booking belongs to parent — also fetch session_id and child_id for later use
+    const { data: bk, error: bkErr } = await supabase
+      .from('bookings')
+      .select('parent_id, status, session_date, session_id, child_id')
+      .eq('id', bookingId)
+      .single()
     if (bkErr) throw bkErr
     if (bk.parent_id !== parentId) throw new Error("Unauthorized to cancel this booking")
     if (bk.status === 'cancelled') throw new Error("Booking is already cancelled")
 
-    // Check cutoff time dynamically from settings table
+    // Check cutoff time dynamically from system_settings table (FIX #2: was 'settings')
     const { data: settingsData } = await supabase
-      .from('settings')
+      .from('system_settings')
       .select('value')
       .eq('key', 'cutoff_hour')
       .maybeSingle()
@@ -55,38 +59,34 @@ Deno.serve(async (req) => {
     // UTC time for cutoffHour BKK is (cutoffHour - 7) UTC.
     const cutoffDateUTC = new Date(Date.UTC(year, month - 1, day, cutoffHour - 7, 0, 0))
     
-    // Add timezone adjustment if we check locally. Let's just compare Date.now() with cutoffDateUTC
     if (Date.now() > cutoffDateUTC.getTime()) {
       const displayTime = `${String(cutoffHour).padStart(2, '0')}:00 น.`
       throw new Error(`หมดเวลายกเลิกคลาสแล้วค่ะ (เลยเวลา ${displayTime} ของวันเรียน) หากมีเหตุจำเป็นต้องลาป่วยกระทันหัน รบกวนทักแจ้งแอดมินนะคะ`)
     }
 
-    // Process Cancellation
-    const { error: updateErr } = await supabase
-      .from('bookings')
-      .update({ status: 'cancelled', cancelled_at: new Date().toISOString(), cancelled_by: 'parent', cancel_reason: cancelReason })
-      .eq('id', bookingId)
-    if (updateErr) throw updateErr
-
-    // Refund Credit
-    const { data: pkgs } = await supabase.from('packages').select('id, credits_remaining').eq('parent_id', parentId).order('created_at', { ascending: true })
-    if (pkgs && pkgs.length > 0) {
-      await supabase.from('packages').update({ credits_remaining: pkgs[0].credits_remaining + 1 }).eq('id', pkgs[0].id)
-    }
-
-    // Decrement Capacity
-    const { data: sess } = await supabase.from('sessions').select('id, booked_count').eq('session_date', bk.session_date).single()
-    if (sess && sess.booked_count > 0) {
-      await supabase.from('sessions').update({ booked_count: sess.booked_count - 1 }).eq('id', sess.id)
-    }
+    // FIX #6: Use cancel_booking RPC for atomic cancellation (handles status update,
+    // credit refund, booked_count decrement, and credit_transactions log in one transaction)
+    // This eliminates race conditions (#3, #4) and missing audit log (#11)
+    const { data: result, error: cancelErr } = await supabase.rpc('cancel_booking', {
+      p_booking_id: bookingId,
+      p_package_id: null,
+      p_cancelled_by: 'parent',
+      p_cancel_reason: cancelReason || 'Cancelled by parent via web UI'
+    })
+    if (cancelErr) throw cancelErr
 
     // Trigger Webhook Notification
+    // FIX #12: Use child_id from the booking record to get the correct child nickname
     const WEBHOOK_URL = Deno.env.get('GOOGLE_CHAT_WEBHOOK_URL')
     if (WEBHOOK_URL) {
-      const { data: child } = await supabase.from('children').select('nickname').eq('parent_id', parentId).limit(1).maybeSingle()
+      const { data: child } = await supabase
+        .from('children')
+        .select('nickname')
+        .eq('id', bk.child_id)
+        .maybeSingle()
       const dateParts = bk.session_date.split("-")
       const displayDate = `${dateParts[2]}/${dateParts[1]}`
-      const cancelMsg = `❌ ผู้ปกครองกดยกเลิกคลาสน้อง${child ? child.nickname : 'ไม่ระบุ'} วันที่ ${displayDate} (สาเหตุ: ${cancelReason})`
+      const cancelMsg = `❌ ผู้ปกครองกดยกเลิกคลาสน้อง${child ? child.nickname : 'ไม่ระบุ'} วันที่ ${displayDate} (สาเหตุ: ${cancelReason || 'ไม่ระบุ'})`
       
       await fetch(WEBHOOK_URL, {
         method: 'POST',
@@ -107,3 +107,4 @@ Deno.serve(async (req) => {
     })
   }
 })
+

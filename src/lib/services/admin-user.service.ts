@@ -159,7 +159,7 @@ export const AdminUserService = {
     const { data, error } = await supabase
       .from('children')
       .select(`
-        *,
+        id, parent_id, nickname, full_name, dob, age, food_allergy, media_perm, no_photo_perm, parent_photo_url, photo_url, special_info, created_at,
         parents (
           name,
           phone,
@@ -175,7 +175,7 @@ export const AdminUserService = {
   async getCreditLogs(parentId: string): Promise<Record<string, unknown>[]> {
     const { data, error } = await supabase
       .from('credit_transactions')
-      .select('id, parent_id, package_id, amount, action_type, reason, created_at')
+      .select('id, parent_id, package_id, amount, action_type, notes, created_at')
       .eq('parent_id', parentId)
       .order('created_at', { ascending: false });
 

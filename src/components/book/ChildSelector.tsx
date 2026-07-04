@@ -3,10 +3,11 @@ import Link from 'next/link';
 import { ChevronRight, Plus, User } from 'lucide-react';
 import { useBookingContext } from './BookingContext';
 import { ROUTES } from '@/config/routes';
-import { COPY } from '@/config/copy';
+import { useDictionary } from '@/lib/i18n/dictionary-context';
 
 export function ChildSelector() {
   const { children, selectedChildId, setSelectedChildId } = useBookingContext();
+  const { dict, lang } = useDictionary();
   const selectedChild = children.find(c => c.id === selectedChildId);
 
   return (
@@ -15,13 +16,13 @@ export function ChildSelector() {
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-bold text-icsn-navy flex items-center gap-1.5 text-base">
           <User className="w-5 h-5 text-icsn-teal" />
-          <span>{COPY.BOOKING_FLOW.STEP_1}</span>
+          <span>{dict.book.step1}</span>
         </h3>
         <Link
-          href={ROUTES.APPLY_ADD_CHILD}
+          href={ROUTES.APPLY_ADD_CHILD(lang)}
           className="flex items-center gap-1 text-sm font-bold text-icsn-teal hover:underline active:opacity-70 transition"
         >
-          <Plus className="w-3.5 h-3.5" /> เพิ่มน้อง
+          <Plus className="w-3.5 h-3.5" /> {dict.book.addChild}
         </Link>
       </div>
 
@@ -45,7 +46,7 @@ export function ChildSelector() {
             onChange={(e) => setSelectedChildId(e.target.value)}
             className="w-full text-base pl-4 pr-10 py-3 border-b-2 border-border focus:outline-none focus:border-icsn-teal bg-transparent text-icsn-navy font-bold appearance-none cursor-pointer transition"
           >
-            {children.length === 0 && <option value="">{COPY.BOOKING_FLOW.NO_CHILDREN}</option>}
+            {children.length === 0 && <option value="">{dict.book.noChildren}</option>}
             {children.map(child => (
               <option key={child.id} value={child.id}>
                 {child.nickname} ({child.full_name})
@@ -60,4 +61,3 @@ export function ChildSelector() {
     </div>
   );
 }
-

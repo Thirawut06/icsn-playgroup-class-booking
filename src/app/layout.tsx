@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import { Sarabun, Outfit } from "next/font/google";
-import "../index.css"; // We have the CSS from Vite in src/index.css
+import "../index.css";
 import { Toaster } from 'react-hot-toast';
+
+export const metadata: Metadata = {
+  title: "ICSN Panda Playgroup",
+  description: "Playgroup Class Booking for ICSN Panda",
+};
+
 const sarabun = Sarabun({
   subsets: ["thai", "latin"],
   weight: ["300", "400", "500", "600", "700"],
@@ -13,11 +19,6 @@ const outfit = Outfit({
   weight: ["400", "500", "600", "700"],
   variable: "--font-outfit",
 });
-
-export const metadata: Metadata = {
-  title: "ICSN Panda Playgroup",
-  description: "Playgroup Class Booking for ICSN Panda",
-};
 
 export default function RootLayout({
   children,

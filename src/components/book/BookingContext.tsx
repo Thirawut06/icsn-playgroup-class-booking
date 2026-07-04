@@ -87,7 +87,7 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) {
-        router.push('/login');
+        router.push('/th/login');
         return;
       }
       setParentId(user.id);

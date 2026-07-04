@@ -1,6 +1,6 @@
 import React from 'react';
 import type { PackageOption } from '@/types';
-import { COPY } from '@/config/copy';
+import { useDictionary } from '@/lib/i18n/dictionary-context';
 
 interface PaymentSectionProps {
   path: 'trial' | 'payment' | null;
@@ -23,21 +23,21 @@ export function PaymentSection({
   setPaymentSlipFile,
   handleFile
 }: PaymentSectionProps) {
+  const { dict } = useDictionary();
   if (path !== 'payment') return null;
 
   return (
     <div className="space-y-6">
       {/* Section Header */}
       <div className="pt-4 border-t border-border mb-2">
-        <h3 className="text-lg font-bold text-icsn-pink">Payment Confirmation</h3>
-        <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{COPY.APPLY_FLOW.TRANSFER_INSTRUCTION}</p>
+        <h3 className="text-lg font-bold text-icsn-pink">{dict.apply.paymentConfirmation}</h3>
+        <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{dict.apply.transferInstruction}</p>
       </div>
 
       {/* Package Selection (Radio) */}
       <div>
         <label className="block mb-3">
-          <span className="text-base font-bold text-foreground">Please choose a package of your payment <span className="text-error">*</span></span>
-          <span className="block text-sm text-muted-foreground -mt-0.5">กรุณาเลือกแพ็กเกจการชำระเงินของท่าน</span>
+          <span className="text-base font-bold text-foreground">{dict.apply.selectPaymentPackage} <span className="text-error">*</span></span>
         </label>
         <div className="space-y-2.5">
           {paymentPackages.map(pkg => (
@@ -52,7 +52,7 @@ export function PaymentSection({
                 onChange={() => setPackageType(pkg.name)}
                 className="custom-radio-pink"
               />
-              <span className="text-sm font-semibold text-foreground leading-relaxed">{pkg.name} - {pkg.price} บาท</span>
+              <span className="text-sm font-semibold text-foreground leading-relaxed">{pkg.name} - {pkg.price} {dict.common.baht}</span>
             </label>
           ))}
         </div>
@@ -61,8 +61,7 @@ export function PaymentSection({
       {/* Payment Method Image */}
       <div>
         <label className="block mb-1.5">
-          <span className="text-base font-bold text-foreground">Payment Method : Please upload your payment evident <span className="text-error">*</span></span>
-          <span className="block text-sm text-muted-foreground -mt-0.5">ขั้นตอนการชำระเงิน: กรุณาแนบหลักฐานการชำระเงิน</span>
+          <span className="text-base font-bold text-foreground">{dict.apply.paymentEvidence} <span className="text-error">*</span></span>
         </label>
         <div className="mb-4 max-w-sm mx-auto">
           <img src="/New_Kbank_QR_acc-no.png" alt="Payment Method Instruction" className="w-full h-auto rounded-xl border border-border shadow-sm" />
@@ -74,7 +73,7 @@ export function PaymentSection({
           required
           className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-icsn-pink/10 file:text-icsn-pink hover:file:bg-icsn-pink/20 border border-border rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
         />
-        <span className="block text-xs text-muted-foreground/70 mb-2">{COPY.APPLY_FLOW.UPLOAD_LIMIT}</span>
+        <span className="block text-xs text-muted-foreground/70 mb-2">{dict.apply.uploadLimit}</span>
         {paymentSlipData && (
           <div className="mt-2 w-32 rounded-xl overflow-hidden border border-border bg-muted">
             <img src={paymentSlipData} alt="Preview" className="w-full h-auto object-contain" />

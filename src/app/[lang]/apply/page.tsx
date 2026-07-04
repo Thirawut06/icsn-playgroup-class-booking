@@ -4,10 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ParentService, PackageService, supabase } from '@/lib/supabase';
 import { FILE_UPLOAD } from '@/config/constants';
-import { Ticket, Wallet, ChevronRight, Check, ArrowLeft, Loader2, UploadCloud, AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import type { PackageOption } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ApplyHeader } from '@/components/apply/ApplyHeader';
 import { PathSelector } from '@/components/apply/PathSelector';
 import { SuccessScreen } from '@/components/apply/SuccessScreen';
@@ -16,10 +15,30 @@ import { ChildInfoSection } from '@/components/apply/ChildInfoSection';
 import { PhotoUploadSection } from '@/components/apply/PhotoUploadSection';
 import { PaymentSection } from '@/components/apply/PaymentSection';
 import { AgreementsSection } from '@/components/apply/AgreementsSection';
+import { useDictionary } from '@/lib/i18n/dictionary-context';
+import { ROUTES } from '@/config/routes';
+
+const applyCache: Record<string, any> = {};
+
+function useCachedState<T>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
+  const [state, setState] = useState<T>(() => {
+    if (key in applyCache) {
+      return applyCache[key];
+    }
+    return defaultValue;
+  });
+
+  useEffect(() => {
+    applyCache[key] = state;
+  }, [key, state]);
+
+  return [state, setState];
+}
 
 export default function Apply() {
   const router = useRouter();
-  const [path, setPath] = useState<'trial' | 'payment' | null>(null);
+  const { dict, lang } = useDictionary();
+  const [path, setPath] = useCachedState<'trial' | 'payment' | null>('path', null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -34,34 +53,34 @@ export default function Apply() {
   }, [fileToast]);
 
   // Parent fields
-  const [parentEmail, setParentEmail] = useState('');
-  const [parentName, setParentName] = useState('');
-  const [parentPhone, setParentPhone] = useState('');
-  const [isReturningParent, setIsReturningParent] = useState(false);
+  const [parentEmail, setParentEmail] = useCachedState('parentEmail', '');
+  const [parentName, setParentName] = useCachedState('parentName', '');
+  const [parentPhone, setParentPhone] = useCachedState('parentPhone', '');
+  const [isReturningParent, setIsReturningParent] = useCachedState('isReturningParent', false);
 
   // Child fields
-  const [childName, setChildName] = useState('');
-  const [childNickname, setChildNickname] = useState('');
-  const [childDob, setChildDob] = useState('');
-  const [allergy, setAllergy] = useState('');
-  const [info, setInfo] = useState('');
+  const [childName, setChildName] = useCachedState('childName', '');
+  const [childNickname, setChildNickname] = useCachedState('childNickname', '');
+  const [childDob, setChildDob] = useCachedState('childDob', '');
+  const [allergy, setAllergy] = useCachedState('allergy', '');
+  const [info, setInfo] = useCachedState('info', '');
 
   // File uploads
-  const [parentPhotoData, setParentPhotoData] = useState('');
-  const [parentPhotoFile, setParentPhotoFile] = useState<File | null>(null);
-  const [childPhotoData, setChildPhotoData] = useState('');
-  const [childPhotoFile, setChildPhotoFile] = useState<File | null>(null);
-  const [paymentSlipData, setPaymentSlipData] = useState('');
-  const [paymentSlipFile, setPaymentSlipFile] = useState<File | null>(null);
+  const [parentPhotoData, setParentPhotoData] = useCachedState('parentPhotoData', '');
+  const [parentPhotoFile, setParentPhotoFile] = useCachedState<File | null>('parentPhotoFile', null);
+  const [childPhotoData, setChildPhotoData] = useCachedState('childPhotoData', '');
+  const [childPhotoFile, setChildPhotoFile] = useCachedState<File | null>('childPhotoFile', null);
+  const [paymentSlipData, setPaymentSlipData] = useCachedState('paymentSlipData', '');
+  const [paymentSlipFile, setPaymentSlipFile] = useCachedState<File | null>('paymentSlipFile', null);
 
   // Agreements & Permissions
-  const [mediaPerm, setMediaPerm] = useState<string>(''); // 'Yes' or 'No'
-  const [noPhotoPerm, setNoPhotoPerm] = useState(false);
-  const [nonRefundable, setNonRefundable] = useState(false);
+  const [mediaPerm, setMediaPerm] = useCachedState<string>('mediaPerm', ''); // 'Yes' or 'No'
+  const [noPhotoPerm, setNoPhotoPerm] = useCachedState('noPhotoPerm', false);
+  const [nonRefundable, setNonRefundable] = useCachedState('nonRefundable', false);
 
   // Payment
-  const [paymentPackages, setPaymentPackages] = useState<PackageOption[]>([]);
-  const [packageType, setPackageType] = useState('');
+  const [paymentPackages, setPaymentPackages] = useCachedState<PackageOption[]>('paymentPackages', []);
+  const [packageType, setPackageType] = useCachedState('packageType', '');
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -83,7 +102,7 @@ export default function Apply() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) {
-        router.push('/login?tab=signup');
+        router.push(ROUTES.LOGIN(lang, 'signup'));
         return;
       }
       setParentId(user.id);
@@ -99,7 +118,7 @@ export default function Apply() {
           if (parent.children && parent.children.length > 0) {
             const params = new URLSearchParams(window.location.search);
             if (params.get('addChild') !== 'true') {
-              router.push('/book');
+              router.push(ROUTES.BOOK(lang));
             }
           }
         }
@@ -107,14 +126,14 @@ export default function Apply() {
     });
 
     PackageService.getPackageOptions().then(setPaymentPackages).catch(console.error);
-  }, [router]);
+  }, [router, lang]);
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>, setData: React.Dispatch<React.SetStateAction<string>>, setFile: React.Dispatch<React.SetStateAction<File | null>>) => {
     setFileToast('');
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > FILE_UPLOAD.MAX_SIZE_BYTES) {
-        setFileToast(`ไฟล์มีขนาดเกินกำหนด — ขนาดไฟล์ต้องไม่เกิน ${FILE_UPLOAD.MAX_SIZE_MB}MB`);
+        setFileToast(dict.apply.fileTooLarge.replace('{mb}', String(FILE_UPLOAD.MAX_SIZE_MB)));
         e.target.value = "";
         return;
       }
@@ -131,14 +150,14 @@ export default function Apply() {
     setErrorMessage('');
 
     try {
-      if (!parentId) throw new Error("ไม่พบข้อมูลผู้ปกครอง");
+      if (!parentId) throw new Error(dict.apply.parentNotFound);
 
       // Validate media permission
       if (!mediaPerm) {
-        throw new Error("กรุณาเลือก Media Permission (Yes/No)");
+        throw new Error(dict.apply.selectMediaPerm);
       }
       if (!noPhotoPerm) {
-        throw new Error("กรุณายืนยันข้อตกลงการไม่ถ่ายรูปนักเรียนคนอื่น");
+        throw new Error(dict.apply.confirmNoPhoto);
       }
 
       if (path === 'trial' && !allergy.trim()) {
@@ -160,10 +179,10 @@ export default function Apply() {
 
       if (path === 'payment') {
         if (!paymentSlipFile || !packageType) {
-          throw new Error("กรุณาอัปโหลดสลิปและเลือกแพ็กเกจ");
+          throw new Error(dict.apply.uploadSlipRequired);
         }
         if (!nonRefundable) {
-          throw new Error("กรุณายืนยันข้อตกลง Non-refundable");
+          throw new Error(dict.apply.confirmNonRefundable);
         }
         await PackageService.submitTopUp(parentId, packageType, paymentSlipFile, nonRefundable);
       } else if (path === 'trial') {
@@ -171,8 +190,12 @@ export default function Apply() {
       }
 
       setShowSuccess(true);
+      // Clear cache so next visit is fresh
+      for (const key in applyCache) {
+        delete applyCache[key];
+      }
     } catch (error: any) {
-      setErrorMessage(error.message || "เกิดข้อผิดพลาด");
+      setErrorMessage(error.message || dict.apply.genericError);
     } finally {
       setIsSubmitting(false);
     }
@@ -213,7 +236,7 @@ export default function Apply() {
           <div className="px-6 pb-10 mt-6 relative z-10">
             <div className="flex items-center justify-center pb-6 mb-6 border-b border-border">
               <h2 className="text-lg font-bold text-icsn-navy text-center">
-                {path === 'trial' ? 'แบบฟอร์มลงทะเบียนทดลองเรียน (Trial)' : 'แบบฟอร์มซื้อแพ็กเกจ (Payment)'}
+                {path === 'trial' ? dict.apply.trialFormTitle : dict.apply.paymentFormTitle}
               </h2>
             </div>
 
@@ -292,7 +315,7 @@ export default function Apply() {
                   className="w-full bg-icsn-teal hover:bg-icsn-teal/90 disabled:bg-foreground/10 disabled:cursor-not-allowed text-white py-3.5 px-4 rounded-full font-bold shadow-md h-[52px] flex items-center justify-center gap-2 cursor-pointer text-lg"
                 >
                   {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
-                  {isSubmitting ? 'Submitting (กำลังดำเนินการ...)' : 'Submit Registration (ส่งข้อมูลลงทะเบียน)'}
+                  {isSubmitting ? dict.apply.submitting : dict.apply.submitRegistration}
                 </Button>
               </div>
             </form>
@@ -302,4 +325,3 @@ export default function Apply() {
     </div>
   );
 }
-

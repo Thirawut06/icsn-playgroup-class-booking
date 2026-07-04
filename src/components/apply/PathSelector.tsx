@@ -1,16 +1,18 @@
-﻿import React from 'react';
+import React from 'react';
 import { Ticket, Wallet, ChevronRight } from 'lucide-react';
+import { useDictionary } from '@/lib/i18n/dictionary-context';
 
 interface PathSelectorProps {
   setPath: (path: 'trial' | 'payment') => void;
 }
 
 export function PathSelector({ setPath }: PathSelectorProps) {
+  const { dict } = useDictionary();
+
   return (
     <div className="px-6 py-6 relative z-10">
       <h2 className="text-lg font-bold text-center text-icsn-navy mb-6">
-        Please select your registration path<br/>
-        <span className="text-xs text-muted-foreground font-normal block mt-1">เลือกทางเลือกเพื่อสั่งซื้อสิทธิ์หรือลงทะเบียนเรียน</span>
+        {dict.apply.selectPath}
       </h2>
 
       <div className="space-y-4">
@@ -23,10 +25,9 @@ export function PathSelector({ setPath }: PathSelectorProps) {
               <Ticket className="w-6 h-6" />
             </div>
             <div>
-              <div className="font-bold text-icsn-navy text-lg">Free Trial Class</div>
+              <div className="font-bold text-icsn-navy text-lg">{dict.apply.trialTitle}</div>
               <div className="text-sm text-muted-foreground mt-0.5">
-                Register for a free 1-session playgroup class<br/>
-                <span className="text-xs text-muted-foreground/70 block mt-0.5">ลงทะเบียนทดลองเรียนกลุ่มเล่น ครั้งที่ 1 ฟรี (สิทธิ์ทดลองเรียน)</span>
+                {dict.apply.trialDesc}
               </div>
             </div>
           </div>
@@ -42,10 +43,9 @@ export function PathSelector({ setPath }: PathSelectorProps) {
               <Wallet className="w-6 h-6" />
             </div>
             <div>
-              <div className="font-bold text-icsn-navy text-lg">Purchase Package</div>
+              <div className="font-bold text-icsn-navy text-lg">{dict.apply.paymentTitle}</div>
               <div className="text-sm text-muted-foreground mt-0.5">
-                Buy playgroup session packages and top up credits<br/>
-                <span className="text-xs text-muted-foreground/70 block mt-0.5">ซื้อแพ็กเกจเรียนกลุ่มเล่นและเติมเครดิตการเรียน</span>
+                {dict.apply.paymentDesc}
               </div>
             </div>
           </div>
@@ -55,4 +55,3 @@ export function PathSelector({ setPath }: PathSelectorProps) {
     </div>
   );
 }
-

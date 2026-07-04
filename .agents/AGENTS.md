@@ -94,9 +94,48 @@ You carefully provide accurate, factual, thoughtful answers, and are a genius at
 ## Supabase PostgREST Accuracy
 - **Query Column Matching:** When writing `select()` queries, always verify column names against the actual SQL migration files. Do not assume column names (e.g., `credit_transactions` uses `notes`, not `reason`).
 
+## Google Drive Sync Architecture (Crucial)
+- **Service Account Limitations:** NEVER use Google Service Accounts for uploading files (Drive API) if the destination expects to consume the user's quota. Service Accounts have 0 bytes of storage and uploads will fail with quota errors.
+- **GAS Webhook Pattern:** ALWAYS use the Google Apps Script (GAS) Webhook pattern for syncing files from Supabase to Google Drive.
+  - The GAS script (`doPost`) must be deployed as a Web App by the target user with "Execute as: Me" and "Who has access: Anyone".
+  - The Supabase Edge Function must convert the file `Blob` to Base64 and send a standard HTTP POST request to the GAS Webhook URL (stored in `GOOGLE_APPS_SCRIPT_WEBHOOK_DRIVE` secret).
+
+## CI/CD & Automated Testing
+- **Integration Tests on CI:** NEVER run integration tests (`*.integration.test.ts`) that require a live Supabase connection in a basic CI pipeline (e.g., GitHub Actions without secrets). Ensure `vitest.config.ts` explicitly excludes them when `process.env.CI` is true: `...(process.env.CI ? ['**/*.integration.test.ts'] : [])`.
+
+## Supabase TypeScript & Builds
+- **1-to-1 Join Type Casting:** When performing `!inner` joins in Supabase `select()` queries, the generated TypeScript types often incorrectly type the joined relation as an array instead of a single object. If this causes `npm run build` to fail on Vercel, resolve it immediately by type-casting the final data array (e.g., `return (data as unknown) as Booking[]`) rather than spending time re-generating types.
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
+
+## Trial Package Logic (CRITICAL)
+- NEVER call `supabase.from('packages').insert()` for trial packages if the parent already has one — it will hit the unique constraint `idx_unique_trial_package`.
+- NEVER call `supabase.from('packages').update()` on packages from the client side — it is blocked by RLS for non-admin users.
+- ALWAYS use the `grant_trial_package` Postgres RPC function (SECURITY DEFINER) to add trial credits:
+  `await supabase.rpc('grant_trial_package', { target_parent_id: parentId })`
+  This function handles both INSERT (first child) and UPDATE (subsequent children) safely.
+
+## Admin UI Accessibility (Low-Tech Users)
+- Admin users are non-technical school staff. NEVER use `text-xs` for interactive elements or main content in admin views.
+- Minimum font sizes: body/labels `text-sm`, table cells `text-base`, buttons `text-sm` minimum.
+- Prefer `py-3` row height in admin tables (not `py-2`) for touch-friendly tap targets.
+- Keep button labels in Thai and short — avoid English-only labels in admin UI.
+
+## Admin Navigation Strategy
+- The admin sidebar already has enough menu items. When adding new admin features:
+  1. FIRST consider if the feature can live on the Dashboard (Quick Actions or inline widget)
+  2. Only add a new Sidebar item if the feature requires its own full page of content
+- The Dashboard is the primary landing page — surfacing key info there reduces navigation burden for low-tech admin staff.
+
+## Admin Layout Constraints
+- The admin main content area is constrained to `max-w-[1400px]` with standard horizontal padding.
+- NEVER stretch content to 100% width on ultra-wide screens. Always maintain readable whitespace.
+
+## Admin Dashboard — Recent Bookings
+- `AdminService.getRecentBookings(limit)` exists in `src/lib/services/admin-booking.service.ts`.
+- It is displayed as a compact table on the Dashboard with columns: สถานะ, เด็ก, ผู้ปกครอง, เบอร์, วันที่, รอบ, จองเมื่อ
+- Do NOT duplicate this as a sidebar menu item.

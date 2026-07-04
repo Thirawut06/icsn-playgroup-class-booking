@@ -1,6 +1,6 @@
 import React from 'react';
-import { CheckCircle2, Loader2 } from 'lucide-react';
-import { COPY } from '@/config/copy';
+import { Loader2 } from 'lucide-react';
+import { useDictionary } from '@/lib/i18n/dictionary-context';
 
 interface BookingConfirmModalProps {
   isOpen: boolean;
@@ -21,55 +21,69 @@ export function BookingConfirmModal({
   timeLabel,
   creditsToDeduct,
   onClose,
-  onConfirm,
+  onConfirm
 }: BookingConfirmModalProps) {
+  const { dict } = useDictionary();
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm transition-opacity">
-      <div className="bg-white rounded-3xl p-6 w-full max-w-[370px] shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
-        <div className="w-16 h-16 bg-icsn-teal/10 rounded-full flex items-center justify-center mb-4 text-icsn-teal">
-          <CheckCircle2 className="w-8 h-8" />
-        </div>
-        <h3 className="text-xl font-black text-icsn-navy mb-2">{COPY.BOOKING_FLOW.CONFIRM_BOOKING_TITLE}</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => !isSubmitting && onClose()}></div>
+      <div className="bg-white rounded-3xl w-[calc(100%-2rem)] max-w-[400px] mx-auto shadow-2xl relative z-10 overflow-hidden border border-border animate-in zoom-in-95 duration-200">
         
-        <div className="w-full bg-muted rounded-2xl p-4 mb-5 space-y-3 text-left">
-          <div className="flex justify-between items-start text-base gap-4">
-            <span className="text-muted-foreground font-medium shrink-0">{COPY.BOOKING_FLOW.STUDENT_LABEL}</span>
-            <span className="font-bold text-icsn-navy text-right break-words">{childName}</span>
+        <div className="p-6 pb-2 text-center">
+          <div className="w-16 h-16 bg-icsn-teal/10 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-sm">
+            <span className="text-3xl leading-none">🎫</span>
           </div>
-          <div className="flex justify-between items-start text-base gap-4">
-            <span className="text-muted-foreground font-medium shrink-0">{COPY.BOOKING_FLOW.DATE_LABEL}</span>
-            <span className="font-bold text-icsn-teal text-right break-words" suppressHydrationWarning>{dateLabel}</span>
-          </div>
-          <div className="flex justify-between items-start text-base gap-4">
-            <span className="text-muted-foreground font-medium shrink-0">{COPY.BOOKING_FLOW.SELECT_SESSION_LABEL}</span>
-            <span className="font-bold text-icsn-navy text-right break-words">{timeLabel}</span>
+          <h3 className="text-xl font-black text-icsn-navy mb-1">{dict.book.confirmBookingTitle}</h3>
+        </div>
+
+        <div className="p-6 pt-4">
+          <div className="bg-muted/50 rounded-2xl p-4 border border-border/50 space-y-3">
+            <div className="flex justify-between items-center pb-3 border-b border-border/60 gap-4">
+              <span className="text-sm font-bold text-muted-foreground shrink-0">{dict.book.studentLabel}</span>
+              <span className="text-base font-bold text-icsn-navy text-right break-words">{childName}</span>
+            </div>
+            <div className="flex justify-between items-center pb-3 border-b border-border/60 gap-4">
+              <span className="text-sm font-bold text-muted-foreground shrink-0">{dict.book.dateLabel}</span>
+              <span className="text-base font-bold text-icsn-navy text-right break-words">{dateLabel}</span>
+            </div>
+            <div className="flex justify-between items-center pb-3 border-b border-border/60 gap-4">
+              <span className="text-sm font-bold text-muted-foreground shrink-0">{dict.book.sessionLabel}</span>
+              <span className="text-base font-bold text-icsn-navy text-right break-words">{timeLabel}</span>
+            </div>
+            <div className="flex justify-between items-center gap-4 pt-1">
+              <span className="text-sm font-bold text-muted-foreground shrink-0">{dict.book.totalSummary}</span>
+              <span className="text-lg font-black text-icsn-teal text-right break-words">{creditsToDeduct} {dict.book.credits}</span>
+            </div>
           </div>
         </div>
 
-        <p className="text-muted-foreground text-sm mb-5 font-medium px-2 leading-relaxed">
-          {COPY.BOOKING_FLOW.DEDUCT_NOTICE} <span className="text-icsn-teal font-bold mx-0.5">{creditsToDeduct} {COPY.BOOKING_FLOW.CREDIT_LABEL}</span> <span className="inline-block">{COPY.BOOKING_FLOW.FROM_PACKAGE}</span>
-        </p>
-
-        <div className="flex gap-3 w-full">
+        <div className="p-4 pt-0 grid grid-cols-2 gap-3">
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className="flex-1 py-3.5 bg-muted text-muted-foreground font-bold rounded-xl hover:bg-muted/80 transition disabled:opacity-50"
+            className="w-full py-3.5 px-4 rounded-xl font-bold text-muted-foreground bg-muted hover:bg-muted/80 hover:text-foreground transition-colors disabled:opacity-50"
           >
-            ยกเลิก
+            {dict.common.cancel}
           </button>
           <button
             onClick={onConfirm}
             disabled={isSubmitting}
-            className="flex-1 py-3.5 bg-icsn-teal text-white font-bold rounded-xl hover:bg-icsn-teal/90 shadow-lg shadow-icsn-teal/30 transition disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3.5 px-4 rounded-xl font-bold text-white bg-icsn-teal hover:bg-icsn-teal/90 shadow-md transition-all active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
           >
-            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'ยืนยันจอง'}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                {dict.book.processing}
+              </>
+            ) : (
+              dict.book.confirmBtn
+            )}
           </button>
         </div>
       </div>
     </div>
   );
 }
-
