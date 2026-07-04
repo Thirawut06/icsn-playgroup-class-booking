@@ -26,14 +26,13 @@ export default function HomePage() {
           <LanguageSwitcher />
         </div>
 
-        <div className="inline-flex items-center justify-center mx-auto w-14 sm:w-16 h-auto mb-1 relative z-10 animate-fade-in">
+        <div className="inline-flex items-center justify-center mx-auto w-24 sm:w-28 h-auto mb-1 relative z-10 animate-fade-in">
           <Image
             src="/white-main-logo-icsn.png"
             alt="ICSN Logo"
-            width={64}
-            height={64}
+            width={112}
+            height={112}
             className="w-full h-auto object-contain drop-shadow-md"
-            style={{ width: 'auto', height: 'auto' }}
             priority
           />
         </div>
