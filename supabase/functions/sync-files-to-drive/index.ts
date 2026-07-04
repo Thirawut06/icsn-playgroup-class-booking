@@ -26,12 +26,22 @@ async function blobToBase64(blob: Blob): Promise<string> {
   return btoa(binary);
 }
 
-async function uploadToGasWebhook(blob: Blob, fileName: string, parentFolderName: string, gasWebhookUrl: string, driveParentFolderId?: string) {
+async function uploadToGasWebhook(
+  blob: Blob, 
+  fileName: string, 
+  parentFolderName: string, 
+  subFolderName: string,
+  parentPhone: string,
+  gasWebhookUrl: string, 
+  driveParentFolderId?: string
+) {
   const base64Data = await blobToBase64(blob);
   const payload = {
     action: 'sync_file',
     driveParentFolderId: driveParentFolderId || '',
     parentFolderName,
+    subFolderName,
+    parentPhone,
     fileName,
     mimeType: blob.type || 'application/octet-stream',
     base64Data
@@ -52,6 +62,21 @@ async function uploadToGasWebhook(blob: Blob, fileName: string, parentFolderName
     throw new Error(`GAS Error: ${data.error}`);
   }
   return data;
+}
+
+// Helpers for Date Formatting (DD-MM-YYYY)
+function getFormattedDateStr(date: Date): string {
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = date.getFullYear();
+  return `${d}-${m}-${y}`;
+}
+
+function getFormattedTimeStr(date: Date): string {
+  const h = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  const s = String(date.getSeconds()).padStart(2, '0');
+  return `${h}${min}${s}`;
 }
 
 Deno.serve(async (req) => {
@@ -96,6 +121,9 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     let folderName = 'Unknown Parent';
+    let parentPhone = '';
+    let childNickname = '';
+
     if (record.parent_id) {
       const { data: parent } = await supabase
         .from('parents')
@@ -104,9 +132,15 @@ Deno.serve(async (req) => {
         .single();
         
       if (parent) {
+        parentPhone = parent.phone || '';
         const childNicknames = parent.children?.map((c: any) => c.nickname).filter(Boolean).join(', ');
-        const childStr = childNicknames ? ` (น้อง${childNicknames})` : '';
-        folderName = `${parent.name}${childStr} ${parent.phone || ''}`.trim();
+        const childStr = childNicknames ? ` (${childNicknames})` : '';
+        folderName = `${parent.name}${childStr} ${parentPhone}`.trim();
+        
+        // If it's a child record, find its specific nickname
+        if (table === 'children' && record.nickname) {
+          childNickname = record.nickname;
+        }
       }
     } else if (table === 'bookings' && record.child_id) {
       // For bookings, we might not have parent_id directly on the record, so fetch via child
@@ -117,7 +151,11 @@ Deno.serve(async (req) => {
         .single();
         
       if (child && child.parents) {
-        folderName = `${child.parents.name} (น้อง${child.nickname}) ${child.parents.phone || ''}`.trim();
+        parentPhone = child.parents.phone || '';
+        childNickname = child.nickname || '';
+        // Wait, for folderName we should still include all children if possible, but we don't have that easily here. 
+        // We will just use what we have, but GAS will merge by phone number!
+        folderName = `${child.parents.name} (${child.nickname}) ${parentPhone}`.trim();
       }
     }
 
@@ -131,11 +169,10 @@ Deno.serve(async (req) => {
       const blob = await res.blob();
       const ext = record.file_url.split('?')[0].split('.').pop() || 'jpg';
       const createdAt = new Date(record.created_at || new Date());
-      const dateStr = createdAt.toISOString().split('T')[0];
-      const timeStr = createdAt.toISOString().split('T')[1].split('.')[0].replace(/:/g, '');
-      const fileName = `สลิปโอนเงิน_${dateStr}_${timeStr}.${ext}`;
+      const dateStr = getFormattedDateStr(createdAt);
+      const fileName = `slip_${dateStr}.${ext}`;
       
-      await uploadToGasWebhook(blob, fileName, folderName, gasWebhookUrl, driveParentFolderId);
+      await uploadToGasWebhook(blob, fileName, folderName, 'สลิป', parentPhone, gasWebhookUrl, driveParentFolderId);
       console.log(`Synced slip ${record.id} to folder: ${folderName}`);
     } 
     else if (table === 'children') {
@@ -146,8 +183,10 @@ Deno.serve(async (req) => {
           const blob = await res.blob();
           const ext = record.photo_url.split('?')[0].split('.').pop() || 'jpg';
           const createdAt = new Date(record.created_at || new Date());
-          const dateStr = createdAt.toISOString().split('T')[0];
-          await uploadToGasWebhook(blob, `รูปโปรไฟล์เด็ก_${dateStr}.${ext}`, folderName, gasWebhookUrl, driveParentFolderId);
+          const dateStr = getFormattedDateStr(createdAt);
+          const fileName = `profile_${dateStr}.${ext}`;
+          
+          await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl, driveParentFolderId);
         }
       }
       
@@ -158,8 +197,10 @@ Deno.serve(async (req) => {
           const blob = await res.blob();
           const ext = record.parent_photo_url.split('?')[0].split('.').pop() || 'jpg';
           const createdAt = new Date(record.created_at || new Date());
-          const dateStr = createdAt.toISOString().split('T')[0];
-          await uploadToGasWebhook(blob, `รูปโปรไฟล์ผู้ปกครอง_${dateStr}.${ext}`, folderName, gasWebhookUrl, driveParentFolderId);
+          const dateStr = getFormattedDateStr(createdAt);
+          const fileName = `parent_profile_${dateStr}.${ext}`;
+          
+          await uploadToGasWebhook(blob, fileName, folderName, '', parentPhone, gasWebhookUrl, driveParentFolderId);
         }
       }
       console.log(`Synced child photos for ${record.id} to folder: ${folderName}`);
@@ -172,11 +213,11 @@ Deno.serve(async (req) => {
       const blob = await res.blob();
       const ext = record.signature_url.split('?')[0].split('.').pop() || 'png';
       const checkinDate = record.checkin_at ? new Date(record.checkin_at) : new Date();
-      const dateStr = checkinDate.toISOString().split('T')[0];
-      const timeStr = checkinDate.toISOString().split('T')[1].split('.')[0].replace(/:/g, '');
-      const fileName = `ลายเซ็นเช็คอิน_${dateStr}_${timeStr}.${ext}`;
+      const dateStr = getFormattedDateStr(checkinDate);
+      const timeStr = getFormattedTimeStr(checkinDate);
+      const fileName = `signature_${dateStr}_${timeStr}.${ext}`;
       
-      await uploadToGasWebhook(blob, fileName, folderName, gasWebhookUrl, driveParentFolderId);
+      await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl, driveParentFolderId);
       console.log(`Synced signature for booking ${record.id} to folder: ${folderName}`);
     }
 
