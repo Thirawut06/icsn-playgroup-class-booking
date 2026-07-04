@@ -5,7 +5,7 @@
 // (เมนู Extensions > Apps Script) แล้วเซฟ และกด Deploy > New Deployment
 // ให้สิทธิ์ Web app รันในฐานะ "Me" และเข้าถึงได้ "Anyone"
 
-const MAIN_FOLDER_NAME = "ICSN Panda Playgroup";
+const MAIN_FOLDER_NAME = "ICSN Playgroup"; // แก้ให้ตรงกับชื่อโฟลเดอร์ปัจจุบันของคุณ
 
 function doPost(e) {
   try {
@@ -42,22 +42,22 @@ function handleFileSync(data) {
   const fileName = data.fileName || "unknown_file";
   const base64Data = data.base64Data;
   const mimeType = data.mimeType || "application/octet-stream";
+  const driveParentFolderId = data.driveParentFolderId;
   
   if (!base64Data) throw new Error("No file data provided");
 
-  // 1. ค้นหาโฟลเดอร์หลัก "ICSN Panda Playgroup"
+  // 1. กำหนด Main Folder
   let mainFolder;
-  const mainFolderIter = DriveApp.getFoldersByName(MAIN_FOLDER_NAME);
-  if (mainFolderIter.hasNext()) {
-    mainFolder = mainFolderIter.next();
+  if (driveParentFolderId) {
+    // ถ้ามีการส่ง ID มาจาก Supabase ให้ใช้ Folder นั้นเป็น Main Folder เลย
+    mainFolder = DriveApp.getFolderById(driveParentFolderId);
   } else {
-    // ถ้าไม่มี ให้สร้างใหม่ที่ root ของ Google Drive
-    // แต่ถ้ากำหนด driveParentFolderId ไว้ ควรเปลี่ยนไปค้นหาผ่าน Id
-    const driveParentFolderId = data.driveParentFolderId;
-    if (driveParentFolderId) {
-       mainFolder = DriveApp.getFolderById(driveParentFolderId).createFolder(MAIN_FOLDER_NAME);
+    // ถ้าไม่มีการส่ง ID มา ให้ค้นหาจากชื่อแทน
+    const mainFolderIter = DriveApp.getFoldersByName(MAIN_FOLDER_NAME);
+    if (mainFolderIter.hasNext()) {
+      mainFolder = mainFolderIter.next();
     } else {
-       mainFolder = DriveApp.createFolder(MAIN_FOLDER_NAME);
+      mainFolder = DriveApp.createFolder(MAIN_FOLDER_NAME);
     }
   }
   
@@ -70,7 +70,7 @@ function handleFileSync(data) {
     if (searchIter.hasNext()) {
       parentFolder = searchIter.next();
       
-      // ถ้าชื่อเก่าไม่เหมือนชื่อใหม่เป๊ะๆ (เช่น เปลี่ยนจากมี 'น้อง' เป็น 'ไม่มีน้อง') ให้เปลี่ยนชื่อ
+      // ถ้าชื่อเก่าไม่เหมือนชื่อใหม่เป๊ะๆ ให้เปลี่ยนชื่อ
       if (parentFolder.getName() !== parentFolderName) {
         parentFolder.setName(parentFolderName);
       }
