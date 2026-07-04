@@ -26,18 +26,17 @@ export default function HomePage() {
           <LanguageSwitcher />
         </div>
 
-        <div className="inline-flex items-center justify-center mx-auto w-14 sm:w-16 h-auto mb-1 relative z-10 animate-fade-in">
+        <div className="inline-flex items-center justify-center mx-auto w-28 sm:w-32 h-auto mb-2 relative z-10 animate-fade-in">
           <Image
             src="/white-main-logo-icsn.png"
             alt="ICSN Logo"
-            width={64}
-            height={64}
+            width={128}
+            height={128}
             className="w-full h-auto object-contain drop-shadow-md"
-            style={{ width: 'auto', height: 'auto' }}
             priority
           />
         </div>
-        <h1 className="text-lg sm:text-xl font-bold tracking-tight relative z-10 text-white drop-shadow-md">
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight relative z-10 text-white drop-shadow-md">
           {dict.common.brandName}
         </h1>
       </div>

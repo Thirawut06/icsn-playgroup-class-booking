@@ -42,13 +42,13 @@ export function ApplyHeader({ showSuccess, path, setPath }: ApplyHeaderProps) {
         </button>
       )}
 
-      <div className="inline-flex items-center justify-center w-12 sm:w-14 h-auto mb-1 relative z-10">
-        <img src="/white-main-logo-icsn.png" alt="ICSN Logo" className="w-full h-auto object-contain drop-shadow-sm" />
+      <div className="inline-flex items-center justify-center mx-auto w-28 sm:w-32 h-auto mb-2 relative z-10 animate-fade-in">
+        <img src="/white-main-logo-icsn.png" alt="ICSN Logo" className="w-full h-auto object-contain drop-shadow-md" />
       </div>
-      <h1 className="text-sm sm:text-base font-bold text-white relative z-10 drop-shadow-md leading-tight">
+      <h1 className="text-xl sm:text-2xl font-black tracking-tight relative z-10 text-white drop-shadow-md">
         {dict.common.brandName}
       </h1>
-      <p className="text-[10px] sm:text-xs font-medium text-white/90 mt-0.5 relative z-10 drop-shadow-md">
+      <p className="text-sm sm:text-base font-semibold text-white/95 mt-1 relative z-10 drop-shadow-md">
         {dict.apply.headerSubtitle}
       </p>
     </div>
