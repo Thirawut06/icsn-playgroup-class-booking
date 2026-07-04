@@ -139,3 +139,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `AdminService.getRecentBookings(limit)` exists in `src/lib/services/admin-booking.service.ts`.
 - It is displayed as a compact table on the Dashboard with columns: สถานะ, เด็ก, ผู้ปกครอง, เบอร์, วันที่, รอบ, จองเมื่อ
 - Do NOT duplicate this as a sidebar menu item.
+
+## Next.js i18n & Client State Caching (SWR)
+- **Module-Level Caching:** When building Context Providers or complex forms inside a `[lang]` dynamic route, ALWAYS use module-level caching (e.g., a `const cache = {}` outside the component with a custom `useCachedState` hook) to preserve state across language switches.
+- **Background Refetch (Stale-While-Revalidate):** When a component remounts and detects cached data, immediately set `loading` to `false` and trigger a silent background fetch (`showLoading = false`) to update the data without showing a full-page loading spinner that unmounts modals.
+
+## HTML5 File Input Validation
+- **Conditional Required:** NEVER use a hardcoded `required` attribute on an `<input type="file">` if the file state is being cached. If the HTML input is empty but the file is cached in state, HTML5 validation will block form submission. ALWAYS make it conditionally required based on the cached preview data (e.g., `required={!parentPhotoData}`).
+
+## Thai Typography CSS constraints
+- **Line Height:** NEVER use `leading-none` or `leading-tight` on text elements that display Thai characters. The vertical space is required for Thai vowels and tone marks. ALWAYS use `leading-normal` or `leading-relaxed` and control vertical spacing using explicit margins (e.g., `mb-1`).

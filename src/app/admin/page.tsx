@@ -86,7 +86,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex font-sarabun text-gray-800">
+    <div className="min-h-screen bg-icsn-bg flex font-sarabun text-foreground">
       {/* ── Fixed Sidebar (desktop) + Slide-out Drawer (mobile/tablet) ── */}
       <AdminSidebar
         activeTab={activeTab}
@@ -100,7 +100,7 @@ export default function AdminPage() {
       <div className="flex-1 flex flex-col min-w-0 xl:ml-64 min-h-screen">
 
         {/* Sticky Top Header */}
-        <header className="bg-white border-b border-gray-200 no-print sticky top-0 z-40 h-[64px] flex items-center shrink-0">
+        <header className="bg-background border-b border-border no-print sticky top-0 z-40 h-[64px] flex items-center shrink-0">
           <div className="w-full px-4 xl:px-8 flex items-center justify-between gap-4">
 
             {/* Left: Hamburger (mobile/tablet only) + page title */}
@@ -108,7 +108,7 @@ export default function AdminPage() {
               <button
                 type="button"
                 onClick={() => setIsDrawerOpen(prev => !prev)}
-                className="xl:hidden p-2 -ml-1 text-icsn-navy hover:bg-gray-100 rounded-lg transition-colors"
+                className="xl:hidden p-2 -ml-1 text-icsn-navy hover:bg-muted rounded-lg transition-colors"
                 aria-label="Toggle menu"
               >
                 <Menu className="w-5 h-5" />
@@ -120,15 +120,15 @@ export default function AdminPage() {
 
             {/* Right: Session badge + Logout */}
             <div className="flex items-center gap-2 text-xs ml-auto">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full font-semibold whitespace-nowrap">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-success/10 text-success border border-success/20 rounded-full font-semibold whitespace-nowrap">
+                <span className="w-2 h-2 rounded-full bg-success shrink-0" />
                 <span className="hidden sm:inline">Admin Session Active</span>
                 <span className="sm:hidden">Active</span>
               </span>
               <button
                 type="button"
                 onClick={logout}
-                className="p-2 border border-gray-200 hover:border-red-200 hover:text-red-600 rounded-xl transition bg-white cursor-pointer"
+                className="p-2 border border-border hover:border-error/50 hover:text-error rounded-xl transition bg-background cursor-pointer"
                 title="Log out"
                 aria-label="Log out"
               >

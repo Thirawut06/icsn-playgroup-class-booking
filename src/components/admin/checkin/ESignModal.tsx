@@ -95,13 +95,13 @@ export function ESignModal({
         <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8 text-center bg-white">
           <CheckCircle2 className="w-24 h-24 text-black" />
           <h2 className="text-4xl font-bold text-black mb-2">เช็คอินสำเร็จ!</h2>
-          <p className="text-xl text-gray-600">
+          <p className="text-xl text-foreground/80">
             <span className="font-bold text-black">{booking.nickname}</span> ลงชื่อเข้าเรียนเรียบร้อยแล้ว
           </p>
           <button
             id="esign-modal-done"
             onClick={handleClose}
-            className="mt-8 px-12 py-4 bg-black text-white rounded font-bold text-xl hover:bg-gray-800 transition active:scale-95"
+            className="mt-8 px-12 py-4 bg-black text-white rounded font-bold text-xl hover:bg-icsn-navy transition active:scale-95"
           >
             ปิด (Close)
           </button>
@@ -115,22 +115,22 @@ export function ESignModal({
               
               <div className="flex flex-col gap-3 text-black">
                 <div>
-                  <p className="text-[10px] text-gray-500 uppercase mb-0.5">วันที่ / รอบ</p>
+                  <p className="text-[10px] text-muted-foreground uppercase mb-0.5">วันที่ / รอบ</p>
                   <p className="text-sm font-medium">{formatThaiDate(sessionDate)} {session.time_label}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-gray-500 uppercase mb-0.5">ชื่อเด็ก</p>
+                  <p className="text-[10px] text-muted-foreground uppercase mb-0.5">ชื่อเด็ก</p>
                   <p className="text-sm font-medium">
                     {booking.nickname}
                     {booking.full_name && booking.full_name !== booking.nickname && (
-                      <span className="text-gray-500 ml-1">({booking.full_name})</span>
+                      <span className="text-muted-foreground ml-1">({booking.full_name})</span>
                     )}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-gray-500 uppercase mb-0.5">ผู้ปกครอง</p>
+                  <p className="text-[10px] text-muted-foreground uppercase mb-0.5">ผู้ปกครอง</p>
                   <p className="text-sm font-medium">
-                    {booking.parent_name} <span className="text-gray-500 ml-1">{booking.parent_phone}</span>
+                    {booking.parent_name} <span className="text-muted-foreground ml-1">{booking.parent_phone}</span>
                   </p>
                 </div>
               </div>
@@ -138,7 +138,7 @@ export function ESignModal({
             
             <button
               onClick={handleClose}
-              className="pointer-events-auto p-4 text-black hover:bg-gray-100 rounded-full transition"
+              className="pointer-events-auto p-4 text-black hover:bg-icsn-bg rounded-full transition"
             >
               <X className="w-8 h-8" />
             </button>
@@ -148,7 +148,7 @@ export function ESignModal({
           <div className="flex-1 relative w-full h-full cursor-crosshair">
             {isEmpty && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
-                <PenLine className="w-32 h-32 text-gray-400" />
+                <PenLine className="w-32 h-32 text-muted-foreground/70" />
               </div>
             )}
             <SignatureCanvas
@@ -170,7 +170,7 @@ export function ESignModal({
             <button
               onClick={handleClear}
               disabled={isSubmitting || isEmpty}
-              className="pointer-events-auto px-8 py-4 text-black font-bold hover:bg-gray-100 rounded transition disabled:opacity-30 disabled:bg-transparent"
+              className="pointer-events-auto px-8 py-4 text-black font-bold hover:bg-icsn-bg rounded transition disabled:opacity-30 disabled:bg-transparent"
             >
               ล้าง
             </button>
@@ -178,7 +178,7 @@ export function ESignModal({
             <button
               onClick={handleConfirm}
               disabled={isSubmitting || isEmpty}
-              className="pointer-events-auto px-8 py-4 bg-icsn-teal text-white font-bold rounded hover:bg-icsn-teal/90 transition disabled:opacity-30 disabled:bg-gray-300 disabled:text-gray-500 flex items-center gap-3 shadow-lg"
+              className="pointer-events-auto px-8 py-4 bg-icsn-teal text-white font-bold rounded hover:bg-icsn-teal/90 transition disabled:opacity-30 disabled:bg-muted/80 disabled:text-muted-foreground flex items-center gap-3 shadow-lg"
             >
               {isSubmitting ? (
                 <>

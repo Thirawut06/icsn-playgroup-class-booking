@@ -40,7 +40,7 @@ export function PhotoUploadSection({
           type="file"
           accept="image/*,.heic,.heif"
           onChange={(e) => handleFile(e, setParentPhotoData as any, setParentPhotoFile as any)}
-          required
+          required={!parentPhotoData}
           className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-icsn-teal/10 file:text-icsn-teal hover:file:bg-icsn-teal/20 border border-border rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
         />
         <span className="block text-xs text-muted-foreground/70">{dict.apply.uploadLimit}</span>
@@ -60,7 +60,7 @@ export function PhotoUploadSection({
           type="file"
           accept="image/*,.heic,.heif"
           onChange={(e) => handleFile(e, setChildPhotoData as any, setChildPhotoFile as any)}
-          required
+          required={!childPhotoData}
           className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-icsn-teal/10 file:text-icsn-teal hover:file:bg-icsn-teal/20 border border-border rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
         />
         <span className="block text-xs text-muted-foreground/70">{dict.apply.uploadLimit}</span>

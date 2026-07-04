@@ -37,26 +37,9 @@ export const AdminUserService = {
 
       const totalCredits = packages.reduce((sum: number, pkg: any) => sum + (pkg.credits_remaining || 0), 0);
       const totalBookings = bookings.filter((b: any) => b.status === 'confirmed').length;
-
-      let category: 'payment' | 'trial' | 'walk-in' = 'walk-in';
-
-      if (packages.length > 0) {
-        const hasTrial = packages.some((pkg: any) => pkg.type === 'trial');
-        const hasNormal = packages.some((pkg: any) => pkg.type !== 'trial');
-
-        if (hasNormal) category = 'payment';
-        else if (hasTrial) category = 'trial';
-        else category = 'payment';
-      }
-
-      // Calculate latest activity to sort properly
-      let latestActivity = new Date(p.created_at).getTime();
-      children.forEach((c: { nickname: string; created_at?: string }) => {
-        if (c.created_at) {
-          const childTime = new Date(c.created_at).getTime();
-          if (childTime > latestActivity) latestActivity = childTime;
-        }
-      });
+      
+      const category = this._classifyUserCategory(packages);
+      const latestActivity = this._calculateLatestActivity(p.created_at, children);
 
       return {
         id: p.id,
@@ -74,6 +57,24 @@ export const AdminUserService = {
 
     // Sort by latest activity descending (newest first)
     return mapped.sort((a: { latestActivity: number }, b: { latestActivity: number }) => b.latestActivity - a.latestActivity);
+  },
+
+  _classifyUserCategory(packages: any[]): 'payment' | 'trial' | 'walk-in' {
+    if (packages.length === 0) return 'walk-in';
+    const hasNormal = packages.some((pkg: any) => pkg.type !== 'trial');
+    if (hasNormal) return 'payment';
+    return 'trial';
+  },
+
+  _calculateLatestActivity(parentCreatedAt: string, children: any[]): number {
+    let latestActivity = new Date(parentCreatedAt).getTime();
+    children.forEach((c: { nickname: string; created_at?: string }) => {
+      if (c.created_at) {
+        const childTime = new Date(c.created_at).getTime();
+        if (childTime > latestActivity) latestActivity = childTime;
+      }
+    });
+    return latestActivity;
   },
 
   async getUserFullDetails(parentId: string): Promise<Record<string, unknown> | null> {

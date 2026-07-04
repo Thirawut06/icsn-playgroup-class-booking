@@ -94,7 +94,7 @@ export function AdminSidebar({
 
   // Shared branding block shown at the top of sidebar / drawer
   const SidebarBranding = () => (
-    <div className="flex items-center gap-3 px-3 py-4 border-b border-gray-100 shrink-0">
+    <div className="flex items-center gap-3 px-3 py-4 border-b border-border/50 shrink-0">
       <Image
         src="/main-logo-icsn.png"
         alt="ICSN"
@@ -112,7 +112,7 @@ export function AdminSidebar({
   return (
     <>
       {/* ── Desktop: Fixed full-height sidebar ── */}
-      <aside className="hidden xl:flex flex-col fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-200 z-40 no-print">
+      <aside className="hidden xl:flex flex-col fixed left-0 top-0 h-screen w-64 bg-white border-r border-border z-40 no-print">
         <SidebarBranding />
         <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
           {renderNavItems(false)}
@@ -130,12 +130,12 @@ export function AdminSidebar({
           />
           {/* Drawer panel */}
           <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] bg-white shadow-2xl flex flex-col">
-            <div className="flex items-center justify-between pr-3 border-b border-gray-100">
+            <div className="flex items-center justify-between pr-3 border-b border-border/50">
               <SidebarBranding />
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors shrink-0"
+                className="p-2 rounded-lg hover:bg-icsn-bg text-muted-foreground/70 transition-colors shrink-0"
                 aria-label="Close menu"
               >
                 <X className="w-5 h-5" />

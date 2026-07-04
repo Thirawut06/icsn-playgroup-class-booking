@@ -1,7 +1,7 @@
 {
   "common": {
     "brandName": "ICSN Panda Playgroup",
-    "tagline": "PLAY & LEARN",
+    "tagline": "Come Play, Learn and Grow",
     "loading": "Loading...",
     "loadingShort": "Loading...",
     "close": "Close",
@@ -107,14 +107,23 @@
     "calendarLegendPast": "Past / Holiday",
     "calendarLegendOpen": "Available",
     "calendarLegendFull": "Full / Closed",
-    "weekDays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "weekDays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat"
+    ],
     "closureTitle": "Holiday Notice",
     "closureFullDay": "Closed all day",
     "closureSession": "Closed for",
     "closureDateLabel": "Date",
     "closureBecause": "due to",
     "closureCollapse": "Hide notifications",
-    "closureShowMore": "Show {count} more"
+    "closureShowMore": "Show {count} more",
+    "pendingSlipNotice": "You have a pending payment waiting for admin approval. Credits will be updated once approved."
   },
   "topUp": {
     "title": "Purchase package to book playgroup classes",
@@ -178,8 +187,34 @@
     "yes": "Yes",
     "no": "No"
   },
-  "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-  "monthsShort": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  "months": [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ],
+  "monthsShort": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
+  ],
   "langSwitcher": {
     "th": "TH",
     "en": "EN"

@@ -95,14 +95,14 @@ export function AdminInfoBox({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-info/10/50 p-4 rounded-xl border border-info/20">
       <div className="flex gap-3">
         <div className="mt-0.5">
-          <Icon className="w-5 h-5 text-blue-600" />
+          <Icon className="w-5 h-5 text-info" />
         </div>
         <div className="text-sm">
-          <p className="font-bold text-blue-900">{title}</p>
-          <div className="text-blue-700/80 mt-1">{description}</div>
+          <p className="font-bold text-info">{title}</p>
+          <div className="text-info/80 mt-1">{description}</div>
         </div>
       </div>
       {action && <div>{action}</div>}
@@ -125,7 +125,7 @@ export function AdminToggle({
       onClick={onClick}
       disabled={disabled}
       className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-icsn-teal focus:ring-offset-2 disabled:opacity-50 transition-colors ${
-        isActive ? 'bg-icsn-teal' : 'bg-gray-200'
+        isActive ? 'bg-icsn-teal' : 'bg-muted'
       }`}
       title={isActive ? 'กดเพื่อปิดใช้งาน' : 'กดเพื่อเปิดใช้งาน'}
     >
@@ -153,13 +153,13 @@ export function AdminIconButton({
 
   switch (variant) {
     case 'primary':
-      variantClasses = "text-blue-600 hover:bg-blue-50";
+      variantClasses = "text-info hover:bg-info/10";
       break;
     case 'danger':
-      variantClasses = "text-red-600 hover:bg-red-50";
+      variantClasses = "text-error hover:bg-error/10";
       break;
     default:
-      variantClasses = "text-gray-500 hover:bg-gray-200";
+      variantClasses = "text-muted-foreground hover:bg-muted";
       break;
   }
 
@@ -178,15 +178,15 @@ export function AdminDataTable({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+    <div className="bg-white border border-border rounded-2xl shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[600px]">
           <thead>
-            <tr className="bg-gray-50/80 border-b border-gray-100 text-sm">
+            <tr className="bg-muted/50/80 border-b border-border/50 text-sm">
               {headers.map((h, i) => (
                 <th
                   key={i}
-                  className={`px-6 py-4 font-bold text-gray-600 ${
+                  className={`px-6 py-4 font-bold text-foreground/80 ${
                     h.align === 'center' ? 'text-center' : h.align === 'right' ? 'text-right' : 'text-left'
                   }`}
                 >
@@ -225,11 +225,11 @@ export function AdminModal({
         className={`bg-white rounded-2xl shadow-xl w-full ${maxWidth} overflow-hidden flex flex-col animate-in zoom-in-95 duration-200`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-gray-50/50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/50/50">
           <h3 className="text-lg font-bold text-icsn-navy">{title}</h3>
           <button 
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-500 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-colors"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

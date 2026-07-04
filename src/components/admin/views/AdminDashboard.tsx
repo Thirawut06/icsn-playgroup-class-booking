@@ -94,19 +94,19 @@ function QuickAction({ item }: { item: QuickActionItem }) {
     <button
       type="button"
       onClick={item.onClick}
-      className={`relative bg-white border border-slate-200 ${item.hoverBorder} hover:shadow-md transition-all p-5 rounded-2xl flex flex-col items-center justify-center gap-3 text-center group cursor-pointer`}
+      className={`relative bg-white border border-border ${item.hoverBorder} hover:shadow-md transition-all p-5 rounded-2xl flex flex-col items-center justify-center gap-3 text-center group cursor-pointer`}
     >
       {item.badge ? (
-        <span className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm min-w-[20px] h-5 flex items-center justify-center">
+        <span className="absolute top-3 right-3 bg-error text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm min-w-[20px] h-5 flex items-center justify-center">
           {item.badge}
         </span>
       ) : null}
-      <div className={`w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center ${item.hoverBg} transition-colors`}>
-        <item.icon className={`w-6 h-6 text-slate-600 ${item.hoverIcon}`} />
+      <div className={`w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center ${item.hoverBg} transition-colors`}>
+        <item.icon className={`w-6 h-6 text-foreground/80 ${item.hoverIcon}`} />
       </div>
       <div>
-        <p className="font-bold text-slate-800 text-sm">{item.label}</p>
-        <p className="text-xs text-slate-500 mt-0.5">{item.description}</p>
+        <p className="font-bold text-foreground text-sm">{item.label}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
       </div>
     </button>
   );
@@ -118,9 +118,9 @@ function RecentBookingsTable({ bookings, loading, onRefresh }: {
   onRefresh: () => void;
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-        <h3 className="font-bold text-slate-800 text-base">การจองล่าสุด (15 รายการ)</h3>
+    <div className="bg-white border border-border rounded-2xl shadow-sm overflow-hidden">
+      <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+        <h3 className="font-bold text-foreground text-base">การจองล่าสุด (15 รายการ)</h3>
         <button onClick={onRefresh} className="text-sm text-icsn-teal font-semibold hover:underline">
           รีเฟรช
         </button>
@@ -128,15 +128,15 @@ function RecentBookingsTable({ bookings, loading, onRefresh }: {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground/70" />
         </div>
       ) : bookings.length === 0 ? (
-        <p className="text-center py-12 text-slate-500 text-base">ยังไม่มีการจองในระบบ</p>
+        <p className="text-center py-12 text-muted-foreground text-base">ยังไม่มีการจองในระบบ</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-50 text-left text-xs font-bold text-slate-500 uppercase tracking-wide">
+              <tr className="bg-muted/50 text-left text-xs font-bold text-muted-foreground uppercase tracking-wide">
                 <th className="px-4 py-2">สถานะ</th>
                 <th className="px-4 py-2">เด็ก</th>
                 <th className="px-4 py-2">ผู้ปกครอง</th>
@@ -151,20 +151,20 @@ function RecentBookingsTable({ bookings, loading, onRefresh }: {
                 const isConfirmed = b.status === BOOKING_STATUS.CONFIRMED;
                 const isCancelled = b.status === BOOKING_STATUS.CANCELLED;
                 return (
-                  <tr key={b.id} className="hover:bg-slate-50">
+                  <tr key={b.id} className="hover:bg-muted/50">
                     <td className="px-4 py-2 font-semibold whitespace-nowrap">
-                      <span className={isConfirmed ? 'text-emerald-600' : isCancelled ? 'text-red-500' : 'text-slate-400'}>
+                      <span className={isConfirmed ? 'text-success' : isCancelled ? 'text-error' : 'text-muted-foreground/70'}>
                         {isConfirmed ? '✓ จอง' : isCancelled ? '✕ ยกเลิก' : b.status}
                       </span>
                     </td>
-                    <td className="px-4 py-2 font-medium text-slate-800 whitespace-nowrap">{b.child_nickname}</td>
-                    <td className="px-4 py-2 text-slate-600 whitespace-nowrap">{b.parent_name}</td>
-                    <td className="px-4 py-2 text-slate-500 whitespace-nowrap">{b.parent_phone}</td>
-                    <td className="px-4 py-2 text-slate-600 whitespace-nowrap">
+                    <td className="px-4 py-2 font-medium text-foreground whitespace-nowrap">{b.child_nickname}</td>
+                    <td className="px-4 py-2 text-foreground/80 whitespace-nowrap">{b.parent_name}</td>
+                    <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">{b.parent_phone}</td>
+                    <td className="px-4 py-2 text-foreground/80 whitespace-nowrap">
                       {b.session_date ? formatThaiDate(b.session_date) : '-'}
                     </td>
-                    <td className="px-4 py-2 text-slate-500 whitespace-nowrap">{b.time_label || '-'}</td>
-                    <td className="px-4 py-2 text-slate-400 whitespace-nowrap">{formatTimeAgo(b.created_at)}</td>
+                    <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">{b.time_label || '-'}</td>
+                    <td className="px-4 py-2 text-muted-foreground/70 whitespace-nowrap">{formatTimeAgo(b.created_at)}</td>
                   </tr>
                 );
               })}
@@ -254,27 +254,27 @@ export function AdminDashboard({ onNavigate }: {
       label: 'ฐานข้อมูลครอบครัว',
       description: 'ดูรายชื่อและสถิติการจอง',
       icon: Users,
-      hoverBorder: 'hover:border-blue-400/50',
-      hoverBg: 'group-hover:bg-blue-50',
-      hoverIcon: 'group-hover:text-blue-600',
+      hoverBorder: 'hover:border-info/50/50',
+      hoverBg: 'group-hover:bg-info/10',
+      hoverIcon: 'group-hover:text-info',
       onClick: () => onNavigate?.('users'),
     },
     {
       label: 'ประกาศวันหยุด',
       description: 'ตั้งค่าและแจ้งปิดคลาส',
       icon: CalendarOff,
-      hoverBorder: 'hover:border-red-400/50',
-      hoverBg: 'group-hover:bg-red-50',
-      hoverIcon: 'group-hover:text-red-600',
+      hoverBorder: 'hover:border-error/50/50',
+      hoverBg: 'group-hover:bg-error/10',
+      hoverIcon: 'group-hover:text-error',
       onClick: () => onNavigate?.('holidays'),
     },
     {
       label: 'การจองล่าสุด',
       description: 'ดูประวัติการจองล่าสุด 15 รายการ',
       icon: Clock,
-      hoverBorder: 'hover:border-purple-400/50',
-      hoverBg: 'group-hover:bg-purple-50',
-      hoverIcon: 'group-hover:text-purple-600',
+      hoverBorder: 'hover:border-accent/50/50',
+      hoverBg: 'group-hover:bg-accent/10',
+      hoverIcon: 'group-hover:text-accent',
       onClick: () => recentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
     },
   ];
@@ -306,8 +306,8 @@ export function AdminDashboard({ onNavigate }: {
 
       {/* Quick Actions */}
       <div>
-        <h3 className="text-lg font-bold text-slate-800 mb-4 font-outfit">
-          Quick Actions <span className="font-sarabun text-sm font-normal text-slate-500 ml-2">เมนูการจัดการด่วน</span>
+        <h3 className="text-lg font-bold text-foreground mb-4 font-outfit">
+          Quick Actions <span className="font-sarabun text-sm font-normal text-muted-foreground ml-2">เมนูการจัดการด่วน</span>
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {quickActions.map((action) => (

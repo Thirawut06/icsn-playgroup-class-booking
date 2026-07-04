@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Loader2, UserPlus, CheckCircle2, X } from 'lucide-react';
-import { AdminService, supabase } from '@/lib/supabase';
+import { AdminService, PackageService, supabase } from '@/lib/supabase';
 import { getErrorMessage } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -31,11 +31,8 @@ export function AdminWalkinModal({ isOpen, sessionId, onClose, onSuccess }: Admi
 
   useEffect(() => {
     if (isOpen) {
-      supabase.from('package_options')
-        .select('name, price')
-        .eq('is_active', true)
-        .order('price', { ascending: true })
-        .then(({ data }) => setPackageOptions(data || []));
+      PackageService.getPackageOptions()
+        .then((data) => setPackageOptions(data || []));
     }
   }, [isOpen]);
 
@@ -98,14 +95,14 @@ export function AdminWalkinModal({ isOpen, sessionId, onClose, onSuccess }: Admi
       const finalChildId = selectedChildId === 'NEW' || !selectedChildId ? null : selectedChildId;
       const finalChildName = finalChildId ? '' : newChildName;
 
-      await AdminService.adminProcessWalkin(
+      await AdminService.adminProcessWalkin({
         phone,
-        finalChildId,
-        finalChildName,
+        childId: finalChildId,
+        childName: finalChildName,
         sessionId,
         paymentType,
-        paymentType === 'paid_package' ? selectedPackage : undefined
-      );
+        packageName: paymentType === 'paid_package' ? selectedPackage : undefined
+      });
       
       toast.success("บันทึก Walk-in สำเร็จ!");
       if (paymentType === 'paid_package') {

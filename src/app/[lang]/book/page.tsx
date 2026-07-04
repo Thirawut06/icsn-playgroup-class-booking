@@ -65,7 +65,8 @@ function BookPageContent() {
     loading,
     selectedChildId,
     refreshData,
-    mergeSessionsForDate
+    mergeSessionsForDate,
+    hasPendingSlip
   } = useBookingContext();
 
   const [monthIndex, setMonthIndex] = useCachedState('monthIndex', 0);
@@ -226,13 +227,26 @@ function BookPageContent() {
         <main className="flex-1 flex flex-col">
           {settings?.announcement_text && (
             <div className="mx-4 my-3">
-              <div className="bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-xl flex items-start gap-3">
+              <div className="bg-info/10 border border-info/30 text-info p-3 rounded-xl flex items-start gap-3">
                 <span className="text-xl leading-none mt-0.5">📢</span>
                 <div>
-                  <p className="text-xs font-bold text-blue-800/70 uppercase tracking-wider mb-0.5">
+                  <p className="text-xs font-bold text-info/70 uppercase tracking-wider mb-0.5">
                     {dict.book.announcementLabel}
                   </p>
                   <p className="text-sm font-medium whitespace-pre-wrap leading-relaxed">{settings.announcement_text}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {hasPendingSlip && (
+            <div className="mx-4 my-2">
+              <div className="bg-warning/10 border border-warning/30 text-warning p-3 rounded-xl flex items-start gap-3">
+                <span className="text-xl leading-none mt-0.5">⏳</span>
+                <div>
+                  <p className="text-sm font-medium whitespace-pre-wrap leading-relaxed">
+                    {dict.book.pendingSlipNotice || "กำลังรอแอดมินอนุมัติการชำระเงิน ระบบจะอัปเดตเครดิตเมื่อตรวจสอบเสร็จสิ้น"}
+                  </p>
                 </div>
               </div>
             </div>

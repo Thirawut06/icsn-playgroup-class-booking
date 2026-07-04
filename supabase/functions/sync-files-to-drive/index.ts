@@ -79,6 +79,54 @@ function getFormattedTimeStr(date: Date): string {
   return `${h}${min}${s}`;
 }
 
+async function resolveFolderInfo(table: string, record: any, supabase: any) {
+  let folderName = 'Unknown Parent';
+  let parentPhone = '';
+  let childNickname = '';
+
+  if (record.parent_id) {
+    const { data: parent } = await supabase
+      .from('parents')
+      .select('name, phone, children(nickname)')
+      .eq('id', record.parent_id)
+      .single();
+      
+    if (parent) {
+      parentPhone = parent.phone || '';
+      const childNicknames = parent.children?.map((c: any) => c.nickname).filter(Boolean).join(', ');
+      const childStr = childNicknames ? ` (${childNicknames})` : '';
+      folderName = `${parent.name}${childStr} ${parentPhone}`.trim();
+      
+      if (table === 'children') {
+        const fn = record.full_name ? record.full_name.trim() : '';
+        const nn = record.nickname ? record.nickname.trim() : '';
+        if (fn && nn) childNickname = `${fn} (${nn})`;
+        else if (fn) childNickname = fn;
+        else if (nn) childNickname = nn;
+      }
+    }
+  } else if (table === 'bookings' && record.child_id) {
+    const { data: child } = await supabase
+      .from('children')
+      .select('nickname, full_name, parents(id, name, phone)')
+      .eq('id', record.child_id)
+      .single();
+      
+    if (child && child.parents) {
+      parentPhone = child.parents.phone || '';
+      const fn = child.full_name ? child.full_name.trim() : '';
+      const nn = child.nickname ? child.nickname.trim() : '';
+      if (fn && nn) childNickname = `${fn} (${nn})`;
+      else if (fn) childNickname = fn;
+      else if (nn) childNickname = nn;
+      
+      folderName = `${child.parents.name} (${child.nickname}) ${parentPhone}`.trim();
+    }
+  }
+
+  return { folderName, parentPhone, childNickname };
+}
+
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
 
@@ -100,15 +148,17 @@ Deno.serve(async (req) => {
       return new Response('Ignored', { status: 200 });
     }
     
-    // For UPDATEs, only process if the file URL changed OR status changed to approved
-    if (type === 'UPDATE') {
-      const fileUrlChanged = record.file_url !== old_record?.file_url;
-      const justApproved = record.status === 'approved' && old_record?.status !== 'approved';
-      
-      if (table === 'slip_uploads' && !fileUrlChanged && !justApproved) {
-        return new Response('Ignored', { status: 200 });
+    if (table === 'slip_uploads') {
+      if (type === 'INSERT') {
+        return new Response('Ignored - Slips only uploaded upon approval', { status: 200 });
       }
-      
+      if (type === 'UPDATE') {
+        const justApproved = record.status === 'approved' && old_record?.status !== 'approved';
+        if (!justApproved) {
+          return new Response('Ignored - Slip status did not change to approved', { status: 200 });
+        }
+      }
+    } else if (type === 'UPDATE') {
       if (table === 'children' && record.photo_url === old_record?.photo_url && record.parent_photo_url === old_record?.parent_photo_url) {
         return new Response('Ignored', { status: 200 });
       }
@@ -119,45 +169,7 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    let folderName = 'Unknown Parent';
-    let parentPhone = '';
-    let childNickname = '';
-
-    if (record.parent_id) {
-      const { data: parent } = await supabase
-        .from('parents')
-        .select('name, phone, children(nickname)')
-        .eq('id', record.parent_id)
-        .single();
-        
-      if (parent) {
-        parentPhone = parent.phone || '';
-        const childNicknames = parent.children?.map((c: any) => c.nickname).filter(Boolean).join(', ');
-        const childStr = childNicknames ? ` (${childNicknames})` : '';
-        folderName = `${parent.name}${childStr} ${parentPhone}`.trim();
-        
-        // If it's a child record, find its specific nickname
-        if (table === 'children' && record.nickname) {
-          childNickname = record.nickname;
-        }
-      }
-    } else if (table === 'bookings' && record.child_id) {
-      // For bookings, we might not have parent_id directly on the record, so fetch via child
-      const { data: child } = await supabase
-        .from('children')
-        .select('nickname, parents(id, name, phone)')
-        .eq('id', record.child_id)
-        .single();
-        
-      if (child && child.parents) {
-        parentPhone = child.parents.phone || '';
-        childNickname = child.nickname || '';
-        // Wait, for folderName we should still include all children if possible, but we don't have that easily here. 
-        // We will just use what we have, but GAS will merge by phone number!
-        folderName = `${child.parents.name} (${child.nickname}) ${parentPhone}`.trim();
-      }
-    }
+    const { folderName, parentPhone, childNickname } = await resolveFolderInfo(table, record, supabase);
 
     const driveParentFolderId = Deno.env.get('DRIVE_PARENT_FOLDER_ID') || undefined;
 
@@ -200,7 +212,7 @@ Deno.serve(async (req) => {
           const dateStr = getFormattedDateStr(createdAt);
           const fileName = `parent_profile_${dateStr}.${ext}`;
           
-          await uploadToGasWebhook(blob, fileName, folderName, '', parentPhone, gasWebhookUrl, driveParentFolderId);
+          await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl, driveParentFolderId);
         }
       }
       console.log(`Synced child photos for ${record.id} to folder: ${folderName}`);

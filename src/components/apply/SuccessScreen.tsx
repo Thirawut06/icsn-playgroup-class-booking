@@ -32,7 +32,9 @@ export function SuccessScreen({ path }: SuccessScreenProps) {
       )}
 
       <Button
-        onClick={() => router.push(ROUTES.BOOK(lang))}
+        onClick={() => {
+          window.location.href = ROUTES.BOOK(lang);
+        }}
         className="w-full bg-icsn-teal text-white font-bold py-3.5 px-6 rounded-xl flex flex-col items-center justify-center hover:bg-icsn-teal/90 h-auto"
       >
         <span className="text-lg">{dict.apply.goToCalendar}</span>

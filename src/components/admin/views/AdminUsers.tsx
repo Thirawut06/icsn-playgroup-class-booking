@@ -150,7 +150,7 @@ export function AdminUsers() {
                       <p className="font-medium text-foreground">{user.children_nicknames || '-'}</p>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <div className="inline-flex items-center justify-center min-w-[3rem] h-8 rounded-full font-bold text-sm bg-blue-50 text-blue-600 border border-blue-200">
+                      <div className="inline-flex items-center justify-center min-w-[3rem] h-8 rounded-full font-bold text-sm bg-info/10 text-info border border-info/30">
                         {user.total_bookings}
                       </div>
                     </td>
