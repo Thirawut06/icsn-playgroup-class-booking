@@ -15,7 +15,7 @@ export default function HomePage() {
     <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)] pb-10 flex flex-col relative overflow-hidden">
       {/* Top banner with nice branding */}
       <div
-        className="w-full aspect-[2000/560] relative overflow-hidden bg-cover bg-center"
+        className="w-full aspect-[2000/560] relative overflow-hidden bg-cover bg-center bg-[#00adb7]"
         style={{ backgroundImage: "url('/playgroup-banner-icsn.png')" }}
       >
         {/* Language Switcher */}
@@ -25,18 +25,18 @@ export default function HomePage() {
       </div>
 
       {/* Brand Header Section */}
-      <div className="flex flex-col items-center pt-6 pb-6 text-center px-4 bg-icsn-navy text-white shadow-[inset_0_-2px_10px_rgba(0,0,0,0.1)]">
+      <div className="flex flex-col items-center pt-6 pb-2 text-center px-4">
         <div className="w-16 sm:w-20 h-auto mb-2 animate-fade-in">
           <Image
-            src="/white-main-logo-icsn.png"
+            src="/main-logo-icsn.png"
             alt="ICSN Logo"
             width={80}
             height={80}
-            className="w-full h-auto object-contain drop-shadow-md"
+            className="w-full h-auto object-contain"
             priority
           />
         </div>
-        <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight drop-shadow-sm">
+        <h1 className="text-xl sm:text-2xl font-bold text-icsn-navy">
           {dict.common.brandName}
         </h1>
       </div>

@@ -18,7 +18,7 @@ export function ApplyHeader({ showSuccess, path, setPath }: ApplyHeaderProps) {
   return (
     <>
       <div 
-        className="w-full aspect-[2000/560] relative overflow-hidden bg-cover bg-center"
+        className="w-full aspect-[2000/560] relative overflow-hidden bg-cover bg-center bg-[#00adb7]"
         style={{ backgroundImage: 'url("/playgroup-banner-icsn.png")' }}
       >
         <div className="absolute top-3 right-3 z-20">
@@ -42,14 +42,14 @@ export function ApplyHeader({ showSuccess, path, setPath }: ApplyHeaderProps) {
         )}
       </div>
 
-      <div className="flex flex-col items-center pt-6 pb-6 text-center px-4 bg-icsn-navy text-white shadow-[inset_0_-2px_10px_rgba(0,0,0,0.1)]">
+      <div className="flex flex-col items-center pt-6 pb-2 text-center px-4 border-b border-border">
         <div className="w-14 sm:w-16 h-auto mb-2">
-          <img src="/white-main-logo-icsn.png" alt="ICSN Logo" className="w-full h-auto object-contain drop-shadow-sm" />
+          <img src="/main-logo-icsn.png" alt="ICSN Logo" className="w-full h-auto object-contain" />
         </div>
-        <h1 className="text-lg sm:text-xl font-extrabold tracking-tight leading-tight drop-shadow-sm">
+        <h1 className="text-lg sm:text-xl font-bold text-icsn-navy leading-tight">
           {dict.common.brandName}
         </h1>
-        <p className="text-xs sm:text-sm font-semibold text-white/90 mt-0.5 drop-shadow-sm">
+        <p className="text-xs sm:text-sm font-semibold text-muted-foreground mt-0.5">
           {dict.apply.headerSubtitle}
         </p>
       </div>
