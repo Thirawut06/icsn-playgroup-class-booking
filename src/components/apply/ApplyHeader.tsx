@@ -17,7 +17,7 @@ export function ApplyHeader({ showSuccess, path, setPath }: ApplyHeaderProps) {
 
   return (
     <div 
-      className="bg-icsn-navy w-full aspect-[2000/560] text-white text-center relative overflow-hidden bg-cover bg-center flex flex-col items-center justify-center"
+      className="bg-icsn-navy w-full aspect-[16/9] text-white text-center relative overflow-hidden bg-cover bg-center flex flex-col items-center justify-center"
       style={{ backgroundImage: 'url("/playgroup-banner-icsn.png")' }}
     >
       <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>

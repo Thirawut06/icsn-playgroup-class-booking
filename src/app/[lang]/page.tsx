@@ -15,7 +15,7 @@ export default function HomePage() {
     <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)] pb-10 flex flex-col relative overflow-hidden">
       {/* Top banner with nice branding */}
       <div
-        className="bg-icsn-navy w-full aspect-[2000/560] text-white text-center relative overflow-hidden bg-cover bg-center flex flex-col items-center justify-center"
+        className="bg-icsn-navy w-full aspect-[16/9] text-white text-center relative overflow-hidden bg-cover bg-center flex flex-col items-center justify-center"
         style={{ backgroundImage: "url('/playgroup-banner-icsn.png')" }}
       >
         {/* Dark overlay for high contrast readability */}
