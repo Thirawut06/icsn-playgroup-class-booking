@@ -1,133 +1,195 @@
-import { SignJWT, importPKCS8 } from 'npm:jose';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
 
-async function getGoogleAccessToken(serviceAccountJson: string, scope: string): Promise<string> {
-  const serviceAccount = JSON.parse(serviceAccountJson);
-  const now = Math.floor(Date.now() / 1000);
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
-  const payload = {
-    iss: serviceAccount.client_email,
-    scope: scope,
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600,
-  };
-
-  const privateKey = await importPKCS8(serviceAccount.private_key, 'RS256');
-
-  const jwt = await new SignJWT(payload)
-    .setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
-    .setIssuer(payload.iss)
-    .setAudience(payload.aud)
-    .setIssuedAt(payload.iat)
-    .setExpirationTime(payload.exp)
-    .sign(privateKey);
-
-  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt,
-    }),
-  });
-
-  if (!tokenRes.ok) {
-    throw new Error(`Failed to get Google token: ${await tokenRes.text()}`);
-  }
-  const data = await tokenRes.json();
-  return data.access_token;
-}
-
-async function clearSheet(spreadsheetId: string, range: string, token: string) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}:clear`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  if (!res.ok) {
-    console.error(`Sheet clear failed for ${range}:`, await res.text());
-  }
-}
-
-async function updateSheetValues(spreadsheetId: string, range: string, values: any[][], token: string) {
-  await clearSheet(spreadsheetId, range, token);
-  
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?valueInputOption=USER_ENTERED`;
-  const res = await fetch(url, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ values })
-  });
-  if (!res.ok) {
-    console.error(`Sheet update failed for ${range}:`, await res.text());
-  }
-}
-
-async function syncAllData() {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  const serviceAccountJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_JSON');
-  const spreadsheetId = Deno.env.get('SPREADSHEET_ID');
-
-  if (!supabaseUrl || !supabaseServiceKey || !serviceAccountJson || !spreadsheetId) {
-    console.error('Missing environment variables for sync-to-sheets');
-    return { success: false, error: 'Missing environment variables' };
+serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-  const token = await getGoogleAccessToken(serviceAccountJson, 'https://www.googleapis.com/auth/spreadsheets');
-
-  // 1. Bookings
-  const { data: bookings } = await supabase.from('bookings').select('id, session_date, status, created_at, parents(name, phone), children(nickname)').order('created_at', { ascending: false }).limit(5000);
-  const bookingsValues = [['Booking ID', 'Session Date', 'Status', 'Parent Name', 'Parent Phone', 'Child Nickname', 'Created At']];
-  bookings?.forEach((b: any) => {
-    bookingsValues.push([
-      b.id, b.session_date, b.status, b.parents?.name || '', b.parents?.phone || '', b.children?.nickname || '', b.created_at
-    ]);
-  });
-  await updateSheetValues(spreadsheetId, 'Bookings!A1:Z', bookingsValues, token);
-
-  // 2. Parents
-  const { data: parents } = await supabase.from('parents').select('id, name, phone, email, created_at').order('created_at', { ascending: false }).limit(5000);
-  const parentValues = [['Parent ID', 'Name', 'Phone', 'Email', 'Created At']];
-  parents?.forEach((p: any) => {
-    parentValues.push([p.id, p.name, p.phone, p.email || '', p.created_at]);
-  });
-  await updateSheetValues(spreadsheetId, 'Parents!A1:Z', parentValues, token);
-
-  // 3. Children
-  const { data: children } = await supabase.from('children').select('id, full_name, nickname, age, food_allergy, special_info, created_at, parents(name)').order('created_at', { ascending: false }).limit(5000);
-  const childrenValues = [['Child ID', 'Parent Name', 'Full Name', 'Nickname', 'Age', 'Food Allergy', 'Special Info', 'Created At']];
-  children?.forEach((c: any) => {
-    childrenValues.push([
-      c.id, c.parents?.name || '', c.full_name, c.nickname, c.age, c.food_allergy || '', c.special_info || '', c.created_at
-    ]);
-  });
-  await updateSheetValues(spreadsheetId, 'Children!A1:Z', childrenValues, token);
-
-  // 4. Credit Logs
-  const { data: logs } = await supabase.from('credit_transactions').select('id, amount, action_type, notes, created_at, parents(name)').order('created_at', { ascending: false }).limit(5000);
-  const logsValues = [['Log ID', 'Parent Name', 'Amount', 'Action Type', 'Notes', 'Created At']];
-  logs?.forEach((l: any) => {
-    logsValues.push([
-      l.id, l.parents?.name || '', l.amount, l.action_type, l.notes || '', l.created_at
-    ]);
-  });
-  await updateSheetValues(spreadsheetId, 'Credit Logs!A1:Z', logsValues, token);
-
-  console.log('Sheets synced successfully at ' + new Date().toISOString());
-  return { success: true };
-}
-
-// Register Deno Cron (Executes every 10 minutes)
-Deno.cron("Sync to Google Sheets", "*/10 * * * *", async () => {
   try {
-    await syncAllData();
-  } catch (err) {
-    console.error("Cron failed:", err);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const webhookUrl = Deno.env.get('GOOGLE_APPS_SCRIPT_WEBHOOK_DRIVE');
+
+    if (!supabaseUrl || !supabaseServiceKey || !webhookUrl) {
+      throw new Error('Missing environment variables for sync-to-sheets');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // 1. 📅 ใบเช็คชื่อวันนี้ (Today's Attendance)
+    // Only confirmed bookings for today's sessions
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }); // YYYY-MM-DD
+    
+    const { data: rosterRaw, error: rosterError } = await supabase
+      .from('bookings')
+      .select(`
+        status,
+        created_at,
+        sessions!inner ( date, time_label ),
+        children ( full_name, nickname, age, food_allergy, special_info, no_photo_perm ),
+        parents ( name, phone )
+      `)
+      .eq('status', 'confirmed')
+      .eq('sessions.date', today);
+
+    if (rosterError) console.error("Roster error:", rosterError);
+
+    const rosterData = [
+      ['เวลาเรียน (Time)', 'ชื่อเล่น', 'ชื่อจริง', 'อายุ', 'ชื่อผู้ปกครอง', 'เบอร์ติดต่อ', 'ห้ามถ่ายรูป (No Photo)', 'แพ้อาหาร / หมายเหตุ', 'เวลาที่จอง']
+    ];
+    rosterRaw?.forEach((b: any) => {
+      rosterData.push([
+        b.sessions?.time_label || '',
+        b.children?.nickname || '',
+        b.children?.full_name || '',
+        b.children?.age || '',
+        b.parents?.name || '',
+        b.parents?.phone || '',
+        b.children?.no_photo_perm ? '❌ ห้ามถ่าย' : '✅ ถ่ายได้',
+        [b.children?.food_allergy, b.children?.special_info].filter(Boolean).join(' | '),
+        new Date(b.created_at).toLocaleString('th-TH')
+      ]);
+    });
+
+    // 2. 👥 ฐานข้อมูลนักเรียน (Master Directory)
+    const { data: directoryRaw, error: dirError } = await supabase
+      .from('children')
+      .select(`
+        full_name, nickname, dob, age, food_allergy, special_info, no_photo_perm, created_at,
+        parents ( name, phone, email )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (dirError) console.error("Directory error:", dirError);
+
+    const directoryData = [
+      ['ชื่อผู้ปกครอง', 'เบอร์โทรศัพท์', 'อีเมล', 'ชื่อจริงเด็ก', 'ชื่อเล่นเด็ก', 'วันเกิด (DOB)', 'อายุ', 'แพ้อาหาร', 'ข้อควรระวังพิเศษ', 'ห้ามถ่ายรูป (No Photo)', 'วันที่สมัคร']
+    ];
+    directoryRaw?.forEach((c: any) => {
+      directoryData.push([
+        c.parents?.name || '',
+        c.parents?.phone || '',
+        c.parents?.email || '',
+        c.full_name || '',
+        c.nickname || '',
+        c.dob || '',
+        c.age || '',
+        c.food_allergy || '',
+        c.special_info || '',
+        c.no_photo_perm ? '❌ ห้ามถ่าย' : '✅ ถ่ายได้',
+        new Date(c.created_at).toLocaleString('th-TH')
+      ]);
+    });
+
+    // 3. 💳 เครดิตคงเหลือ (Credit Balances)
+    const { data: packagesRaw, error: pkgError } = await supabase
+      .from('packages')
+      .select(`
+        type, credits_remaining, created_at,
+        parents ( id, name, phone )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (pkgError) console.error("Packages error:", pkgError);
+
+    const parentBalances = new Map();
+    packagesRaw?.forEach((p: any) => {
+      const parentId = p.parents?.id;
+      if (!parentId) return;
+      if (!parentBalances.has(parentId)) {
+        parentBalances.set(parentId, {
+          name: p.parents?.name || '',
+          phone: p.parents?.phone || '',
+          credits: p.credits_remaining,
+          latest_package: p.type,
+          updated_at: p.created_at
+        });
+      } else {
+        const existing = parentBalances.get(parentId);
+        existing.credits += p.credits_remaining;
+      }
+    });
+
+    const balancesData = [
+      ['ชื่อผู้ปกครอง', 'เบอร์ติดต่อ', 'ยอดเครดิตปัจจุบัน', 'แพ็กเกจล่าสุด', 'อัปเดตข้อมูลล่าสุดเมื่อ']
+    ];
+    Array.from(parentBalances.values()).forEach((b: any) => {
+      balancesData.push([
+        b.name,
+        b.phone,
+        b.credits,
+        b.latest_package,
+        new Date(b.updated_at).toLocaleString('th-TH')
+      ]);
+    });
+
+    // 4. 📝 ประวัติการใช้เครดิต (Transaction History)
+    const { data: historyRaw, error: histError } = await supabase
+      .from('credit_transactions')
+      .select(`
+        amount, action_type, notes, created_at,
+        parents ( name )
+      `)
+      .order('created_at', { ascending: false })
+      .limit(3000);
+
+    if (histError) console.error("History error:", histError);
+
+    const historyData = [
+      ['วัน/เวลา', 'ชื่อผู้ปกครอง', 'ประเภทรายการ', 'จำนวน', 'หมายเหตุ']
+    ];
+    historyRaw?.forEach((h: any) => {
+      historyData.push([
+        new Date(h.created_at).toLocaleString('th-TH'),
+        h.parents?.name || '',
+        h.action_type || '',
+        h.amount,
+        h.notes || ''
+      ]);
+    });
+
+    const payload = {
+      rosterData,
+      directoryData,
+      balancesData,
+      historyData
+    };
+
+    console.log("Sending data to Google Sheets Webhook...");
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Failed to push to Google Sheets:", errorText);
+      throw new Error(`Google Sheets API Error: ${errorText}`);
+    }
+
+    const responseJson = await response.json();
+    console.log("Google Sheets response:", responseJson);
+
+    return new Response(JSON.stringify({ success: true, message: "Synced successfully" }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    });
+
+  } catch (error: any) {
+    console.error("Error in sync-to-sheets:", error.message);
+    return new Response(JSON.stringify({ success: false, error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
+    });
   }
 });
