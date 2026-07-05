@@ -88,7 +88,7 @@ export function LoginForm() {
                   onChange={(e) => setCompleteName(e.target.value)}
                   required
                   placeholder={dict.auth.namePlaceholder}
-                  className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
+                  className="block w-full pl-11 pr-4 py-2 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors min-h-12 text-base leading-normal"
                 />
               </div>
             </div>
@@ -107,7 +107,7 @@ export function LoginForm() {
                   onChange={(e) => setCompletePhone(e.target.value)}
                   required
                   placeholder={dict.auth.phonePlaceholder}
-                  className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
+                  className="block w-full pl-11 pr-4 py-2 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors min-h-12 text-base leading-normal"
                 />
               </div>
             </div>
@@ -128,7 +128,7 @@ export function LoginForm() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder={dict.auth.emailPlaceholder}
-                  className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
+                  className="block w-full pl-11 pr-4 py-2 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors min-h-12 text-base leading-normal"
                 />
               </div>
             </div>
@@ -147,7 +147,7 @@ export function LoginForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder={dict.auth.passwordPlaceholder}
-                  className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
+                  className="block w-full pl-11 pr-4 py-2 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors min-h-12 text-base leading-normal"
                 />
               </div>
             </div>

@@ -59,7 +59,7 @@ export function SignupForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder={dict.auth.emailPlaceholder}
-              className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
+              className="block w-full pl-11 pr-4 py-2 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors min-h-12 text-base leading-normal"
             />
           </div>
         </div>
@@ -79,7 +79,7 @@ export function SignupForm() {
               required
               minLength={6}
               placeholder={dict.auth.passwordMinLength}
-              className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
+              className="block w-full pl-11 pr-4 py-2 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors min-h-12 text-base leading-normal"
             />
           </div>
         </div>
@@ -98,7 +98,7 @@ export function SignupForm() {
               onChange={(e) => setParentName(e.target.value)}
               required
               placeholder={dict.auth.nameExample}
-              className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
+              className="block w-full pl-11 pr-4 py-2 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors min-h-12 text-base leading-normal"
             />
           </div>
         </div>
@@ -117,7 +117,7 @@ export function SignupForm() {
               onChange={(e) => setPhone(e.target.value)}
               required
               placeholder={dict.auth.phonePlaceholder}
-              className="block w-full pl-11 pr-4 py-3 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors h-12 text-base"
+              className="block w-full pl-11 pr-4 py-2 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors min-h-12 text-base leading-normal"
             />
           </div>
         </div>
