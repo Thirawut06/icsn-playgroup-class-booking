@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Settings, Save, Loader2, Info, BellRing, Clock } from 'lucide-react';
+import { Save, Loader2, Info, BellRing, Clock } from 'lucide-react';
 import { SettingsService, SystemSettings } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { COPY } from '@/config/copy';
@@ -18,10 +18,6 @@ export function SettingsTab() {
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-
   const fetchSettings = async () => {
     setLoading(true);
     try {
@@ -35,6 +31,10 @@ export function SettingsTab() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);

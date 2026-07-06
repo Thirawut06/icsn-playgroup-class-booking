@@ -93,7 +93,7 @@ export function AdminSidebar({
   );
 
   // Shared branding block shown at the top of sidebar / drawer
-  const SidebarBranding = () => (
+  const sidebarBranding = (
     <div className="flex items-center gap-3 px-3 py-4 border-b border-border/50 shrink-0">
       <Image
         src="/main-logo-icsn.png"
@@ -113,7 +113,7 @@ export function AdminSidebar({
     <>
       {/* ── Desktop: Fixed full-height sidebar ── */}
       <aside className="hidden xl:flex flex-col fixed left-0 top-0 h-screen w-64 bg-white border-r border-border z-40 no-print">
-        <SidebarBranding />
+        {sidebarBranding}
         <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
           {renderNavItems(false)}
         </div>
@@ -131,7 +131,7 @@ export function AdminSidebar({
           {/* Drawer panel */}
           <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] bg-white shadow-2xl flex flex-col">
             <div className="flex items-center justify-between pr-3 border-b border-border/50">
-              <SidebarBranding />
+              {sidebarBranding}
               <button
                 type="button"
                 onClick={onClose}
