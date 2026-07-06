@@ -149,3 +149,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Thai Typography CSS constraints
 - **Line Height:** NEVER use `leading-none` or `leading-tight` on text elements that display Thai characters. The vertical space is required for Thai vowels and tone marks. ALWAYS use `leading-normal` or `leading-relaxed` and control vertical spacing using explicit margins (e.g., `mb-1`).
+
+## Google Sheets Sync Architecture (Crucial)
+- **Google Sheets Snapshot Sync:** For Google Sheets, always use a stateless "Snapshot Sync" (Clear & Rewrite) pattern in the GAS script to ensure 100% data accuracy and avoid drift.
+- **Event-Driven Triggers:** Never use Deno.cron for syncing. Use Supabase Database Triggers (via pg_net extension) to call the Edge Function only when data changes.
+- **GAS Webhook Pattern:** Similar to Drive, always use the Google Apps Script (GAS) Webhook pattern for syncing data to Google Sheets.
+
+## Automated Testing (vitest)
+- **Vitest Timeouts for External APIs:** When writing integration tests that invoke Edge Functions hitting slow external services (like GAS Webhooks), ALWAYS increase the test timeout (e.g., }, 30000);) to prevent flaky timeout failures.
+- **Staging Parity Reminder:** Integration tests using .env.local hit the Staging database. If a test for an Edge Function returns 500, explicitly remind the developer that they must deploy the Edge Function and its Secrets to Staging, not just Production.
