@@ -47,6 +47,18 @@ async function resolveCreditsFromSlip(supabase: ReturnType<typeof createClient>,
   return creditsToAdd
 }
 
+async function getRemainingCredits(supabase: ReturnType<typeof createClient>, parentId: string) {
+  const { data } = await supabase.from('packages').select('credits_remaining').eq('parent_id', parentId).maybeSingle()
+  return data?.credits_remaining || 0
+}
+
+async function getFamilyDetails(supabase: ReturnType<typeof createClient>, parentId: string) {
+  const { data } = await supabase.from('parents').select('name, children(nickname, full_name)').eq('id', parentId).single()
+  const child = data?.children?.[0]
+  const childName = child ? (child.full_name && child.nickname ? `${child.full_name} (${child.nickname})` : child.full_name || child.nickname || 'ไม่ระบุ') : 'ไม่ระบุ'
+  return { parentName: data?.name || 'ไม่ระบุ', childName }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -105,7 +117,9 @@ Deno.serve(async (req) => {
       if (rpcErr) throw rpcErr
 
       const { child_nickname } = result as { success: boolean; credits_added: number; child_nickname: string }
-      await sendGoogleChat(`💰 ชำระเงินแล้ว: น้อง${child_nickname} — approved (+${creditsToAdd} สิทธิ์)`)
+      const creditsRemaining = await getRemainingCredits(supabase, slip.parent_id)
+      const family = await getFamilyDetails(supabase, slip.parent_id)
+      await sendGoogleChat(`✅ *อนุมัติสลิปชำระเงินแล้ว!*\n*ผู้ปกครองของ:* ${family.childName}\n*แพ็กเกจ:* ได้รับ +${creditsToAdd} เครดิต\n⭐ *เครดิตคงเหลือปัจจุบัน:* ${creditsRemaining} เครดิต`)
 
       return new Response(JSON.stringify({ success: true, creditsAdded: creditsToAdd, childNickname: child_nickname }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -115,11 +129,19 @@ Deno.serve(async (req) => {
 
     if (action === 'reject-slip') {
       const { slipId } = payload as { slipId: string }
+      
+      const { data: slip, error: sErr } = await supabase.from('slip_uploads').select('parent_id').eq('id', slipId).single()
+      if (sErr) throw sErr
+
       const { error } = await supabase
         .from('slip_uploads')
         .update({ status: 'rejected', reviewed_at: new Date().toISOString() })
         .eq('id', slipId)
       if (error) throw error
+
+      const family = await getFamilyDetails(supabase, slip.parent_id)
+      const creditsRemaining = await getRemainingCredits(supabase, slip.parent_id)
+      await sendGoogleChat(`❌ *ปฏิเสธสลิปชำระเงิน!*\n*ผู้ปกครอง:* ${family.parentName} (${family.childName})\n*เหตุผล:* สลิปไม่ถูกต้อง หรือยอดเงินไม่ตรง\n⭐ *เครดิตคงเหลือปัจจุบัน:* ${creditsRemaining} เครดิต`)
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -141,7 +163,14 @@ Deno.serve(async (req) => {
       const result = data as { session_date: string; child_nickname: string }
       const dateParts = result.session_date.split('-')
       const displayDate = `${dateParts[2]}/${dateParts[1]}`
-      await sendGoogleChat(`❌ แอดมินยกเลิกสิทธิ์ส่งน้อง${result.child_nickname} วันที่ ${displayDate} (สาเหตุ: ${cancelReason || 'ไม่ระบุ'})`)
+      
+      let childName = result.child_nickname
+      const { data: child } = await supabase.from('children').select('full_name, nickname').eq('id', bk.child_id).single()
+      if (child) {
+        childName = (child.full_name && child.nickname) ? `${child.full_name} (${child.nickname})` : (child.full_name || child.nickname || 'ไม่ระบุ')
+      }
+
+      await sendGoogleChat(`🚫 *มีการยกเลิกคลาสเรียน (โดยแอดมิน)*\n*ชื่อเด็ก:* ${childName}\n*รอบเรียน:* วันที่ ${displayDate}\n*สาเหตุ:* ${cancelReason || 'ไม่ระบุ'}`)
 
       return new Response(JSON.stringify({ success: true, ...result }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

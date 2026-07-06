@@ -75,25 +75,7 @@ Deno.serve(async (req) => {
     })
     if (cancelErr) throw cancelErr
 
-    // Trigger Webhook Notification
-    // FIX #12: Use child_id from the booking record to get the correct child nickname
-    const WEBHOOK_URL = Deno.env.get('GOOGLE_CHAT_WEBHOOK_URL')
-    if (WEBHOOK_URL) {
-      const { data: child } = await supabase
-        .from('children')
-        .select('nickname')
-        .eq('id', bk.child_id)
-        .maybeSingle()
-      const dateParts = bk.session_date.split("-")
-      const displayDate = `${dateParts[2]}/${dateParts[1]}`
-      const cancelMsg = `❌ ผู้ปกครองกดยกเลิกคลาสน้อง${child ? child.nickname : 'ไม่ระบุ'} วันที่ ${displayDate} (สาเหตุ: ${cancelReason || 'ไม่ระบุ'})`
-      
-      await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-        body: JSON.stringify({ text: cancelMsg })
-      }).catch(e => console.error("Webhook failed:", e))
-    }
+
 
     return new Response(JSON.stringify({ success: true, refunded: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

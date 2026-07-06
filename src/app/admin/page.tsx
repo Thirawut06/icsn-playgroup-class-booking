@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { LogOut, Loader2, Menu } from 'lucide-react';
+import { Loader2, Menu } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { AdminLoginGate } from '@/components/admin/AdminLoginGate';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
@@ -94,47 +94,26 @@ export default function AdminPage() {
         pendingSlipCount={pendingSlipCount}
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
+        onLogout={logout}
       />
 
       {/* ── Main content area pushed right by sidebar on desktop ── */}
       <div className="flex-1 flex flex-col min-w-0 xl:ml-64 min-h-screen">
 
-        {/* Sticky Top Header */}
-        <header className="bg-background border-b border-border no-print sticky top-0 z-40 h-[64px] flex items-center shrink-0">
-          <div className="w-full px-4 xl:px-8 flex items-center justify-between gap-4">
-
-            {/* Left: Hamburger (mobile/tablet only) + page title */}
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setIsDrawerOpen(prev => !prev)}
-                className="xl:hidden p-2 -ml-1 text-icsn-navy hover:bg-muted rounded-lg transition-colors"
-                aria-label="Toggle menu"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-              <span className="xl:hidden font-bold text-icsn-navy text-sm font-outfit">
-                Admin Backoffice
-              </span>
-            </div>
-
-            {/* Right: Session badge + Logout */}
-            <div className="flex items-center gap-2 text-xs ml-auto">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-success/10 text-success border border-success/20 rounded-full font-semibold whitespace-nowrap">
-                <span className="w-2 h-2 rounded-full bg-success shrink-0" />
-                <span className="hidden sm:inline">Admin Session Active</span>
-                <span className="sm:hidden">Active</span>
-              </span>
-              <button
-                type="button"
-                onClick={logout}
-                className="p-2 border border-border hover:border-error/50 hover:text-error rounded-xl transition bg-background cursor-pointer"
-                title="Log out"
-                aria-label="Log out"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
+        {/* Sticky Top Header (Mobile only) */}
+        <header className="xl:hidden bg-background border-b border-border no-print sticky top-0 z-40 h-[64px] flex items-center shrink-0">
+          <div className="w-full px-4 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsDrawerOpen(prev => !prev)}
+              className="p-2 -ml-1 text-icsn-navy hover:bg-muted rounded-lg transition-colors"
+              aria-label="Toggle menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <span className="font-bold text-icsn-navy text-sm font-outfit">
+              Admin Backoffice
+            </span>
           </div>
         </header>
 
