@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { Users, CalendarCheck, ReceiptText, Loader2, CalendarOff, Clock } from 'lucide-react';
+import { Users, CalendarCheck, ReceiptText, Loader2, CalendarOff, Clock, FileSpreadsheet, Folder } from 'lucide-react';
 import { CLASS_CONFIG, BOOKING_STATUS } from '@/config/constants';
 import { AdminService, BookingService, SettingsService } from '@/lib/supabase';
 
@@ -276,6 +276,24 @@ export function AdminDashboard({ onNavigate }: {
       hoverBg: 'group-hover:bg-accent/10',
       hoverIcon: 'group-hover:text-accent',
       onClick: () => recentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+    },
+    {
+      label: 'Google Drive รูปสลิป',
+      description: 'เปิดโฟลเดอร์ภาพสลิป',
+      icon: Folder,
+      hoverBorder: 'hover:border-blue-400/50',
+      hoverBg: 'group-hover:bg-blue-100',
+      hoverIcon: 'group-hover:text-blue-600',
+      onClick: () => window.open('https://drive.google.com/drive/u/0/folders/1xjcWjvRbE7qre-c8PUpMqnks3BY2VTpN', '_blank'),
+    },
+    {
+      label: 'Google Sheets สำรอง',
+      description: 'ฐานข้อมูลสรุปยอดรายวัน',
+      icon: FileSpreadsheet,
+      hoverBorder: 'hover:border-green-400/50',
+      hoverBg: 'group-hover:bg-green-100',
+      hoverIcon: 'group-hover:text-green-600',
+      onClick: () => window.open('https://docs.google.com/spreadsheets/d/1DtVGWisyY3WnGpize3ZG0Kodh_FRxVW4YjIEmyA0lOo/edit?usp=sharing', '_blank'),
     },
   ];
 

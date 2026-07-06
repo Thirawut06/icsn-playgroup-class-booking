@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users, Search, Loader2, Info } from 'lucide-react';
-import { AdminPanel, AdminPanelHeader, AdminDataTable } from '../admin-ui';
+import { Users, Search, Loader2, Info, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AdminPanel, AdminPanelHeader, AdminDataTable, AdminTabs } from '../admin-ui';
 import { AdminService } from '@/lib/supabase';
 import type { ClassifiedUser } from '@/types';
 import { UserDetailDrawer } from '../UserDetailDrawer';
@@ -15,6 +15,10 @@ export function AdminUsers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<ClassifiedUser[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Drawer state
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -58,6 +62,14 @@ export function AdminUsers() {
     return filtered;
   }, [users, activeTab, searchTerm]);
 
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
+  const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const openDrawer = (parentId: string) => {
     setSelectedParentId(parentId);
     setDrawerOpen(true);
@@ -74,24 +86,16 @@ export function AdminUsers() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             
             {/* Segmented Control */}
-            <div className="flex p-1 bg-muted rounded-xl w-full md:w-auto overflow-x-auto custom-scrollbar">
-              {[
+            <AdminTabs
+              tabs={[
                 { id: 'all', label: 'ทั้งหมด (All)' },
                 { id: 'payment', label: 'สมาชิกปกติ (Payment)' },
                 { id: 'trial', label: 'ทดลองเรียน (Trial)' },
                 { id: 'walk-in', label: 'Walk-in (ไม่มีแพ็กเกจ)' }
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as Category)}
-                  className={`flex-1 md:flex-none whitespace-nowrap px-4 py-2 rounded-lg font-bold text-sm transition ${
-                    activeTab === tab.id ? 'bg-white text-icsn-teal shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+              ]}
+              activeTab={activeTab}
+              onChange={(id) => setActiveTab(id as Category)}
+            />
 
             {/* Search */}
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -112,10 +116,11 @@ export function AdminUsers() {
 
           <AdminDataTable
             headers={[
-              { label: 'ผู้ปกครอง' },
               { label: 'ชื่อนักเรียน' },
-              { label: 'ยอดจองสำเร็จ', align: 'center' },
-              { label: 'เครดิตคงเหลือ', align: 'center' },
+              { label: 'ผู้ปกครอง' },
+              { label: 'อีเมล' },
+              { label: 'จองสำเร็จ', align: 'center' },
+              { label: 'เครดิต', align: 'center' },
               { label: 'จัดการ', align: 'center' },
             ]}
           >
@@ -125,7 +130,7 @@ export function AdminUsers() {
                   <Loader2 className="w-6 h-6 animate-spin mx-auto text-icsn-teal" />
                 </td>
               </tr>
-            ) : filteredUsers.length === 0 ? (
+            ) : paginatedUsers.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
                   ไม่พบข้อมูล
@@ -133,12 +138,21 @@ export function AdminUsers() {
               </tr>
             ) : (
               <>
-                {filteredUsers.map((user) => (
+                {paginatedUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-icsn-navy">{user.name}</p>
-                      <p className="text-sm text-muted-foreground">{user.phone} • {user.email || '-'}</p>
-                      <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${
+                    <td className="px-4 py-4">
+                      {user.children_list && user.children_list.length > 0 ? (
+                        <div className="space-y-1">
+                          {user.children_list.map((child, idx) => (
+                            <p key={idx} className="font-semibold text-foreground text-sm">
+                              {child.full_name || '-'} <span className="font-normal text-muted-foreground">({child.nickname})</span>
+                            </p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="font-medium text-muted-foreground text-sm">-</p>
+                      )}
+                      <span className={`inline-block mt-1.5 px-2 py-0.5 rounded text-[11px] font-medium ${
                         user.category === 'payment' ? 'bg-info/10 text-info' :
                         user.category === 'trial' ? 'bg-warning/10 text-warning' :
                         user.category === 'walk-in' ? 'bg-muted text-foreground' : 'bg-muted text-muted-foreground'
@@ -146,28 +160,32 @@ export function AdminUsers() {
                         {user.category.toUpperCase()}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <p className="font-medium text-foreground">{user.children_nicknames || '-'}</p>
+                    <td className="px-4 py-4">
+                      <p className="font-medium text-foreground/80 text-sm">{user.name}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">{user.phone}</p>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="inline-flex items-center justify-center min-w-[3rem] h-8 rounded-full font-bold text-sm bg-info/10 text-info border border-info/30">
+                    <td className="px-4 py-4 text-sm text-muted-foreground">
+                      {user.email || '-'}
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <div className="inline-flex items-center justify-center min-w-[2.5rem] h-7 rounded-full font-semibold text-sm bg-info/10 text-info border border-info/30">
                         {user.total_bookings}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className={`inline-flex items-center justify-center min-w-[3rem] h-8 rounded-full font-bold text-sm border ${
+                    <td className="px-4 py-4 text-center">
+                      <div className={`inline-flex items-center justify-center min-w-[2.5rem] h-7 rounded-full font-semibold text-sm border ${
                         user.total_credits > 0 ? 'bg-success/10 text-success border-success/20' : 'bg-muted text-muted-foreground border-border'
                       }`}>
                         {user.total_credits}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-4 py-4 text-center">
                       <div className="flex justify-center">
                         <button
                           onClick={() => openDrawer(user.id)}
-                          className="flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-muted text-icsn-navy border border-border rounded-xl text-sm font-bold shadow-sm transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-muted text-icsn-navy border border-border rounded-lg text-sm font-medium transition-colors"
                         >
-                          <Info className="w-4 h-4" />
+                          <Info className="w-4 h-4 text-muted-foreground" />
                           ดูรายละเอียด
                         </button>
                       </div>
@@ -177,6 +195,54 @@ export function AdminUsers() {
               </>
             )}
           </AdminDataTable>
+
+          {/* Pagination Controls */}
+          {!loading && filteredUsers.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border">
+              <p className="text-sm text-muted-foreground">
+                แสดงผล <span className="font-bold text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span> ถึง <span className="font-bold text-foreground">{Math.min(currentPage * itemsPerPage, filteredUsers.length)}</span> จากทั้งหมด <span className="font-bold text-foreground">{filteredUsers.length}</span> รายการ
+              </p>
+              
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }).map((_, idx) => {
+                    const pageNum = idx + 1;
+                    // Show current, first, last, and pages around current
+                    if (pageNum === 1 || pageNum === totalPages || (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)) {
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition-colors ${
+                            currentPage === pageNum ? 'bg-icsn-teal text-white' : 'hover:bg-muted text-foreground'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    } else if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                      return <span key={pageNum} className="text-muted-foreground">...</span>;
+                    }
+                    return null;
+                  })}
+                </div>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </AdminPanel>
 

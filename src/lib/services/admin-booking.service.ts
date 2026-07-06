@@ -89,7 +89,7 @@ export const AdminBookingService = {
         checkin_at,
         child_name_snapshot,
         parent_phone_snapshot,
-        child:children(id, nickname, full_name, age, food_allergy),
+        child:children(id, nickname, full_name, age, dob, food_allergy),
         parent:parents(name, phone)
       `)
       .eq('session_id', sessionId)
@@ -101,6 +101,7 @@ export const AdminBookingService = {
       id: row.id,
       nickname: row.child?.nickname || row.child_name_snapshot || '(Deleted User)',
       full_name: row.child?.full_name,
+      dob: row.child?.dob,
       age: row.child?.age ?? 0,
       food_allergy: row.child?.food_allergy ?? null,
       parent_name: row.parent?.name || '-',
@@ -146,6 +147,49 @@ export const AdminBookingService = {
       child_nickname: slip.parent?.children?.[0]?.nickname || slip.parent?.children?.[0]?.full_name || '-',
       credits_to_add: packageMap.get(slip.package_id) || 0
     }));
+  },
+
+  async getTransactionHistory(): Promise<import('@/types').TransactionHistoryRow[]> {
+    const { data: slips, error } = await supabase
+      .from('slip_uploads')
+      .select(`
+        id,
+        parent_id,
+        file_url,
+        status,
+        created_at,
+        package_id,
+        reviewed_at,
+        parent:parents(name, phone, children(full_name, nickname))
+      `)
+      .order('created_at', { ascending: false })
+      .limit(1000);
+
+    if (error) throw error;
+
+    const { data: packages } = await supabase.from('package_options').select('id, name, credits, price');
+    const packageMap = new Map((packages || []).map((p: any) => [p.name, p])); // package_id in slip_uploads is actually the package name
+
+    return (slips || []).map((slip: any) => {
+      const pkgInfo = packageMap.get(slip.package_id) || { name: slip.package_id, credits: 0, price: 0 };
+      const children = slip.parent?.children || [];
+      const childrenNames = children.map((c: any) => c.nickname || c.full_name).filter(Boolean).join(', ');
+
+      return {
+        id: slip.id,
+        parent_id: slip.parent_id,
+        parent_name: slip.parent?.name || '-',
+        parent_phone: slip.parent?.phone || '-',
+        children_nicknames: childrenNames || '-',
+        package_name: pkgInfo.name || '-',
+        price: pkgInfo.price,
+        credits: pkgInfo.credits,
+        file_url: slip.file_url,
+        status: slip.status,
+        created_at: slip.created_at,
+        reviewed_at: slip.reviewed_at || null,
+      };
+    });
   },
 
   async invokeAdminAction<T = Record<string, unknown>>(

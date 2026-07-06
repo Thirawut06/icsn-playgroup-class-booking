@@ -20,7 +20,7 @@ export const AdminUserService = {
         phone,
         email,
         created_at,
-        children(nickname, created_at),
+        children(nickname, full_name, created_at),
         packages(
           credits_remaining,
           type
@@ -47,6 +47,7 @@ export const AdminUserService = {
         email: p.email,
         phone: p.phone,
         children_nicknames: children.map((c: { nickname: string }) => c.nickname).join(', '),
+        children_list: children.map((c: { nickname: string, full_name?: string }) => ({ nickname: c.nickname, full_name: c.full_name })),
         total_credits: totalCredits,
         total_bookings: totalBookings,
         category,
