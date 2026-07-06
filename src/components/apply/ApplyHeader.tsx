@@ -17,11 +17,9 @@ export function ApplyHeader({ showSuccess, path, setPath }: ApplyHeaderProps) {
 
   return (
     <div 
-      className="bg-icsn-navy w-full aspect-[2000/560] text-white text-center relative overflow-hidden bg-cover bg-center flex flex-col items-center justify-center"
+      className="bg-icsn-navy w-full aspect-[3/1] text-white text-center relative overflow-hidden bg-cover bg-center flex flex-col items-center justify-center"
       style={{ backgroundImage: 'url("/playgroup-banner-icsn.png")' }}
     >
-      <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
-
       <div className="absolute top-3 right-3 z-20">
         <LanguageSwitcher />
       </div>
@@ -41,16 +39,6 @@ export function ApplyHeader({ showSuccess, path, setPath }: ApplyHeaderProps) {
           <ArrowLeft className="w-6 h-6" />
         </button>
       )}
-
-      <div className="inline-flex items-center justify-center mx-auto w-16 sm:w-18 h-auto mb-1 relative z-10">
-        <img src="/white-main-logo-icsn.png" alt="ICSN Logo" className="w-full h-auto object-contain drop-shadow-md" />
-      </div>
-      <h1 className="text-xl sm:text-2xl font-black tracking-tight relative z-10 text-white drop-shadow-md">
-        {dict.common.brandName}
-      </h1>
-      <p className="text-sm sm:text-base font-semibold text-white/95 mt-1 relative z-10 drop-shadow-md">
-        {dict.apply.headerSubtitle}
-      </p>
     </div>
   );
 }

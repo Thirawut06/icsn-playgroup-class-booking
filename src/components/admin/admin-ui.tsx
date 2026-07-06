@@ -15,6 +15,36 @@ export function AdminPanel({
   );
 }
 
+export function AdminTabs<T extends string>({
+  tabs,
+  activeTab,
+  onChange,
+  className = '',
+}: {
+  tabs: { id: T; label: string }[];
+  activeTab: T;
+  onChange: (id: T) => void;
+  className?: string;
+}) {
+  return (
+    <div className={`flex p-1 bg-muted rounded-xl w-full md:w-auto overflow-x-auto custom-scrollbar shrink-0 ${className}`}>
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          onClick={() => onChange(tab.id)}
+          className={`flex-1 md:flex-none whitespace-nowrap px-6 py-2 rounded-lg font-bold text-sm transition ${
+            activeTab === tab.id
+              ? 'bg-white text-icsn-teal shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function AdminPanelHeader({
   icon: Icon,
   title,

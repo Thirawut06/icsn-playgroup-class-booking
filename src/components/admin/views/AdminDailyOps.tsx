@@ -1,12 +1,12 @@
 "use client";
 
 import React from 'react';
-import { CalendarDays, Printer, Users, XCircle, Power, Loader2, PenLine, CheckCircle2, Plus, Settings } from 'lucide-react';
+import { CalendarDays, Printer, Users, XCircle, Power, Loader2, PenLine, CheckCircle2, Plus, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { COPY } from '@/config/copy';
 import { AdminEmptyState, AdminFieldLabel, AdminPanel, AdminPanelHeader, AdminPrimaryButton, AdminDataTable } from '../admin-ui';
 import { AdminWalkinModal } from '../walkin/AdminWalkinModal';
 import { ESignModal } from '../checkin/ESignModal';
-import { formatAgeDisplay } from '../admin-utils';
+import { formatAgeDisplay, formatAgeYMD } from '../admin-utils';
 import { useDailyAttendance } from '@/hooks/useDailyAttendance';
 import type { DailyAttendanceRow } from '@/types';
 
@@ -43,6 +43,18 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
     refreshData,
   } = useDailyAttendance({ onRefresh });
 
+  const handlePrevDay = () => {
+    const d = new Date(`${dailyDate}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() - 1);
+    setDailyDate(d.toISOString().split('T')[0]);
+  };
+
+  const handleNextDay = () => {
+    const d = new Date(`${dailyDate}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + 1);
+    setDailyDate(d.toISOString().split('T')[0]);
+  };
+
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <AdminPanel className="no-print bg-muted/20">
@@ -59,13 +71,45 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
 
               {/* Date picker */}
               <div className="shrink-0">
-                <AdminFieldLabel>วันที่</AdminFieldLabel>
-                <input
-                  type="date"
-                  value={dailyDate}
-                  onChange={e => setDailyDate(e.target.value)}
-                  className="mt-1.5 block px-3 h-[44px] border border-border rounded-lg focus:border-icsn-teal focus:ring-2 focus:ring-icsn-teal/30 outline-none bg-white text-icsn-navy transition shadow-sm font-bold cursor-pointer text-base"
-                />
+                <AdminFieldLabel>
+                  <span className="flex items-baseline gap-2">
+                    วันที่
+                    {dailyDate && (
+                      <span className="text-sm font-medium text-icsn-teal">
+                        {new Date(`${dailyDate}T00:00:00Z`).toLocaleDateString('th-TH', { 
+                          weekday: 'long', 
+                          day: 'numeric', 
+                          month: 'long', 
+                          year: 'numeric' 
+                        })}
+                      </span>
+                    )}
+                  </span>
+                </AdminFieldLabel>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <button 
+                    type="button" 
+                    onClick={handlePrevDay} 
+                    className="flex items-center justify-center h-[44px] w-[44px] bg-white border border-border rounded-lg text-muted-foreground hover:bg-muted hover:text-icsn-navy transition shadow-sm"
+                    title="วันก่อนหน้า"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <input
+                    type="date"
+                    value={dailyDate}
+                    onChange={e => setDailyDate(e.target.value)}
+                    className="block px-3 h-[44px] border border-border rounded-lg focus:border-icsn-teal focus:ring-2 focus:ring-icsn-teal/30 outline-none bg-white text-icsn-navy transition shadow-sm font-bold cursor-pointer text-base"
+                  />
+                  <button 
+                    type="button" 
+                    onClick={handleNextDay} 
+                    className="flex items-center justify-center h-[44px] w-[44px] bg-white border border-border rounded-lg text-muted-foreground hover:bg-muted hover:text-icsn-navy transition shadow-sm"
+                    title="วันถัดไป"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
               {/* Session chips */}
@@ -173,17 +217,7 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
                   {sessionIsActive ? 'ปิดรับจองชั่วคราว' : 'เปิดรับจอง'}
                 </button>
 
-                {/* Divider */}
-                <div className="h-6 w-px bg-border" />
 
-                {/* Print */}
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="flex items-center gap-1.5 px-5 h-[42px] bg-white border border-border hover:bg-muted text-icsn-navy rounded-lg font-bold text-sm transition shadow-sm"
-                >
-                  <Printer className="w-3.5 h-3.5 text-icsn-teal" /> พิมพ์รายชื่อ
-                </button>
               </div>
 
               {/* Closed warning */}
@@ -210,7 +244,7 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
                 ) : (
                   <AdminDataTable
                     headers={[
-                      { label: 'ชื่อเล่น' },
+                      { label: 'ชื่อนักเรียน' },
                       { label: 'อายุ' },
                       { label: 'แพ้อาหาร' },
                       { label: 'ผู้ปกครอง' },
@@ -220,8 +254,11 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
                   >
                     {attendance.map(row => (
                       <tr key={row.id} className={`transition ${row.checkin_at ? 'bg-success/5' : 'hover:bg-muted/30'}`}>
-                        <td className="px-4 py-3 font-bold text-icsn-navy text-base">{row.nickname}</td>
-                        <td className="px-4 py-3 text-muted-foreground text-base">{formatAgeDisplay(row.age)}</td>
+                        <td className="px-4 py-3">
+                          <div className="font-bold text-icsn-navy text-base">{row.full_name || row.nickname}</div>
+                          {row.full_name && <div className="text-sm text-muted-foreground">น้อง{row.nickname}</div>}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground text-base">{row.dob ? formatAgeYMD(row.dob) : formatAgeDisplay(row.age)}</td>
                         <td className="px-4 py-3 text-base">
                           {row.food_allergy
                             ? <span className="text-error font-bold bg-error/10 px-2 py-0.5 rounded text-sm uppercase">{row.food_allergy}</span>
@@ -237,16 +274,16 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
                         <td className="px-4 py-3 text-center">
                           {row.checkin_at ? (
                             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-success/15 text-success border border-success/20">
-                              <CheckCircle2 className="w-4 h-4" /> เช็คอินแล้ว
+                              <CheckCircle2 className="w-5 h-5" /> เช็คอินแล้ว
                             </span>
                           ) : (
                             <button
                               id={`esign-btn-${row.id}`}
                               type="button"
                               onClick={() => setEsignTarget(row)}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold bg-icsn-teal/10 text-icsn-teal hover:bg-icsn-teal hover:text-white border border-icsn-teal/30 transition cursor-pointer"
+                              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-base font-bold bg-icsn-teal text-white hover:bg-icsn-teal/90 shadow-sm transition active:scale-[0.98] cursor-pointer"
                             >
-                              <PenLine className="w-4 h-4" /> เช็คอิน
+                              <PenLine className="w-5 h-5" /> เช็คอิน
                             </button>
                           )}
                         </td>

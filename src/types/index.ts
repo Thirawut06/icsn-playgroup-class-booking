@@ -49,6 +49,7 @@ export interface DailyAttendanceRow {
   id: string;
   nickname: string;
   full_name?: string;
+  dob?: string;
   age: number;
   food_allergy: string | null;
   parent_name: string;
@@ -57,6 +58,21 @@ export interface DailyAttendanceRow {
   is_walkin?: boolean;
   signature_url?: string | null;
   checkin_at?: string | null;
+}
+
+export interface TransactionHistoryRow {
+  id: string;
+  parent_id: string;
+  parent_name: string;
+  parent_phone: string;
+  children_nicknames: string;
+  package_name: string;
+  price: number;
+  credits: number;
+  file_url: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+  reviewed_at: string | null;
 }
 
 export interface PendingSlipRow {
@@ -135,6 +151,7 @@ export interface ClassifiedUser {
   email?: string;
   phone: string;
   children_nicknames: string;
+  children_list: { nickname: string, full_name?: string }[];
   total_credits: number;
   total_bookings: number;
   category: 'payment' | 'trial' | 'walk-in';

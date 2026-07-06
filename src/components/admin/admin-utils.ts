@@ -24,3 +24,21 @@ export function formatAgeDisplay(age: number | string | null | undefined): strin
   if (age === null || age === undefined || age === '') return '-';
   return `${age} yrs (${age} ขวบ)`;
 }
+
+export function formatAgeYMD(dobString?: string | null): string {
+  if (!dobString) return '-';
+  const dob = new Date(dobString);
+  const now = new Date();
+  let years = now.getFullYear() - dob.getFullYear();
+  let months = now.getMonth() - dob.getMonth();
+  let days = now.getDate() - dob.getDate();
+  if (days < 0) {
+    months--;
+    days += new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+  }
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  return `${years} ปี ${months} เดือน ${days} วัน`;
+}

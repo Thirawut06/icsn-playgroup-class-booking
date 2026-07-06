@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import Image from 'next/image';
-import { X } from 'lucide-react';
+import { X, LogOut } from 'lucide-react';
 import { ADMIN_NAV_SCHEMA } from '@/config/navigation';
 import { TOKENS } from '@/config/theme/tokens';
 import { cn } from '@/lib/utils';
@@ -14,6 +14,7 @@ interface AdminSidebarProps {
   pendingSlipCount: number;
   isOpen?: boolean;
   onClose?: () => void;
+  onLogout?: () => void;
 }
 
 export function AdminSidebar({
@@ -22,6 +23,7 @@ export function AdminSidebar({
   pendingSlipCount,
   isOpen = false,
   onClose,
+  onLogout,
 }: AdminSidebarProps) {
   const nav = TOKENS.COMPONENTS.ADMIN_NAV;
 
@@ -109,14 +111,31 @@ export function AdminSidebar({
     </div>
   );
 
+  const renderLogoutButton = () => {
+    if (!onLogout) return null;
+    return (
+      <div className="p-3 mt-auto border-t border-border/50 shrink-0">
+        <button
+          type="button"
+          onClick={onLogout}
+          className="w-full flex items-center justify-center gap-3 px-3 py-3 text-sm font-bold text-error bg-error/5 hover:bg-error/10 hover:text-error/90 rounded-xl transition-colors border border-error/20"
+        >
+          <LogOut className="w-5 h-5" strokeWidth={2.5} />
+          <span>ออกจากระบบ (Logout)</span>
+        </button>
+      </div>
+    );
+  };
+
   return (
     <>
       {/* ── Desktop: Fixed full-height sidebar ── */}
       <aside className="hidden xl:flex flex-col fixed left-0 top-0 h-screen w-64 bg-white border-r border-border z-40 no-print">
         <SidebarBranding />
-        <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
+        <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar flex flex-col">
           {renderNavItems(false)}
         </div>
+        {renderLogoutButton()}
       </aside>
 
       {/* ── Mobile/Tablet: Slide-out drawer ── */}
@@ -141,9 +160,10 @@ export function AdminSidebar({
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto px-3 py-4">
+            <div className="flex-1 overflow-y-auto px-3 py-4 flex flex-col">
               {renderNavItems(true)}
             </div>
+            {renderLogoutButton()}
           </div>
         </div>
       )}

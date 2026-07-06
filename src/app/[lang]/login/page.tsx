@@ -4,7 +4,6 @@ import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { LoginForm } from '@/components/login/LoginForm';
 import { SignupForm } from '@/components/login/SignupForm';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
@@ -29,7 +28,7 @@ function LoginFormContent() {
     <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)] pb-10 flex flex-col relative overflow-hidden">
       {/* Top banner */}
       <div
-        className="bg-icsn-navy w-full aspect-[2000/560] text-white text-center relative overflow-hidden bg-cover bg-center flex flex-col items-center justify-center"
+        className="bg-icsn-navy w-full aspect-[3/1] text-white text-center relative overflow-hidden bg-cover bg-center flex flex-col items-center justify-center"
         style={{ backgroundImage: 'url("/playgroup-banner-icsn.png")' }}
       >
         <Link href={ROUTES.HOME(lang)} className="absolute top-4 left-4 text-white/80 hover:text-white transition-colors cursor-pointer z-20">
@@ -38,13 +37,6 @@ function LoginFormContent() {
         <div className="absolute top-3 right-3 z-20">
           <LanguageSwitcher />
         </div>
-        <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
-        <div className="inline-flex items-center justify-center mx-auto w-16 sm:w-18 h-auto mb-1 relative z-10 animate-fade-in">
-          <Image src="/white-main-logo-icsn.png" alt="ICSN Logo" width={72} height={72} className="w-full h-auto object-contain drop-shadow-md" priority />
-        </div>
-        <h1 className="text-xl sm:text-2xl font-black tracking-tight relative z-10 text-white drop-shadow-md">
-          {dict.common.brandName}
-        </h1>
       </div>
 
       {/* Form Container */}
