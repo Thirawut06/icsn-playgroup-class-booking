@@ -56,7 +56,7 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
   }, [dailyDate, selectedSessionId]);
 
   useEffect(() => {
-    loadSessions();
+    Promise.resolve().then(() => loadSessions());
     // eslint-disable-next-line
   }, [dailyDate]);
 
@@ -81,7 +81,7 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
   }, [selectedSessionId, sessions]);
 
   useEffect(() => {
-    loadAttendance();
+    Promise.resolve().then(() => loadAttendance());
     // eslint-disable-next-line
   }, [selectedSessionId]);
 

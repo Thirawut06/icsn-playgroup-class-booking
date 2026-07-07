@@ -34,7 +34,7 @@ export function SignupForm() {
 
       await ParentService.signUp(email.trim(), password, parentName.trim(), cleanPhone);
       
-      router.push(ROUTES.APPLY(lang));
+      window.location.href = ROUTES.APPLY(lang);
     } catch (error: unknown) {
       setErrorMessage(error instanceof Error && error.message ? error.message : dict.auth.signupFailed);
     } finally {

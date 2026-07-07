@@ -35,7 +35,7 @@ export function LoginForm() {
 
         await ParentService.completeProfile(user.id, completeName.trim(), cleanPhone);
         
-        router.push(ROUTES.APPLY(lang));
+        window.location.href = ROUTES.APPLY(lang);
         return;
       }
 
@@ -47,9 +47,9 @@ export function LoginForm() {
 
       const children = await ParentService.getChildren(parent.id);
       if (children && children.length > 0) {
-        router.push(ROUTES.BOOK(lang));
+        window.location.href = ROUTES.BOOK(lang);
       } else {
-        router.push(ROUTES.APPLY(lang));
+        window.location.href = ROUTES.APPLY(lang);
       }
     } catch (error: unknown) {
       if (error instanceof Error && error.message === 'PROFILE_MISSING') {
