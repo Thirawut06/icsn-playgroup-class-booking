@@ -188,10 +188,7 @@ export function AdminDashboard({ onNavigate }: {
   const [recentLoading, setRecentLoading] = useState(true);
   const recentRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetchStats();
-    fetchRecentBookings();
-  }, []);
+
 
   const fetchStats = async () => {
     setStatsLoading(true);
@@ -230,7 +227,18 @@ export function AdminDashboard({ onNavigate }: {
     }
   };
 
-  const quickActions: QuickActionItem[] = [
+  useEffect(() => {
+    fetchStats();
+    fetchRecentBookings();
+  }, []);
+
+  const handleScrollToRecent = React.useCallback(() => {
+    if (recentRef.current) {
+      recentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
+
+  const quickActions: QuickActionItem[] = React.useMemo(() => [
     {
       label: 'จัดการรอบเรียนวันนี้',
       description: 'เช็คอิน / เพิ่ม Walk-in',
@@ -275,7 +283,7 @@ export function AdminDashboard({ onNavigate }: {
       hoverBorder: 'hover:border-accent/50/50',
       hoverBg: 'group-hover:bg-accent/10',
       hoverIcon: 'group-hover:text-accent',
-      onClick: () => recentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      onClick: handleScrollToRecent,
     },
     {
       label: 'Google Drive รูปสลิป',
@@ -295,7 +303,7 @@ export function AdminDashboard({ onNavigate }: {
       hoverIcon: 'group-hover:text-green-600',
       onClick: () => window.open('https://docs.google.com/spreadsheets/d/1DtVGWisyY3WnGpize3ZG0Kodh_FRxVW4YjIEmyA0lOo/edit?usp=sharing', '_blank'),
     },
-  ];
+  ], [onNavigate, stats?.pendingSlips, handleScrollToRecent]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -328,6 +336,7 @@ export function AdminDashboard({ onNavigate }: {
           Quick Actions <span className="font-sarabun text-sm font-normal text-muted-foreground ml-2">เมนูการจัดการด่วน</span>
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {/* eslint-disable-next-line react-hooks/refs */}
           {quickActions.map((action) => (
             <QuickAction key={action.label} item={action} />
           ))}

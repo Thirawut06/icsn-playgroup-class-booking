@@ -5,7 +5,6 @@ import { X, Clock, Plus, Trash2, Edit2, Loader2, Check, X as XIcon } from 'lucid
 import { AdminService } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { SessionTemplate } from '@/types';
-import { COPY } from '@/config/copy';
 import { AdminFieldLabel } from './admin-ui';
 
 interface TimeSlotManagerModalProps {
@@ -27,12 +26,6 @@ export function TimeSlotManagerModal({ isOpen, onClose }: TimeSlotManagerModalPr
   const [editLabel, setEditLabel] = useState('');
   const [editCapacity, setEditCapacity] = useState<number>(12);
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchTemplates();
-    }
-  }, [isOpen]);
-
   const fetchTemplates = async () => {
     setLoading(true);
     try {
@@ -44,6 +37,12 @@ export function TimeSlotManagerModal({ isOpen, onClose }: TimeSlotManagerModalPr
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchTemplates();
+    }
+  }, [isOpen]);
 
   const handleAdd = async () => {
     if (!newLabel.trim()) {

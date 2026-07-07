@@ -73,6 +73,7 @@ export function AdminUsers() {
   // Reset page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, [activeTab, searchTerm]);
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
