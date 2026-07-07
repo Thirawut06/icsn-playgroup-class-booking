@@ -11,4 +11,6 @@ export const ROUTES = {
   APPLY: (lang: string) => `/${lang}/apply`,
   APPLY_ADD_CHILD: (lang: string) => `/${lang}/apply?addChild=true`,
   BOOK: (lang: string) => `/${lang}/book`,
+  TERMS: (lang: string) => `/${lang}/terms`,
+  PRIVACY: (lang: string) => `/${lang}/privacy`,
 };

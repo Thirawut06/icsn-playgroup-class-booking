@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { ParentService, supabase } from '@/lib/supabase';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
 import { ROUTES } from '@/config/routes';
+import { LineSupportCard } from '@/components/ui/LineSupportCard';
 
 export function LoginForm() {
   const router = useRouter();
@@ -183,6 +184,10 @@ export function LoginForm() {
           isCompletingProfile ? dict.auth.saveProfile : dict.auth.signInBtn
         )}
       </button>
+
+      <div className="pt-2">
+        <LineSupportCard className="!mt-0" />
+      </div>
     </form>
   );
 }

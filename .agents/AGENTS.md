@@ -363,3 +363,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Avoid GAS Rename Scripts:** Do not write complex Google Apps Script code to rename or move existing files in Drive. It is safer to manually delete the incorrectly named subfolders in Google Drive and run a backfill.
 - **Backfill Execution:** To trigger a backfill, temporarily deploy the "backfill-drive" Edge Function with "--no-verify-jwt", and instruct the user to run "Invoke-RestMethod" via PowerShell directly.
 - **Production Edge Deployments:** When deploying Edge Functions targeting the production environment, always append "--project-ref psusuyesaxuhiondxqie".
+
+## Edge Function Architecture & Clean Code (CRITICAL)
+- **Parallel Query Execution:** When an Edge Function needs to query multiple unrelated Supabase tables (e.g., getting bookings, children, and packages for a report), NEVER use sequential `await` calls. ALWAYS use `Promise.all` to fetch the data in parallel. This is critical for performance and reducing execution timeouts.
+- **Single Responsibility (Avoid God Functions):** Do not write massive "God Functions" (200+ lines) inside the main `serve` block of an Edge Function. Always extract data formatting and transformation logic into dedicated helper functions (e.g., `formatRosterData`) to keep the main orchestration flow clean, readable, and easy to maintain.
+- **Webhook Resilience (Timeouts):** When an Edge Function makes external HTTP requests to Webhooks (like Google Apps Script), ALWAYS use an `AbortController` with a strict timeout (e.g., 10 seconds). Do not allow the Edge Function to hang indefinitely if the external service is unresponsive.

@@ -25,7 +25,8 @@ export default function HomePage() {
 
       {/* Navigation flow based on Parent State */}
       <div className="p-6 sm:p-8 space-y-6">
-        <div className="text-center">
+        <div className="text-center flex flex-col items-center justify-center gap-3">
+          <img src="/main-logo-icsn.png" alt="ICSN Logo" className="w-24 h-auto object-contain" />
           <h2 className="text-icsn-navy font-extrabold text-lg leading-tight">
             {dict.home.selectStatus}
           </h2>

@@ -5,6 +5,7 @@ import { FILE_UPLOAD } from '@/config/constants';
 import type { PackageOption } from '@/types';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
 import { useBookingContext } from './BookingContext';
+import { LineSupportCard } from '@/components/ui/LineSupportCard';
 
 interface TopUpModalProps {
   isOpen: boolean;
@@ -177,6 +178,10 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
                   {errorMsg}
                 </div>
               )}
+
+              <div className="pt-2">
+                <LineSupportCard className="!mt-0" />
+              </div>
             </div>
           )}
         </div>
