@@ -38,7 +38,7 @@ export function PhotoUploadSection({
         </label>
         <input
           type="file"
-          accept="image/*,.heic,.heif"
+          accept="image/jpeg, image/png, image/webp"
           onChange={(e) => handleFile(e, setParentPhotoData as any, setParentPhotoFile as any)}
           required={!parentPhotoData}
           className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-icsn-teal/10 file:text-icsn-teal hover:file:bg-icsn-teal/20 border border-border rounded-xl bg-white mb-1.5 cursor-pointer outline-none"
@@ -58,7 +58,7 @@ export function PhotoUploadSection({
         </label>
         <input
           type="file"
-          accept="image/*,.heic,.heif"
+          accept="image/jpeg, image/png, image/webp"
           onChange={(e) => handleFile(e, setChildPhotoData as any, setChildPhotoFile as any)}
           required={!childPhotoData}
           className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-icsn-teal/10 file:text-icsn-teal hover:file:bg-icsn-teal/20 border border-border rounded-xl bg-white mb-1.5 cursor-pointer outline-none"

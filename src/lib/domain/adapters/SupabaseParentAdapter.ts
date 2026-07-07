@@ -121,6 +121,24 @@ export class SupabaseParentAdapter implements IParentRepository {
     return parentData;
   }
 
+  async updateChildPhotos(childId: string, photoUrl: string | null, parentPhotoUrl: string | null): Promise<void> {
+    const updates: any = {};
+    if (photoUrl !== null) updates.photo_url = photoUrl;
+    if (parentPhotoUrl !== null) updates.parent_photo_url = parentPhotoUrl;
+
+    if (Object.keys(updates).length === 0) return;
+
+    const { error } = await supabase
+      .from('children')
+      .update(updates)
+      .eq('id', childId);
+
+    if (error) {
+      console.error("Error updating child photos", error);
+      throw error;
+    }
+  }
+
   async getParentDetails(parentId: string): Promise<ParentWithDetails | null> {
     const { data, error } = await supabase
       .from('parents')
@@ -168,24 +186,16 @@ export class SupabaseParentAdapter implements IParentRepository {
 
     let actualPhotoUrl = "";
     if (childPhotoFile) {
-      try {
-        const ext = childPhotoFile.name.split('.').pop() || 'jpg';
-        const fileName = `${parentId}_child_${Date.now()}.${ext}`;
-        actualPhotoUrl = await this.uploadFile('profiles', childPhotoFile, fileName);
-      } catch (e) {
-        console.error("Storage child photo upload failed", e);
-      }
+      const ext = childPhotoFile.name.split('.').pop() || 'jpg';
+      const fileName = `${parentId}_child_${Date.now()}.${ext}`;
+      actualPhotoUrl = await this.uploadFile('profiles', childPhotoFile, fileName);
     }
 
     let actualParentPhotoUrl = "";
     if (parentPhotoFile) {
-      try {
-        const ext = parentPhotoFile.name.split('.').pop() || 'jpg';
-        const fileName = `${parentId}_parent_${Date.now()}.${ext}`;
-        actualParentPhotoUrl = await this.uploadFile('profiles', parentPhotoFile, fileName);
-      } catch (e) {
-        console.error("Storage parent photo upload failed", e);
-      }
+      const ext = parentPhotoFile.name.split('.').pop() || 'jpg';
+      const fileName = `${parentId}_parent_${Date.now()}.${ext}`;
+      actualParentPhotoUrl = await this.uploadFile('profiles', parentPhotoFile, fileName);
     }
 
     let ageYears = 3;

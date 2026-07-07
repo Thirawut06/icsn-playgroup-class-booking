@@ -12,6 +12,7 @@ import { BookingSummary } from '@/components/book/BookingSummary';
 import { CancelConfirmModal } from '@/components/book/CancelConfirmModal';
 import { BookingConfirmModal } from '@/components/book/BookingConfirmModal';
 import { ClosureNotificationBanner } from '@/components/book/ClosureNotificationBanner';
+import { MissingPhotoBlocker } from '@/components/book/MissingPhotoBlocker';
 
 import { BookingProvider, useBookingContext } from '@/components/book/BookingContext';
 import { useBookingActions } from '@/hooks/useBookingActions';
@@ -198,6 +199,8 @@ function BookPageContent() {
     return <div className="min-h-screen bg-white flex items-center justify-center text-icsn-teal font-bold">{dict.common.loading}</div>;
   }
 
+  const childrenMissingPhotos = children.filter(c => !c.photo_url || !c.parent_photo_url);
+
   // Build locale-aware date label for confirm modal
   const dateLocale = lang === 'th' ? 'th-TH' : 'en-US';
   const dateLabel = selectedDates.length === 1
@@ -210,6 +213,16 @@ function BookPageContent() {
   return (
     <div className="bg-white flex flex-col min-h-screen pb-16">
       <div className="max-w-[480px] mx-auto w-full bg-white min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)] flex flex-col relative overflow-hidden">
+
+        {childrenMissingPhotos.length > 0 && (
+          <MissingPhotoBlocker 
+            childrenMissingPhotos={childrenMissingPhotos} 
+            parentId={parentId} 
+            onUploadSuccess={async () => {
+              await refreshData();
+            }} 
+          />
+        )}
 
         {(() => {
           const parentPhotoUrl = children.find(c => c.parent_photo_url)?.parent_photo_url || '';
