@@ -18,10 +18,10 @@ describe('AdminUsers Component', () => {
     expect(screen.getByText(/จัดการผู้ใช้งาน/i)).toBeInTheDocument();
     
     // Tabs (segmented control) should be present
-    const allTabBtn = screen.getByText(/ทั้งหมด \(All\)/i);
+    const allTabBtn = screen.getByText(/ทั้งหมด/i);
     const paymentTabBtn = screen.getByText(/สมาชิกปกติ \(Payment\)/i);
     const trialTabBtn = screen.getByText(/ทดลองเรียน \(Trial\)/i);
-    const walkinTabBtn = screen.getByText(/Walk-in \(ไม่มีแพ็กเกจ\)/i);
+    const walkinTabBtn = screen.getByText(/Walk-in \(ลูกค้าหน้างาน\)/i);
     
     expect(allTabBtn).toBeInTheDocument();
     expect(paymentTabBtn).toBeInTheDocument();
