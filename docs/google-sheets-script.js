@@ -28,7 +28,7 @@ function doPost(e) {
     }
     
     if (payload.directoryData) {
-      updateTab(spreadsheet, "👥 ฐานข้อมูลนักเรียน", payload.directoryData);
+      updateTab(spreadsheet, "👥 ฐานข้อมูลผู้ใช้", payload.directoryData);
     }
     
     if (payload.balancesData) {

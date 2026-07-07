@@ -56,7 +56,8 @@ serve(async (req) => {
       .select(`
         status,
         created_at,
-        sessions!inner ( date, time_label ),
+        checkin_at,
+        sessions!inner ( session_date, time_label ),
         children ( full_name, nickname, dob, age, food_allergy, special_info, no_photo_perm ),
         parents ( name, phone )
       `)
@@ -65,8 +66,8 @@ serve(async (req) => {
     if (rosterError) console.error("Roster error:", rosterError);
 
     rosterRaw?.sort((a: any, b: any) => {
-      const dateA = new Date(a.sessions?.date || 0).getTime();
-      const dateB = new Date(b.sessions?.date || 0).getTime();
+      const dateA = new Date(a.sessions?.session_date || 0).getTime();
+      const dateB = new Date(b.sessions?.session_date || 0).getTime();
       if (dateA !== dateB) return dateB - dateA; // Descending Date
       const timeA = a.sessions?.time_label || '';
       const timeB = b.sessions?.time_label || '';
@@ -74,19 +75,19 @@ serve(async (req) => {
     });
 
     const rosterData = [
-      ['วันที่เรียน (Date)', 'เวลาเรียน (Time)', 'ชื่อเล่น', 'ชื่อจริง', 'อายุ', 'ชื่อผู้ปกครอง', 'เบอร์ติดต่อ', 'ห้ามถ่ายรูป (No Photo)', 'แพ้อาหาร / หมายเหตุ', 'เวลาที่จอง']
+      ['วันที่เรียน (Date)', 'เวลาเรียน (Time)', 'ชื่อเล่น', 'ชื่อจริง', 'อายุ', 'ชื่อผู้ปกครอง', 'เบอร์ติดต่อ', 'ห้ามถ่ายรูป (No Photo)', 'แพ้อาหาร / หมายเหตุ', 'เวลาที่เช็คชื่อ (Check-in)', 'เวลาที่จอง']
     ];
     
     let lastClassKey: string | null = null;
 
     rosterRaw?.forEach((b: any) => {
-      const dateVal = b.sessions?.date || '';
+      const dateVal = b.sessions?.session_date || '';
       const timeVal = b.sessions?.time_label || '';
       const currentClassKey = `${dateVal}-${timeVal}`;
       
       if (lastClassKey && lastClassKey !== currentClassKey) {
         // Add an empty row for visual separation between classes
-        rosterData.push(['', '', '', '', '', '', '', '', '', '']);
+        rosterData.push(['', '', '', '', '', '', '', '', '', '', '']);
       }
       lastClassKey = currentClassKey;
 
@@ -100,7 +101,8 @@ serve(async (req) => {
         b.parents?.phone || '',
         b.children?.no_photo_perm ? '❌ ห้ามถ่าย' : '✅ ถ่ายได้',
         [b.children?.food_allergy, b.children?.special_info].filter(Boolean).join(' | '),
-        new Date(b.created_at).toLocaleString('th-TH')
+        b.checkin_at ? new Date(b.checkin_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : 'ยังไม่เช็คชื่อ',
+        new Date(b.created_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })
       ]);
     });
 
@@ -109,16 +111,21 @@ serve(async (req) => {
       .from('children')
       .select(`
         full_name, nickname, dob, age, food_allergy, special_info, no_photo_perm, created_at,
-        parents ( name, phone, email )
+        parents ( name, phone, email, children ( nickname ) )
       `)
       .order('created_at', { ascending: false });
 
     if (dirError) console.error("Directory error:", dirError);
 
     const directoryData = [
-      ['ชื่อผู้ปกครอง', 'เบอร์โทรศัพท์', 'อีเมล', 'ชื่อจริงเด็ก', 'ชื่อเล่นเด็ก', 'วันเกิด (DOB)', 'อายุ', 'แพ้อาหาร', 'ข้อควรระวังพิเศษ', 'ห้ามถ่ายรูป (No Photo)', 'วันที่สมัคร']
+      ['ชื่อผู้ปกครอง', 'เบอร์โทรศัพท์', 'อีเมล', 'ชื่อจริงเด็ก', 'ชื่อเล่นเด็ก', 'วันเกิด (DOB)', 'อายุ', 'แพ้อาหาร', 'ข้อควรระวังพิเศษ', 'ห้ามถ่ายรูป (No Photo)', 'วันที่สมัคร', 'Google Drive Link']
     ];
     directoryRaw?.forEach((c: any) => {
+      const childNicknames = c.parents?.children?.map((child: any) => child.nickname).filter(Boolean).join(', ');
+      const childStr = childNicknames ? ` (${childNicknames})` : '';
+      const folderName = `${c.parents?.name || ''}${childStr}`.trim();
+      const driveLink = folderName ? `https://drive.google.com/drive/search?q=type:folder+title:"${encodeURIComponent(folderName)}"` : '';
+
       directoryData.push([
         c.parents?.name || '',
         c.parents?.phone || '',
@@ -130,7 +137,8 @@ serve(async (req) => {
         c.food_allergy || '',
         c.special_info || '',
         c.no_photo_perm ? '❌ ห้ามถ่าย' : '✅ ถ่ายได้',
-        new Date(c.created_at).toLocaleString('th-TH')
+        new Date(c.created_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }),
+        driveLink
       ]);
     });
 
@@ -172,7 +180,7 @@ serve(async (req) => {
         b.phone,
         b.credits,
         b.latest_package,
-        new Date(b.updated_at).toLocaleString('th-TH')
+        new Date(b.updated_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })
       ]);
     });
 
@@ -193,7 +201,7 @@ serve(async (req) => {
     ];
     historyRaw?.forEach((h: any) => {
       historyData.push([
-        new Date(h.created_at).toLocaleString('th-TH'),
+        new Date(h.created_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }),
         h.parents?.name || '',
         h.action_type || '',
         h.amount,

@@ -315,7 +315,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Line Height:** NEVER use `leading-none` or `leading-tight` on text elements that display Thai characters. The vertical space is required for Thai vowels and tone marks. ALWAYS use `leading-normal` or `leading-relaxed` and control vertical spacing using explicit margins (e.g., `mb-1`).
 
 ## Google Sheets Sync Architecture (Crucial)
-- **Google Sheets Snapshot Sync:** For Google Sheets, always use a stateless "Snapshot Sync" (Clear & Rewrite) pattern in the GAS script to ensure 100% data accuracy and avoid drift.
+- **Google Sheets Snapshot Sync:** For Google Sheets, always use a stateless "Snapshot Sync" (Clear & Rewrite) pattern in the GAS script to ensure 100% data accuracy and avoid drift. Treat the Google Apps Script (`.gs`) strictly as a "dumb receiver". ALL complex logic (e.g., calculating ages, injecting spacer rows, formatting timezones, generating links) MUST happen inside the Supabase Edge Function in TypeScript. The GAS script should ONLY use `.clearContents()` and `.setValues()` to blindly dump the provided 2D array.
 - **Event-Driven Triggers:** Never use Deno.cron for syncing. Use Supabase Database Triggers (via pg_net extension) to call the Edge Function only when data changes.
 - **GAS Webhook Pattern:** Similar to Drive, always use the Google Apps Script (GAS) Webhook pattern for syncing data to Google Sheets.
 
@@ -325,6 +325,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## JavaScript Date Timezone Safety (CRITICAL)
 - **Timezone-Safe Date Math:** When parsing or manipulating pure date strings (e.g., `"YYYY-MM-DD"`) in JavaScript, ALWAYS append `T00:00:00Z` to force UTC parsing, and exclusively use `.setUTCDate()` and `.getUTCDate()` for date arithmetic. Relying on standard `new Date()` and `.getDate()` operates in the user's local timezone, causing catastrophic date-shifting bugs across timezones.
+- **Edge Function Timezones (Deno is UTC):** When formatting dates to a local string inside a Supabase Edge Function (e.g., `new Date().toLocaleString('th-TH')`), it will default to UTC time. You MUST explicitly provide the timezone options (e.g., `{ timeZone: 'Asia/Bangkok' }`) to ensure correct local time formatting.
 
 ## Admin Data Pagination (CRITICAL)
 - **Bounded Queries:** NEVER write unbounded `.select()` queries for admin history tables (e.g., `getTransactionHistory`). Always include a safety cap (e.g., `.limit(1000)`) or implement proper server-side pagination to prevent memory spikes on the client and database.
@@ -353,6 +354,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - Child Profiles: "profile_[full_name]_[nickname].ext"
   - Parent Profiles: "parent_profile_[parentName].ext"
   - Signatures: "signature_[full_name]_[nickname]_[DD-MM-YYYY].ext"
+- **Drive Link Generation without DB Bloat:** Do not store dynamically generated Google Drive folder URLs in the Supabase database. To link from Google Sheets to a user's Google Drive folder, generate a direct Google Drive Search URL dynamically within the Edge Function (e.g., `https://drive.google.com/drive/search?q=type:folder+title:"<folder_name>"`) and push it as a string to Google Sheets. This is more robust, automatically linkified by Sheets, and prevents unnecessary database schema changes.
 
 ## Edge Function Data Logic (Bookings Table)
 - **Compound Relationships:** When extracting nested relationship data for "bookings" (which contain BOTH "parent_id" and "child_id"), NEVER write if-else chains that evaluate "parent_id" first and skip querying the "children" table. Both pieces of data must be fetched to compose the complete folder and file names (e.g. "parent_name" for the folder, "child_nickname" for the signature file).
