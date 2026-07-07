@@ -32,13 +32,11 @@ async function uploadToGasWebhook(
   parentFolderName: string, 
   subFolderName: string,
   parentPhone: string,
-  gasWebhookUrl: string, 
-  driveParentFolderId?: string
+  gasWebhookUrl: string
 ) {
   const base64Data = await blobToBase64(blob);
   const payload = {
     action: 'sync_file',
-    driveParentFolderId: driveParentFolderId || '',
     parentFolderName,
     subFolderName,
     parentPhone,
@@ -95,7 +93,7 @@ async function resolveFolderInfo(table: string, record: any, supabase: any) {
       parentPhone = parent.phone || '';
       const childNicknames = parent.children?.map((c: any) => c.nickname).filter(Boolean).join(', ');
       const childStr = childNicknames ? ` (${childNicknames})` : '';
-      folderName = `${parent.name}${childStr} ${parentPhone}`.trim();
+      folderName = `${parent.name}${childStr}`.trim();
       
       if (table === 'children') {
         const fn = record.full_name ? record.full_name.trim() : '';
@@ -120,7 +118,7 @@ async function resolveFolderInfo(table: string, record: any, supabase: any) {
       else if (fn) childNickname = fn;
       else if (nn) childNickname = nn;
       
-      folderName = `${child.parents.name} (${child.nickname}) ${parentPhone}`.trim();
+      folderName = `${child.parents.name} (${child.nickname})`.trim();
     }
   }
 
@@ -171,7 +169,6 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const { folderName, parentPhone, childNickname } = await resolveFolderInfo(table, record, supabase);
 
-    const driveParentFolderId = Deno.env.get('DRIVE_PARENT_FOLDER_ID') || undefined;
 
     if (table === 'slip_uploads' && record.file_url) {
       const fetchUrl = resolveFetchUrl(record.file_url, supabaseUrl);
@@ -184,7 +181,7 @@ Deno.serve(async (req) => {
       const dateStr = getFormattedDateStr(createdAt);
       const fileName = `slip_${dateStr}.${ext}`;
       
-      await uploadToGasWebhook(blob, fileName, folderName, 'สลิป', parentPhone, gasWebhookUrl, driveParentFolderId);
+      await uploadToGasWebhook(blob, fileName, folderName, 'สลิป', parentPhone, gasWebhookUrl);
       console.log(`Synced slip ${record.id} to folder: ${folderName}`);
     } 
     else if (table === 'children') {
@@ -198,7 +195,7 @@ Deno.serve(async (req) => {
           const dateStr = getFormattedDateStr(createdAt);
           const fileName = `profile_${dateStr}.${ext}`;
           
-          await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl, driveParentFolderId);
+          await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl);
         }
       }
       
@@ -212,7 +209,7 @@ Deno.serve(async (req) => {
           const dateStr = getFormattedDateStr(createdAt);
           const fileName = `parent_profile_${dateStr}.${ext}`;
           
-          await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl, driveParentFolderId);
+          await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl);
         }
       }
       console.log(`Synced child photos for ${record.id} to folder: ${folderName}`);
@@ -229,7 +226,7 @@ Deno.serve(async (req) => {
       const timeStr = getFormattedTimeStr(checkinDate);
       const fileName = `signature_${dateStr}_${timeStr}.${ext}`;
       
-      await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl, driveParentFolderId);
+      await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl);
       console.log(`Synced signature for booking ${record.id} to folder: ${folderName}`);
     }
 
