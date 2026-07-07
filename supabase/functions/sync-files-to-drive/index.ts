@@ -62,6 +62,16 @@ async function uploadToGasWebhook(
   return data;
 }
 
+// Helpers for string sanitization
+function sanitizeForFilename(str: string): string {
+  if (!str) return '';
+  return str
+    .trim()
+    .replace(/\s+/g, '_')     // Replace spaces with underscores
+    .replace(/[()\/\\:*?"<>|]/g, '') // Remove invalid file characters and parentheses
+    .replace(/_+/g, '_');     // Replace multiple underscores with single underscore
+}
+
 // Helpers for Date Formatting (DD-MM-YYYY)
 function getFormattedDateStr(date: Date): string {
   const d = String(date.getDate()).padStart(2, '0');
@@ -179,7 +189,9 @@ Deno.serve(async (req) => {
       const ext = record.file_url.split('?')[0].split('.').pop() || 'jpg';
       const createdAt = new Date(record.created_at || new Date());
       const dateStr = getFormattedDateStr(createdAt);
-      const fileName = `slip_${dateStr}.${ext}`;
+      
+      const safePhone = sanitizeForFilename(parentPhone) || 'no_phone';
+      const fileName = `slip_${safePhone}_${dateStr}.${ext}`;
       
       await uploadToGasWebhook(blob, fileName, folderName, 'สลิป', parentPhone, gasWebhookUrl);
       console.log(`Synced slip ${record.id} to folder: ${folderName}`);
@@ -193,7 +205,11 @@ Deno.serve(async (req) => {
           const ext = record.photo_url.split('?')[0].split('.').pop() || 'jpg';
           const createdAt = new Date(record.created_at || new Date());
           const dateStr = getFormattedDateStr(createdAt);
-          const fileName = `profile_${dateStr}.${ext}`;
+          
+          const safeFullName = sanitizeForFilename(record.full_name);
+          const safeNickname = sanitizeForFilename(record.nickname);
+          const namePart = [safeFullName, safeNickname].filter(Boolean).join('_') || 'unknown';
+          const fileName = `profile_${namePart}.${ext}`;
           
           await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl);
         }
@@ -207,7 +223,14 @@ Deno.serve(async (req) => {
           const ext = record.parent_photo_url.split('?')[0].split('.').pop() || 'jpg';
           const createdAt = new Date(record.created_at || new Date());
           const dateStr = getFormattedDateStr(createdAt);
-          const fileName = `parent_profile_${dateStr}.${ext}`;
+          
+          // parent_profile uses parent's name from resolveFolderInfo via query, but we can't easily get it here directly.
+          // Wait, folderName is `${parent.name} (${childStr})`. Let's just use parent.name which we can extract, 
+          // or we can query parent name if needed.
+          // Actually, we can get parent name from folderName by splitting at ' ('.
+          const extractedParentName = folderName.split(' (')[0];
+          const safeParentName = sanitizeForFilename(extractedParentName) || 'unknown';
+          const fileName = `parent_profile_${safeParentName}.${ext}`;
           
           await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl);
         }
@@ -223,8 +246,9 @@ Deno.serve(async (req) => {
       const ext = record.signature_url.split('?')[0].split('.').pop() || 'png';
       const checkinDate = record.checkin_at ? new Date(record.checkin_at) : new Date();
       const dateStr = getFormattedDateStr(checkinDate);
-      const timeStr = getFormattedTimeStr(checkinDate);
-      const fileName = `signature_${dateStr}_${timeStr}.${ext}`;
+      
+      const safeChildName = sanitizeForFilename(childNickname) || 'unknown';
+      const fileName = `signature_${safeChildName}_${dateStr}.${ext}`;
       
       await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl);
       console.log(`Synced signature for booking ${record.id} to folder: ${folderName}`);
