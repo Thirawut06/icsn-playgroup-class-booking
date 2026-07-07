@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isAdminUser } from '@/lib/auth/roles';
 
 /**
  * POST /api/trigger-drive-sync
@@ -17,8 +18,7 @@ export async function POST(req: NextRequest) {
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const role = user.app_metadata?.role;
-    if (role !== 'admin') {
+    if (!isAdminUser(user)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
