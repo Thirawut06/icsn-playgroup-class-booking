@@ -10,4 +10,5 @@ export interface IParentRepository {
   getChildren(parentId: string): Promise<Child[]>;
   uploadFile(bucket: string, file: File, path: string): Promise<string>;
   submitNewChild(payload: SubmitChildPayload): Promise<Child>;
+  updateChildPhotos(childId: string, photoUrl: string | null, parentPhotoUrl: string | null): Promise<void>;
 }
