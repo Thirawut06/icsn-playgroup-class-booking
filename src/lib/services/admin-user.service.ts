@@ -38,7 +38,7 @@ export const AdminUserService = {
       const totalCredits = packages.reduce((sum: number, pkg: any) => sum + (pkg.credits_remaining || 0), 0);
       const totalBookings = bookings.filter((b: any) => b.status === 'confirmed').length;
       
-      const category = this._classifyUserCategory(packages);
+      const category = this._classifyUserCategory(packages, p.email);
       const latestActivity = this._calculateLatestActivity(p.created_at, children);
 
       return {
@@ -60,8 +60,13 @@ export const AdminUserService = {
     return mapped.sort((a: { latestActivity: number }, b: { latestActivity: number }) => b.latestActivity - a.latestActivity);
   },
 
-  _classifyUserCategory(packages: any[]): 'payment' | 'trial' | 'walk-in' {
-    if (packages.length === 0) return 'walk-in';
+  _classifyUserCategory(packages: any[], email: string = ''): 'payment' | 'trial' | 'registered' | 'walk-in' {
+    if (packages.length === 0) {
+      if (email && email.endsWith('@icsn.local')) {
+        return 'walk-in';
+      }
+      return 'registered';
+    }
     const hasNormal = packages.some((pkg: any) => pkg.type !== 'trial');
     if (hasNormal) return 'payment';
     return 'trial';

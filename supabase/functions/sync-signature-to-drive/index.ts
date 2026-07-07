@@ -157,6 +157,29 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized: Missing auth header' }), { status: 401 });
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
+    
+    // Create a Supabase client configured to use the user's JWT
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    
+    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    if (userError || !user) {
+       return new Response(JSON.stringify({ error: 'Unauthorized: Invalid token' }), { status: 401 });
+    }
+    
+    if (user.app_metadata?.role !== 'admin') {
+       return new Response(JSON.stringify({ error: 'Forbidden: Admin access required' }), { status: 403 });
+    }
+
     const payload: SyncPayload = await req.json();
     const { bookingId, signatureUrl, parentName, parentPhone, childName, sessionDate, sessionLabel } = payload;
 

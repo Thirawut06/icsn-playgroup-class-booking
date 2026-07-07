@@ -8,7 +8,7 @@ import type { ClassifiedUser } from '@/types';
 import { UserDetailDrawer } from '../UserDetailDrawer';
 import toast from 'react-hot-toast';
 
-type Category = 'all' | 'payment' | 'trial' | 'walk-in';
+type Category = 'all' | 'payment' | 'trial' | 'registered' | 'walk-in';
 
 export function AdminUsers() {
   const [activeTab, setActiveTab] = useState<Category>('all');
@@ -40,6 +40,14 @@ export function AdminUsers() {
     // eslint-disable-next-line
     fetchUsers();
   }, []);
+
+  const stats = useMemo(() => ({
+    total: users.length,
+    payment: users.filter(u => u.category === 'payment').length,
+    trial: users.filter(u => u.category === 'trial').length,
+    registered: users.filter(u => u.category === 'registered').length,
+    walkin: users.filter(u => u.category === 'walk-in').length,
+  }), [users]);
 
   const filteredUsers = useMemo(() => {
     let filtered = users;
@@ -88,10 +96,11 @@ export function AdminUsers() {
             {/* Segmented Control */}
             <AdminTabs
               tabs={[
-                { id: 'all', label: 'ทั้งหมด (All)' },
+                { id: 'all', label: 'ทั้งหมด' },
                 { id: 'payment', label: 'สมาชิกปกติ (Payment)' },
                 { id: 'trial', label: 'ทดลองเรียน (Trial)' },
-                { id: 'walk-in', label: 'Walk-in (ไม่มีแพ็กเกจ)' }
+                { id: 'registered', label: 'ลงทะเบียนใหม่ (ยังไม่มีแพ็กเกจ)' },
+                { id: 'walk-in', label: 'Walk-in (ลูกค้าหน้างาน)' }
               ]}
               activeTab={activeTab}
               onChange={(id) => setActiveTab(id as Category)}
@@ -126,13 +135,13 @@ export function AdminUsers() {
           >
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
+                <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
                   <Loader2 className="w-6 h-6 animate-spin mx-auto text-icsn-teal" />
                 </td>
               </tr>
             ) : paginatedUsers.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
+                <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
                   ไม่พบข้อมูล
                 </td>
               </tr>
@@ -155,6 +164,7 @@ export function AdminUsers() {
                       <span className={`inline-block mt-1.5 px-2 py-0.5 rounded text-[11px] font-medium ${
                         user.category === 'payment' ? 'bg-info/10 text-info' :
                         user.category === 'trial' ? 'bg-warning/10 text-warning' :
+                        user.category === 'registered' ? 'bg-secondary/20 text-secondary-foreground' :
                         user.category === 'walk-in' ? 'bg-muted text-foreground' : 'bg-muted text-muted-foreground'
                       }`}>
                         {user.category.toUpperCase()}

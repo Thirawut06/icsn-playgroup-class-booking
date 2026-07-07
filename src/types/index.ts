@@ -154,7 +154,7 @@ export interface ClassifiedUser {
   children_list: { nickname: string, full_name?: string }[];
   total_credits: number;
   total_bookings: number;
-  category: 'payment' | 'trial' | 'walk-in';
+  category: 'payment' | 'trial' | 'registered' | 'walk-in';
   latestActivity: number;
   raw_parent?: any;
 }
