@@ -6,6 +6,33 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function calculateExactAge(dobString: string | null | undefined): string {
+  if (!dobString) return '';
+  const dob = new Date(dobString + 'T00:00:00Z');
+  const now = new Date();
+  
+  let years = now.getUTCFullYear() - dob.getUTCFullYear();
+  let months = now.getUTCMonth() - dob.getUTCMonth();
+  let days = now.getUTCDate() - dob.getUTCDate();
+
+  if (days < 0) {
+    months--;
+    const prevMonth = new Date(now.getUTCFullYear(), now.getUTCMonth(), 0);
+    days += prevMonth.getUTCDate();
+  }
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  let result = [];
+  if (years > 0) result.push(`${years} ปี`);
+  if (months > 0) result.push(`${months} เดือน`);
+  if (days > 0) result.push(`${days} วัน`);
+  
+  return result.join(' ') || '0 วัน';
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -15,7 +42,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const webhookUrl = Deno.env.get('GOOGLE_APPS_SCRIPT_WEBHOOK_DRIVE');
+    const webhookUrl = Deno.env.get('GOOGLE_APPS_SCRIPT_WEBHOOK_SHEETS');
 
     if (!supabaseUrl || !supabaseServiceKey || !webhookUrl) {
       throw new Error('Missing environment variables for sync-to-sheets');
@@ -23,33 +50,52 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 1. 📅 ใบเช็คชื่อวันนี้ (Today's Attendance)
-    // Only confirmed bookings for today's sessions
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }); // YYYY-MM-DD
-    
+    // 1. 📅 ประวัติการเข้าเรียนทั้งหมด (All Classes Attendance)
     const { data: rosterRaw, error: rosterError } = await supabase
       .from('bookings')
       .select(`
         status,
         created_at,
         sessions!inner ( date, time_label ),
-        children ( full_name, nickname, age, food_allergy, special_info, no_photo_perm ),
+        children ( full_name, nickname, dob, age, food_allergy, special_info, no_photo_perm ),
         parents ( name, phone )
       `)
-      .eq('status', 'confirmed')
-      .eq('sessions.date', today);
+      .eq('status', 'confirmed');
 
     if (rosterError) console.error("Roster error:", rosterError);
 
+    rosterRaw?.sort((a: any, b: any) => {
+      const dateA = new Date(a.sessions?.date || 0).getTime();
+      const dateB = new Date(b.sessions?.date || 0).getTime();
+      if (dateA !== dateB) return dateB - dateA; // Descending Date
+      const timeA = a.sessions?.time_label || '';
+      const timeB = b.sessions?.time_label || '';
+      return timeB.localeCompare(timeA); // Descending Time
+    });
+
     const rosterData = [
-      ['เวลาเรียน (Time)', 'ชื่อเล่น', 'ชื่อจริง', 'อายุ', 'ชื่อผู้ปกครอง', 'เบอร์ติดต่อ', 'ห้ามถ่ายรูป (No Photo)', 'แพ้อาหาร / หมายเหตุ', 'เวลาที่จอง']
+      ['วันที่เรียน (Date)', 'เวลาเรียน (Time)', 'ชื่อเล่น', 'ชื่อจริง', 'อายุ', 'ชื่อผู้ปกครอง', 'เบอร์ติดต่อ', 'ห้ามถ่ายรูป (No Photo)', 'แพ้อาหาร / หมายเหตุ', 'เวลาที่จอง']
     ];
+    
+    let lastClassKey: string | null = null;
+
     rosterRaw?.forEach((b: any) => {
+      const dateVal = b.sessions?.date || '';
+      const timeVal = b.sessions?.time_label || '';
+      const currentClassKey = `${dateVal}-${timeVal}`;
+      
+      if (lastClassKey && lastClassKey !== currentClassKey) {
+        // Add an empty row for visual separation between classes
+        rosterData.push(['', '', '', '', '', '', '', '', '', '']);
+      }
+      lastClassKey = currentClassKey;
+
       rosterData.push([
-        b.sessions?.time_label || '',
+        dateVal,
+        timeVal,
         b.children?.nickname || '',
         b.children?.full_name || '',
-        b.children?.age || '',
+        calculateExactAge(b.children?.dob) || b.children?.age || '',
         b.parents?.name || '',
         b.parents?.phone || '',
         b.children?.no_photo_perm ? '❌ ห้ามถ่าย' : '✅ ถ่ายได้',
@@ -80,7 +126,7 @@ serve(async (req) => {
         c.full_name || '',
         c.nickname || '',
         c.dob || '',
-        c.age || '',
+        calculateExactAge(c.dob) || c.age || '',
         c.food_allergy || '',
         c.special_info || '',
         c.no_photo_perm ? '❌ ห้ามถ่าย' : '✅ ถ่ายได้',

@@ -5,7 +5,7 @@
 // (เมนู Extensions > Apps Script) แล้วเซฟ และกด Deploy > New Deployment
 // ให้สิทธิ์ Web app รันในฐานะ "Me" และเข้าถึงได้ "Anyone"
 
-const MAIN_FOLDER_NAME = "ICSN Panda Playgroup";
+const MAIN_FOLDER_NAME = "ICSN Panda Playgroup Files and Pay Slip";
 
 function doPost(e) {
   try {

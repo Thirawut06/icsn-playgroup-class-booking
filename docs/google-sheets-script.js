@@ -24,7 +24,7 @@ function doPost(e) {
 
     // ทำการอัปเดตแต่ละ Tab (ใช้แบบ Snapshot Sync คือล้างของเก่าแล้วเขียนทับใหม่หมด เพื่อความแม่นยำ)
     if (payload.rosterData) {
-      updateTab(spreadsheet, "📅 รายชื่อคลาสวันนี้", payload.rosterData);
+      updateTab(spreadsheet, "📅 ประวัติการเข้าเรียนทั้งหมด", payload.rosterData);
     }
     
     if (payload.directoryData) {

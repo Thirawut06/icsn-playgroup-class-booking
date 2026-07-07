@@ -104,31 +104,33 @@ async function resolveFolderInfo(table: string, record: any, supabase: any) {
       const childNicknames = parent.children?.map((c: any) => c.nickname).filter(Boolean).join(', ');
       const childStr = childNicknames ? ` (${childNicknames})` : '';
       folderName = `${parent.name}${childStr}`.trim();
-      
-      if (table === 'children') {
-        const fn = record.full_name ? record.full_name.trim() : '';
-        const nn = record.nickname ? record.nickname.trim() : '';
-        if (fn && nn) childNickname = `${fn} (${nn})`;
-        else if (fn) childNickname = fn;
-        else if (nn) childNickname = nn;
-      }
     }
+  }
+
+  if (table === 'children') {
+    const fn = record.full_name ? record.full_name.trim() : '';
+    const nn = record.nickname ? record.nickname.trim() : '';
+    if (fn && nn) childNickname = `${fn} (${nn})`;
+    else if (fn) childNickname = fn;
+    else if (nn) childNickname = nn;
   } else if (table === 'bookings' && record.child_id) {
     const { data: child } = await supabase
       .from('children')
-      .select('nickname, full_name, parents(id, name, phone)')
+      .select('nickname, full_name')
       .eq('id', record.child_id)
       .single();
       
-    if (child && child.parents) {
-      parentPhone = child.parents.phone || '';
+    if (child) {
       const fn = child.full_name ? child.full_name.trim() : '';
       const nn = child.nickname ? child.nickname.trim() : '';
       if (fn && nn) childNickname = `${fn} (${nn})`;
       else if (fn) childNickname = fn;
       else if (nn) childNickname = nn;
-      
-      folderName = `${child.parents.name} (${child.nickname})`.trim();
+    }
+    
+    // Fallback if child is somehow not found or has no name
+    if (!childNickname && record.child_name_snapshot) {
+      childNickname = record.child_name_snapshot.trim();
     }
   }
 

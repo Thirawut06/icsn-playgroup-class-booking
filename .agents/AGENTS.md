@@ -344,3 +344,20 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Environment & Vercel Constraints
 - **Vercel Preview Isolation:** To maintain strict staging isolation, Vercel environment variables MUST be explicitly split by environment (Production vs. Preview/Development). Crucially, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` must have separate Staging values for Preview builds. Additionally, external IDs like `GOOGLE_SHEET_ID`, `GOOGLE_DRIVE_ROOT_ID`, and `GOOGLE_CHAT_WEBHOOK_URL` should be split to prevent staging data from polluting production systems. Service account credentials can remain shared.
+
+## Google Drive Sync Architecture & Naming Conventions
+- **Main Folder Name:** The root folder name in Google Drive for all operations is strictly "ICSN Panda Playgroup Files and Pay Slip". Never assume variations like "ICSN Panda Playgroup".
+- **Filename Sanitization:** Never use spaces or parentheses () in filenames before uploading to Google Drive via GAS Webhooks. Always sanitize them by replacing spaces with underscores _ and removing invalid characters.
+- **Strict Naming Formats:** 
+  - Payment Slips: "slip_[parentPhone]_[DD-MM-YYYY].ext"
+  - Child Profiles: "profile_[full_name]_[nickname].ext"
+  - Parent Profiles: "parent_profile_[parentName].ext"
+  - Signatures: "signature_[full_name]_[nickname]_[DD-MM-YYYY].ext"
+
+## Edge Function Data Logic (Bookings Table)
+- **Compound Relationships:** When extracting nested relationship data for "bookings" (which contain BOTH "parent_id" and "child_id"), NEVER write if-else chains that evaluate "parent_id" first and skip querying the "children" table. Both pieces of data must be fetched to compose the complete folder and file names (e.g. "parent_name" for the folder, "child_nickname" for the signature file).
+
+## Drive Backfill Strategy & Deployment
+- **Avoid GAS Rename Scripts:** Do not write complex Google Apps Script code to rename or move existing files in Drive. It is safer to manually delete the incorrectly named subfolders in Google Drive and run a backfill.
+- **Backfill Execution:** To trigger a backfill, temporarily deploy the "backfill-drive" Edge Function with "--no-verify-jwt", and instruct the user to run "Invoke-RestMethod" via PowerShell directly.
+- **Production Edge Deployments:** When deploying Edge Functions targeting the production environment, always append "--project-ref psusuyesaxuhiondxqie".
