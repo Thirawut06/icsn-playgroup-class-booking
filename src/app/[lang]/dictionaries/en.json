@@ -39,7 +39,7 @@
     "passwordPlaceholder": "••••••••",
     "passwordMinLength": "At least 6 characters",
     "namePlaceholder": "Your Full Name",
-    "nameExample": "e.g., Mom Pimchanok",
+    "nameExample": "e.g., Somchai Jaidee",
     "phonePlaceholder": "e.g., 0812345678",
     "profileIncomplete": "Account found, but profile is incomplete.\nPlease provide your name and phone number to continue.",
     "loginError": "Unable to sign in. Please check your credentials or sign up.",
