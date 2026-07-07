@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Users, CalendarCheck, ReceiptText, Loader2, CalendarOff, Clock } from 'lucide-react';
+import { Users, CalendarCheck, ReceiptText, Loader2, CalendarOff, Clock, type LucideIcon } from 'lucide-react';
 import { CLASS_CONFIG, BOOKING_STATUS } from '@/config/constants';
 import { AdminService, BookingService, SettingsService } from '@/lib/supabase';
 
