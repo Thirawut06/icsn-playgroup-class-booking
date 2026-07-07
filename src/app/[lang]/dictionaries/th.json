@@ -39,7 +39,7 @@
     "passwordPlaceholder": "••••••••",
     "passwordMinLength": "อย่างน้อย 6 ตัวอักษร",
     "namePlaceholder": "ชื่อ-นามสกุล ผู้ปกครอง",
-    "nameExample": "เช่น คุณแม่ พิมพ์ชนก",
+    "nameExample": "เช่น สมชาย ใจดี",
     "phonePlaceholder": "08XXXXXXXX",
     "profileIncomplete": "พบบัญชีของคุณแล้ว แต่ข้อมูลยังไม่สมบูรณ์\nกรุณากรอกชื่อและเบอร์โทรศัพท์เพื่อดำเนินการต่อ",
     "loginError": "ไม่สามารถเข้าสู่ระบบได้ กรุณาตรวจสอบข้อมูลหรือสมัครสมาชิกใหม่",
