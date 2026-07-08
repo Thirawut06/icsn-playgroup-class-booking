@@ -22,7 +22,7 @@ interface Child {
   age?: string;
   food_allergy?: string;
   special_info?: string;
-  no_photo_perm?: boolean;
+  media_perm?: boolean;
   created_at?: string;
   parents?: Parent;
 }
@@ -113,9 +113,6 @@ function formatRosterData(rosterRaw: Booking[] | null): string[][] {
     const timeVal = b.sessions?.time_label || '';
     const currentClassKey = `${dateVal}-${timeVal}`;
     
-    if (lastClassKey && lastClassKey !== currentClassKey) {
-      rosterData.push(['', '', '', '', '', '', '', '', '', '', '']); // Spacer
-    }
     lastClassKey = currentClassKey;
 
     rosterData.push([
@@ -126,7 +123,7 @@ function formatRosterData(rosterRaw: Booking[] | null): string[][] {
       calculateExactAge(b.children?.dob) || b.children?.age || '',
       b.parents?.name || '',
       b.parents?.phone || '',
-      b.children?.no_photo_perm ? '❌ ห้ามถ่าย' : '✅ ถ่ายได้',
+      !b.children?.media_perm ? '❌ ห้ามถ่าย' : '✅ ถ่ายได้',
       [b.children?.food_allergy, b.children?.special_info].filter(Boolean).join(' | '),
       b.checkin_at ? formatThaiTime(b.checkin_at) : 'ยังไม่เช็คชื่อ',
       formatThaiTime(b.created_at)
@@ -159,7 +156,7 @@ function formatDirectoryData(directoryRaw: Child[] | null): string[][] {
       calculateExactAge(c.dob) || c.age || '',
       c.food_allergy || '',
       c.special_info || '',
-      c.no_photo_perm ? '❌ ห้ามถ่าย' : '✅ ถ่ายได้',
+      !c.media_perm ? '❌ ห้ามถ่าย' : '✅ ถ่ายได้',
       formatThaiTime(c.created_at),
       driveLink
     ]);
@@ -247,8 +244,8 @@ serve(async (req) => {
 
     console.log("Fetching data from Supabase in parallel...");
     const [rosterRes, directoryRes, packagesRes, historyRes] = await Promise.all([
-      supabase.from('bookings').select(`status, created_at, checkin_at, sessions!inner ( session_date, time_label ), children ( full_name, nickname, dob, age, food_allergy, special_info, no_photo_perm ), parents ( name, phone )`).eq('status', 'confirmed'),
-      supabase.from('children').select(`full_name, nickname, dob, age, food_allergy, special_info, no_photo_perm, created_at, parents ( name, phone, email, children ( nickname ) )`).order('created_at', { ascending: false }),
+      supabase.from('bookings').select(`status, created_at, checkin_at, sessions!inner ( session_date, time_label ), children ( full_name, nickname, dob, age, food_allergy, special_info, media_perm ), parents ( name, phone )`).eq('status', 'confirmed'),
+      supabase.from('children').select(`full_name, nickname, dob, age, food_allergy, special_info, media_perm, created_at, parents ( name, phone, email, children ( nickname ) )`).order('created_at', { ascending: false }),
       supabase.from('packages').select(`type, credits_remaining, created_at, parents ( id, name, phone )`).order('created_at', { ascending: false }),
       supabase.from('credit_transactions').select(`amount, action_type, notes, created_at, parents ( name )`).order('created_at', { ascending: false }).limit(3000)
     ]);

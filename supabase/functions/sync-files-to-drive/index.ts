@@ -62,6 +62,33 @@ async function uploadToGasWebhook(
   return data;
 }
 
+async function updateGoogleSheetsLink(
+  gasSheetsWebhookUrl: string, 
+  transactionId: string, 
+  type: string, 
+  url: string
+) {
+  if (!gasSheetsWebhookUrl) return;
+  const payload = {
+    action: 'update_drive_link',
+    transactionId,
+    type,
+    url
+  };
+  
+  const res = await fetch(gasSheetsWebhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  
+  if (!res.ok) {
+    console.error(`GAS Sheets Webhook failed to update link: ${await res.text()}`);
+  } else {
+    console.log(`Updated Sheets link for ${transactionId} (${type})`);
+  }
+}
+
 // Helpers for string sanitization
 function sanitizeForFilename(str: string): string {
   if (!str) return '';
@@ -143,6 +170,7 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   const gasWebhookUrl = Deno.env.get('GOOGLE_APPS_SCRIPT_WEBHOOK_DRIVE');
+  const gasSheetsWebhookUrl = Deno.env.get('GOOGLE_APPS_SCRIPT_WEBHOOK_SHEETS');
 
   if (!gasWebhookUrl || !supabaseUrl || !supabaseServiceKey) {
     console.error('Missing required env vars: GOOGLE_APPS_SCRIPT_WEBHOOK_DRIVE is required');
@@ -193,9 +221,12 @@ Deno.serve(async (req) => {
       const dateStr = getFormattedDateStr(createdAt);
       
       const safePhone = sanitizeForFilename(parentPhone) || 'no_phone';
-      const fileName = `slip_${safePhone}_${dateStr}.${ext}`;
+      const fileName = `slip_${record.id}.${ext}`;
       
-      await uploadToGasWebhook(blob, fileName, folderName, 'สลิป', parentPhone, gasWebhookUrl);
+      const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, 'สลิป', parentPhone, gasWebhookUrl);
+      if (gasResponse && gasResponse.url && gasSheetsWebhookUrl) {
+        await updateGoogleSheetsLink(gasSheetsWebhookUrl, record.id, 'slip', gasResponse.url);
+      }
       console.log(`Synced slip ${record.id} to folder: ${folderName}`);
     } 
     else if (table === 'children') {
@@ -213,7 +244,11 @@ Deno.serve(async (req) => {
           const namePart = [safeFullName, safeNickname].filter(Boolean).join('_') || 'unknown';
           const fileName = `profile_${namePart}.${ext}`;
           
-          await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl);
+          const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl);
+          if (gasResponse && gasResponse.url && gasSheetsWebhookUrl) {
+            // For children, transaction ID is parent_id (since we combine children into 1 row per parent)
+            await updateGoogleSheetsLink(gasSheetsWebhookUrl, record.parent_id, 'child_photo', gasResponse.url);
+          }
         }
       }
       
@@ -234,7 +269,11 @@ Deno.serve(async (req) => {
           const safeParentName = sanitizeForFilename(extractedParentName) || 'unknown';
           const fileName = `parent_profile_${safeParentName}.${ext}`;
           
-          await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl);
+          const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl);
+          if (gasResponse && gasResponse.url && gasSheetsWebhookUrl) {
+            // For parents, transaction ID is parent_id
+            await updateGoogleSheetsLink(gasSheetsWebhookUrl, record.id, 'parent_photo', gasResponse.url);
+          }
         }
       }
       console.log(`Synced child photos for ${record.id} to folder: ${folderName}`);

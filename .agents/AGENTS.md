@@ -378,3 +378,17 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Domain Specifics - Automated Cancellations:** The `admin_close_session` RPC automatically cancels and refunds 100% of credits.
 - **Domain Specifics - Liability:** Always include "As-Is" clauses to protect against software bugs.
 - **Domain Specifics - Sensitive Data:** Health/allergy data must explicitly rely on the "Consent" basis (PDPA Art. 26).
+
+## Supabase SSR & PKCE Cross-Browser Limitations (CRITICAL)
+- **Password Reset Cross-Device Issue:** By default, `@supabase/ssr` uses the PKCE flow which stores a `code_verifier` cookie in the browser. If a user clicks a "Reset Password" or "Magic Link" email on a different device or in an in-app browser (WebView), the cookie is missing and `exchangeCodeForSession` will fail with `invalid_token`.
+- **Token Hash Workaround:** To allow cross-browser password resets, NEVER use the default `{{ .ConfirmationURL }}` in email templates. Instead, construct a custom link using `{{ .TokenHash }}` (e.g., `{{ .SiteURL }}/th/auth/verify-reset?token_hash={{ .TokenHash }}`).
+- **Custom Verification Route:** Create a custom GET route handler that extracts `token_hash` from the URL and calls `await supabase.auth.verifyOtp({ token_hash, type: 'recovery' })`. This verifies the token server-side and establishes the session without relying on PKCE cookies, then redirects the user to the reset password form.
+
+## Resend & SMTP Domain Verification
+- **Internal Server Error 500 on Auth:** If `resetPasswordForEmail` or OTP emails throw a 500 error when using Resend as a custom SMTP provider, it is almost always because the sender domain is unverified (Sandbox mode restrictions).
+- **DirectAdmin DNS Gotcha:** When instructing users to add MX or CNAME records in DirectAdmin/cPanel (e.g., pointing to `feedback-smtp.us-east-1.amazonses.com`), ALWAYS emphasize adding a **trailing dot (`.`)** at the end of the target value. Without the trailing dot, DirectAdmin will automatically append the local domain name, causing the DNS verification to fail silently.
+
+## Email Template Management
+- **Dashboard Syncing:** Editing `.html` email templates locally in `supabase/templates` does NOT automatically update Supabase. The user MUST manually copy and paste the HTML code into the Supabase Dashboard (Authentication > Email Templates).
+- **Staging vs Production Testing:** When testing on `localhost:3000` (which points to the Staging database `ykyifdoufyadgtemkhdd`), remind the user to paste the email templates into the **Staging** project's dashboard, otherwise they will see stale English templates.
+- **Image Formatting for Gmail:** Always include explicit `height` and `width` attributes (e.g., `height="48"`) and `display: block;` in `<img>` tags for email templates. Gmail aggressively blocks images from new domains, and missing dimensions can cause layout breakage when the "broken image" icon is displayed. Avoid explicit `<br>` tags that break text wrapping prematurely.

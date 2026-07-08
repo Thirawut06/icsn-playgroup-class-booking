@@ -29,8 +29,14 @@ export function ForgotPasswordForm() {
       if (error) throw error;
       
       setSuccess(true);
-    } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : dict.auth.genericError || 'An error occurred');
+    } catch (error: any) {
+      let msg = dict.auth.genericError || 'An error occurred';
+      if (error?.message && error.message !== '{}') {
+        msg = error.message;
+      } else if (typeof error === 'string') {
+        msg = error;
+      }
+      setErrorMessage(msg);
     } finally {
       setLoading(false);
     }

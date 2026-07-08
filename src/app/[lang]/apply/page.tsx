@@ -177,6 +177,8 @@ export default function Apply() {
         noPhotoPerm
       });
 
+      let transactionId = parentId; // Default to parentId for Trial
+
       if (path === 'payment') {
         if (!paymentSlipFile || !packageType) {
           throw new Error(dict.apply.uploadSlipRequired);
@@ -184,10 +186,29 @@ export default function Apply() {
         if (!nonRefundable) {
           throw new Error(dict.apply.confirmNonRefundable);
         }
-        await PackageService.submitTopUp(parentId, packageType, paymentSlipFile, nonRefundable);
+        const result = await PackageService.submitTopUp(parentId, packageType, paymentSlipFile, nonRefundable);
+        if (result && result.id) {
+          transactionId = result.id;
+        }
       } else if (path === 'trial') {
         await PackageService.grantTrialPackage(parentId);
       }
+
+      // Fire and forget appending to Google Sheets
+      try {
+        const formDataPayload = {
+          form_type: path,
+          parentId: parentId,
+          transactionId: transactionId
+        };
+        
+        supabase.functions.invoke('append-to-sheets', {
+          body: formDataPayload
+        }).catch(err => console.error("Error appending to sheets:", err));
+      } catch (err) {
+        console.error("Failed to invoke append-to-sheets", err);
+      }
+
 
       setShowSuccess(true);
       // Clear cache so next visit is fresh

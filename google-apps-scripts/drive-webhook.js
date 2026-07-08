@@ -45,20 +45,13 @@ function handleFileSync(data) {
   
   if (!base64Data) throw new Error("No file data provided");
 
-  // 1. ค้นหาโฟลเดอร์หลัก "ICSN Panda Playgroup"
+  // แก้ต้นเหตุ: ใช้ Folder ID ที่มีอยู่แล้วโดยตรง แทนการค้นหาชื่อหรือสร้างใหม่
+  const MAIN_FOLDER_ID = "1xjcWjvRbE7qre-c8PUpMqnks3BY2VTpN";
   let mainFolder;
-  const mainFolderIter = DriveApp.getFoldersByName(MAIN_FOLDER_NAME);
-  if (mainFolderIter.hasNext()) {
-    mainFolder = mainFolderIter.next();
-  } else {
-    // ถ้าไม่มี ให้สร้างใหม่ที่ root ของ Google Drive
-    // แต่ถ้ากำหนด driveParentFolderId ไว้ ควรเปลี่ยนไปค้นหาผ่าน Id
-    const driveParentFolderId = data.driveParentFolderId;
-    if (driveParentFolderId) {
-       mainFolder = DriveApp.getFolderById(driveParentFolderId).createFolder(MAIN_FOLDER_NAME);
-    } else {
-       mainFolder = DriveApp.createFolder(MAIN_FOLDER_NAME);
-    }
+  try {
+    mainFolder = DriveApp.getFolderById(MAIN_FOLDER_ID);
+  } catch (e) {
+    throw new Error("Cannot find the specified Google Drive folder. Please check if the ID is correct and the script has access.");
   }
   
   // 2. ค้นหาโฟลเดอร์ผู้ปกครอง หรือสร้างใหม่ (โดยใช้เบอร์โทรค้นหาเพื่อกันความซ้ำซ้อน)
