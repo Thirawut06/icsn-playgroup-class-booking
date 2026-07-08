@@ -13,4 +13,6 @@ export const ROUTES = {
   BOOK: (lang: string) => `/${lang}/book`,
   TERMS: (lang: string) => `/${lang}/terms`,
   PRIVACY: (lang: string) => `/${lang}/privacy`,
+  FORGOT_PASSWORD: (lang: string) => `/${lang}/forgot-password`,
+  RESET_PASSWORD: (lang: string) => `/${lang}/reset-password`,
 };

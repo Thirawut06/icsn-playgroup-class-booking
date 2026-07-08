@@ -368,3 +368,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Parallel Query Execution:** When an Edge Function needs to query multiple unrelated Supabase tables (e.g., getting bookings, children, and packages for a report), NEVER use sequential `await` calls. ALWAYS use `Promise.all` to fetch the data in parallel. This is critical for performance and reducing execution timeouts.
 - **Single Responsibility (Avoid God Functions):** Do not write massive "God Functions" (200+ lines) inside the main `serve` block of an Edge Function. Always extract data formatting and transformation logic into dedicated helper functions (e.g., `formatRosterData`) to keep the main orchestration flow clean, readable, and easy to maintain.
 - **Webhook Resilience (Timeouts):** When an Edge Function makes external HTTP requests to Webhooks (like Google Apps Script), ALWAYS use an `AbortController` with a strict timeout (e.g., 10 seconds). Do not allow the Edge Function to hang indefinitely if the external service is unresponsive.
+
+## ICSN Playgroup Legal, Compliance, & Tone Preferences
+- **Enterprise Grade but Business-Friendly:** Legal documents (PDPA, Terms) must be 100% compliant but flexible enough not to restrict business operations (e.g., using "Compelling Legitimate Grounds" exceptions to protect school marketing).
+- **Common Sense over Bureaucracy:** Use friendly, accessible language. Focus on "We will quickly fix and notify you" rather than citing scary government bodies (PDPC) unless strictly necessary.
+- **Executive Sensitivity:** When drafting constraints or legal clauses (like Intellectual Property), evaluate if it might sound too aggressive or restrictive for a kindergarten/playgroup environment. Do not over-legislate if the school management didn't request it.
+- **No Assumptions (The Grilling Process):** Never guess or assume on sensitive legal/business flows. Always pause, present a "Legal Briefing" or options, and let the user decide. Act as a meticulous Auditor scanning for blind spots.
+- **Domain Specifics - Refunds:** Credits do not expire. Manual refunds happen via LINE `@792sitws`.
+- **Domain Specifics - Automated Cancellations:** The `admin_close_session` RPC automatically cancels and refunds 100% of credits.
+- **Domain Specifics - Liability:** Always include "As-Is" clauses to protect against software bugs.
+- **Domain Specifics - Sensitive Data:** Health/allergy data must explicitly rely on the "Consent" basis (PDPA Art. 26).

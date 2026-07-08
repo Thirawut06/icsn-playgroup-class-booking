@@ -33,9 +33,14 @@ export function LanguageSwitcher() {
     }
     const newPath = segments.join('/') || `/${otherLang}`;
     
+    // Save user preference to cookie (expires in 1 year)
+    document.cookie = `NEXT_LOCALE=${otherLang}; path=/; max-age=31536000; SameSite=Lax`;
+    
     // Preserve query parameters without causing Next.js useSearchParams() static de-opt
     const query = typeof window !== 'undefined' ? window.location.search : '';
-    router.push(`${newPath}${query}`);
+    
+    // Use replace instead of push to prevent back-button trapping
+    router.replace(`${newPath}${query}`);
   };
 
   return (
@@ -45,8 +50,8 @@ export function LanguageSwitcher() {
       aria-label={`Switch to ${LABELS[otherLang]}`}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={FLAGS[otherLang]} alt={otherLang} className="w-4 h-auto rounded-[2px] object-cover" />
-      <span>{LABELS[otherLang]}</span>
+      <img src={FLAGS[lang]} alt={lang} className="w-4 h-auto rounded-[2px] object-cover" />
+      <span>{LABELS[lang]}</span>
     </button>
   );
 }
@@ -70,8 +75,10 @@ export function LanguageSwitcherLight() {
     }
     const newPath = segments.join('/') || `/${otherLang}`;
     
+    document.cookie = `NEXT_LOCALE=${otherLang}; path=/; max-age=31536000; SameSite=Lax`;
+    
     const query = typeof window !== 'undefined' ? window.location.search : '';
-    router.push(`${newPath}${query}`);
+    router.replace(`${newPath}${query}`);
   };
 
   return (
@@ -81,8 +88,8 @@ export function LanguageSwitcherLight() {
       aria-label={`Switch to ${LABELS[otherLang]}`}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={FLAGS[otherLang]} alt={otherLang} className="w-4 h-auto rounded-[2px] object-cover shadow-[0_0_2px_rgba(0,0,0,0.1)]" />
-      <span>{LABELS[otherLang]}</span>
+      <img src={FLAGS[lang]} alt={lang} className="w-4 h-auto rounded-[2px] object-cover shadow-[0_0_2px_rgba(0,0,0,0.1)]" />
+      <span>{LABELS[lang]}</span>
     </button>
   );
 }

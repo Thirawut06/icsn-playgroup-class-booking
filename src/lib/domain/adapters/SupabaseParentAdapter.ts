@@ -69,6 +69,10 @@ export class SupabaseParentAdapter implements IParentRepository {
       // We must sign out the local session because the auth user was deleted
       await supabase.auth.signOut();
       
+      if (pError.code === '23505' || pError.message?.includes('parents_phone_key')) {
+        throw new Error('เบอร์โทรศัพท์นี้มีการลงทะเบียนในระบบแล้ว กรุณาใช้เบอร์อื่น หรือเข้าสู่ระบบด้วยอีเมลเดิม');
+      }
+      
       throw new Error(`ไม่สามารถสร้างโปรไฟล์ได้: ${pError.message || pError.code}`);
     }
     
@@ -117,7 +121,12 @@ export class SupabaseParentAdapter implements IParentRepository {
       .select()
       .single();
 
-    if (pError) throw pError;
+    if (pError) {
+      if (pError.code === '23505' || pError.message?.includes('parents_phone_key')) {
+        throw new Error('เบอร์โทรศัพท์นี้มีการลงทะเบียนในระบบแล้ว กรุณาใช้เบอร์อื่น');
+      }
+      throw pError;
+    }
     return parentData;
   }
 

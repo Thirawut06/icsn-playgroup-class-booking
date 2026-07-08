@@ -87,7 +87,7 @@ export const AdminUserService = {
     const { data, error } = await supabase
       .from('parents')
       .select(`
-        id, name, phone, email,
+        id, name, phone, email, admin_notes,
         children(id, parent_id, nickname, full_name, dob, age, food_allergy, media_perm, no_photo_perm, parent_photo_url, photo_url),
         packages(id, parent_id, type, credits_remaining, non_refundable, created_at),
         bookings(
