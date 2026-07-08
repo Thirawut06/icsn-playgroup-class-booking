@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Sarabun, Outfit } from "next/font/google";
 import "../index.css";
 import { Toaster } from 'react-hot-toast';
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
   title: "ICSN Panda Playgroup",
@@ -30,6 +31,7 @@ export default function RootLayout({
       <body className={`${sarabun.variable} ${outfit.variable} font-sans antialiased bg-icsn-bg`}>
         <Toaster position="top-center" />
         {children}
+        <Analytics />
       </body>
     </html>
   );
