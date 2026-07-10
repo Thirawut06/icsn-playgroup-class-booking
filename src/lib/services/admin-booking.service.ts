@@ -89,6 +89,7 @@ export const AdminBookingService = {
         checkin_at,
         child_name_snapshot,
         parent_phone_snapshot,
+        is_trial,
         child:children(id, nickname, full_name, age, dob, food_allergy),
         parent:parents(name, phone)
       `)
@@ -109,6 +110,7 @@ export const AdminBookingService = {
       created_at: row.created_at,
       signature_url: row.signature_url ?? null,
       checkin_at: row.checkin_at ?? null,
+      is_trial: row.is_trial ?? false,
     }));
   },
 
@@ -200,7 +202,19 @@ export const AdminBookingService = {
       body: { action: actionType, payload }
     });
     
-    if (error) throw error;
+    if (error) {
+      let errMsg = error.message;
+      try {
+        if (error.context && typeof error.context.json === 'function') {
+          const errData = await error.context.json();
+          if (errData?.error) errMsg = errData.error;
+        }
+      } catch (e) {
+        // Ignore if we can't parse the error body
+      }
+      throw new Error(errMsg);
+    }
+    
     if (data?.error) throw new Error(data.error);
     return data as T;
   },

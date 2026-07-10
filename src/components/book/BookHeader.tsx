@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
-import { LogOut, Wallet } from 'lucide-react';
+import { LogOut, Wallet, Pencil } from 'lucide-react';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
 import { LanguageSwitcherLight } from '@/components/ui/language-switcher';
+import { EditProfileModal } from './EditProfileModal';
 
 interface BookHeaderProps {
   parentName: string;
@@ -14,6 +15,7 @@ interface BookHeaderProps {
 
 export function BookHeader({ parentName, creditsRemaining, parentPhotoUrl, onLogout, onTopUpClick }: BookHeaderProps) {
   const { dict } = useDictionary();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   return (
     <>
@@ -64,9 +66,18 @@ export function BookHeader({ parentName, creditsRemaining, parentPhotoUrl, onLog
 
           {/* Name + Credits */}
           <div className="min-w-0">
-            <p className="text-base font-bold text-icsn-navy truncate leading-normal mb-0.5">
-              {parentName || dict.book.parentFallback}
-            </p>
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <p className="text-base font-bold text-icsn-navy truncate leading-normal">
+                {parentName || dict.book.parentFallback}
+              </p>
+              <button 
+                onClick={() => setIsEditModalOpen(true)}
+                className="text-muted-foreground hover:text-icsn-teal transition-colors p-1 rounded-md hover:bg-icsn-teal/10"
+                aria-label="Edit Profile"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            </div>
             <p className="text-sm text-muted-foreground leading-normal">
               {dict.book.creditsRemaining}{' '}
               <span className="font-black text-icsn-teal">{creditsRemaining}</span>
@@ -84,6 +95,11 @@ export function BookHeader({ parentName, creditsRemaining, parentPhotoUrl, onLog
           {dict.book.topUp}
         </button>
       </div>
+
+      <EditProfileModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+      />
     </>
   );
 }

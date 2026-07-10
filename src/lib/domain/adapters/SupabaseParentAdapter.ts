@@ -148,6 +148,24 @@ export class SupabaseParentAdapter implements IParentRepository {
     }
   }
 
+  async updateParentName(parentId: string, newName: string): Promise<void> {
+    const { error } = await supabase
+      .from('parents')
+      .update({ name: newName })
+      .eq('id', parentId);
+
+    if (error) throw error;
+  }
+
+  async updateChildName(childId: string, newFullName: string, newNickname: string): Promise<void> {
+    const { error } = await supabase
+      .from('children')
+      .update({ full_name: newFullName, nickname: newNickname })
+      .eq('id', childId);
+
+    if (error) throw error;
+  }
+
   async getParentDetails(parentId: string): Promise<ParentWithDetails | null> {
     const { data, error } = await supabase
       .from('parents')

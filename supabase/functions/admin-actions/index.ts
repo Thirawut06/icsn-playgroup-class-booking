@@ -221,13 +221,15 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'update-session') {
-      const { sessionId, totalCapacity, isActive } = payload as {
+      const { sessionId, totalCapacity, trialCapacity, isActive } = payload as {
         sessionId: string
         totalCapacity?: number
+        trialCapacity?: number
         isActive?: boolean
       }
       const updates: Record<string, unknown> = {}
       if (typeof totalCapacity === 'number') updates.total_capacity = totalCapacity
+      if (typeof trialCapacity === 'number') updates.trial_capacity = trialCapacity
       if (typeof isActive === 'boolean') updates.is_active = isActive
 
       const { data, error } = await supabase

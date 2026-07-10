@@ -30,7 +30,7 @@ export function ForgotPasswordForm() {
       
       setSuccess(true);
     } catch (error: any) {
-      let msg = dict.auth.genericError || 'An error occurred';
+      let msg = (dict.auth as any).genericError || 'An error occurred';
       if (error?.message && error.message !== '{}') {
         msg = error.message;
       } else if (typeof error === 'string') {

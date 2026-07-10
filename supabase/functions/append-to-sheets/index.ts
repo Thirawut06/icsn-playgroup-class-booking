@@ -17,6 +17,49 @@ function formatDateStr(dateStr: string | null): string {
   }
 }
 
+function formatDateTimeStr(dateStr: string | null): string {
+  if (!dateStr) return "";
+  try {
+    const d = new Date(dateStr);
+    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
+  } catch (e) {
+    return dateStr;
+  }
+}
+
+function calculateAge(dobStr: string | null): string {
+  if (!dobStr) return "";
+  try {
+    const birthDate = new Date(dobStr);
+    const today = new Date();
+    let years = today.getFullYear() - birthDate.getFullYear();
+    let months = today.getMonth() - birthDate.getMonth();
+    let days = today.getDate() - birthDate.getDate();
+    
+    if (days < 0) {
+      months--;
+      const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+      days += lastMonth.getDate();
+    }
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+    return `${years} ปี ${months} เทือน ${days} วัน`;
+  } catch (e) {
+    return "";
+  }
+}
+
+async function sendToGoogleSheets(webhookUrl: string, payload: any) {
+  const response = await fetch(webhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return response.text();
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -48,123 +91,170 @@ serve(async (req) => {
       .eq('id', parentId)
       .single();
 
-    if (parentError || !parent) throw new Error('Parent not found');
+    if (parentError || !parent) throw new Error("Parent not found");
 
-    // 2. Fetch Children
-    const { data: children, error: childrenError } = await supabase
-      .from('children')
-      .select('*')
-      .eq('parent_id', parentId)
-      .order('created_at', { ascending: true });
+    // 2. Fetch Packages & Balance for Update
+    const { data: creditBalance } = await supabase.rpc('get_parent_balance', { p_parent_id: parentId });
+    const { data: latestPackage } = await supabase.from('packages').select('*').eq('parent_id', parentId).order('created_at', { ascending: false }).limit(1).maybeSingle();
+    const packageName = latestPackage ? latestPackage.type : '';
+    const currentBalance = creditBalance || 0;
+    const nowStr = formatDateTimeStr(new Date().toISOString());
 
-    const childrenList = children || [];
-    const childNames = childrenList.map((c: any) => c.full_name).filter(Boolean).join(', ');
-    const childNicknames = childrenList.map((c: any) => c.nickname).filter(Boolean).join(', ');
-    const childDobs = childrenList.map((c: any) => formatDateStr(c.dob)).filter(Boolean).join(', ');
-    const childAllergies = childrenList.map((c: any) => c.food_allergy).filter(Boolean).join(', ');
-    const childInfos = childrenList.map((c: any) => c.special_info).filter(Boolean).join(', ');
-    
-    // We will leave child photo blank in the payload, Drive webhook will late update it using transactionId (which is parent_id for trials)
-    // Same for parent photo and slip
+    // Routing Logic
+    if (form_type === 'trial' || form_type === 'manual') {
+      // EVENT: Parent Registration (Trial / Manual)
+      const { data: child } = await supabase.from('children').select('*').eq('parent_id', parentId).order('created_at', { ascending: false }).limit(1).maybeSingle();
+      const folderLookupName = child ? `${parent.name} - ${child.nickname}` : parent.name;
+      
+      let rowData = [
+        parent.name,
+        parent.phone,
+        parent.email,
+        child ? child.full_name : '',
+        child ? child.nickname : '',
+        child ? formatDateStr(child.dob) : '',
+        child ? calculateAge(child.dob) : '',
+        child ? (child.food_allergy || '-') : '',
+        child ? (child.special_info || '-') : '',
+        child ? (child.media_perm ? '✅ อนุญาต' : '❌ ไม่อนุญาต') : '',
+        formatDateTimeStr(parent.created_at),
+        '' // Placeholder for Google Drive Link
+      ];
 
-    console.log(`Formatting payload for Google Sheets Append: ${transactionId}`);
+      await sendToGoogleSheets(webhookUrl, {
+        tab_name: '👥 ฐานข้อมูลผู้ใช้',
+        action: 'append_row',
+        rowData: rowData,
+        lookup_phone: parent.phone
+      });
 
-    // Prepare 36 column row data (0 to 35)
-    const rowData = new Array(36).fill("");
-
-    // 1: Timestamp
-    let txDate = new Date();
-    if (form_type === 'trial') {
-      txDate = new Date(parent.created_at || new Date());
-    } else if (transactionId) {
-      const { data: slip } = await supabase.from('slip_uploads').select('created_at').eq('id', transactionId).single();
-      if (slip && slip.created_at) txDate = new Date(slip.created_at);
-    }
-    rowData[0] = txDate.toLocaleString("en-US", { timeZone: "Asia/Bangkok" });
-    
-    // 2: Status
-    rowData[1] = ""; 
-    
-    // 3: Email
-    rowData[2] = parent.email || ""; 
-    
-    // 4: Path
-    rowData[3] = form_type === 'trial' ? "A free trial class / ทดลองเรียนฟรีครั้งแรก" : "Make a Payment / ชำระเงิน";
-
-    const childMediaPerm = childrenList.length > 0 && childrenList[0].media_perm ? "Yes" : "";
-    const childNoPhotoPerm = childrenList.length > 0 && childrenList[0].no_photo_perm ? "Yes" : "";
-
-    if (form_type === 'trial') {
-      // 5-15: Trial Section (E to P)
-      rowData[4] = ""; // Trial Date (leave blank for now)
-      rowData[5] = parent.name || "";
-      rowData[6] = parent.phone || "";
-      rowData[7] = ""; // Parent Photo (Late Update)
-      rowData[8] = childNames;
-      rowData[9] = childNicknames;
-      rowData[10] = childDobs;
-      rowData[11] = ""; // Child Photo (Late Update)
-      rowData[12] = childAllergies;
-      rowData[13] = childInfos;
-      rowData[14] = childMediaPerm;
-      rowData[15] = childNoPhotoPerm;
     } else if (form_type === 'payment') {
-      // 16-25: Payment Section (Q to Z)
-      rowData[16] = parent.name || "";
-      rowData[17] = parent.phone || "";
-      rowData[18] = childNames;
-      rowData[19] = childNicknames;
-      rowData[20] = childDobs;
+      // EVENT: Package Topup
+      const { data: slip } = await supabase.from('slip_uploads').select('*').eq('id', transactionId).single();
       
-      let packageType = "";
-      if (transactionId) {
-        const { data: slip } = await supabase
-          .from('slip_uploads')
-          .select('*')
-          .eq('id', transactionId)
-          .single();
-        if (slip) {
-          packageType = slip.package_id || ""; 
-        }
+      const getPackageAmount = (packageId: string) => {
+        if (!packageId) return 0;
+        if (packageId.includes('1 Course')) return 5;
+        if (packageId.includes('2 Courses')) return 10;
+        if (packageId.includes('3 Courses')) return 15;
+        if (packageId.includes('4 Courses')) return 20;
+        if (packageId.includes('trial')) return 1;
+        if (packageId.includes('Drop-in')) return 1;
+        return 0;
+      };
+      const amount = slip && slip.status === 'approved' ? getPackageAmount(slip.package_id) : 0;
+
+      // 1. Insert Usage History
+      await sendToGoogleSheets(webhookUrl, {
+        tab_name: '📝 ประวัติการใช้เครดิต',
+        action: 'append_row',
+        rowData: [
+          formatDateTimeStr(slip ? (slip.reviewed_at || slip.created_at) : new Date().toISOString()),
+          parent.name,
+          'topup',
+          amount,
+          slip ? `slip approved: ${slip.id}` : 'slip approved'
+        ]
+      });
+
+      // 2. Update Remaining Credits
+      await sendToGoogleSheets(webhookUrl, {
+        tab_name: '💳 เครดิตคงเหลือ',
+        action: 'upsert_credit',
+        phone: parent.phone,
+        rowData: [
+          parent.name,
+          parent.phone,
+          currentBalance,
+          packageName,
+          nowStr
+        ]
+      });
+
+    } else if (form_type === 'booking') {
+      // EVENT: Class Booking
+      const { data: booking } = await supabase.from('bookings').select('*, session:sessions(session_date, time_label), child:children(*)').eq('id', transactionId).single();
+
+      if (booking && booking.session && booking.child) {
+        // 1. Insert Attendance History
+        await sendToGoogleSheets(webhookUrl, {
+          tab_name: '📅 ประวัติการเข้าเรียนทั้งหมด',
+          action: 'append_row',
+          rowData: [
+            formatDateStr(booking.session.session_date),
+            booking.session.time_label,
+            booking.child.nickname,
+            booking.child.full_name,
+            calculateAge(booking.child.dob),
+            parent.name,
+            parent.phone,
+            booking.child.media_perm ? '✅ อนุญาต' : '❌ ไม่อนุญาต',
+            booking.child.food_allergy || '-',
+            booking.checkin_at ? formatDateTimeStr(booking.checkin_at) : 'ยังไม่เช็คชื่อ',
+            formatDateTimeStr(booking.created_at)
+          ]
+        });
+
+        // 2. Insert Usage History
+        await sendToGoogleSheets(webhookUrl, {
+          tab_name: '📝 ประวัติการใช้เครดิต',
+          action: 'append_row',
+          rowData: [
+            formatDateTimeStr(booking.created_at),
+            parent.name,
+            'booking',
+            -1,
+            `Booked session ${booking.session_id}`
+          ]
+        });
+
+        // 3. Update Remaining Credits
+        await sendToGoogleSheets(webhookUrl, {
+          tab_name: '💳 เครดิตคงเหลือ',
+          action: 'upsert_credit',
+          phone: parent.phone,
+          rowData: [
+            parent.name,
+            parent.phone,
+            currentBalance,
+            packageName,
+            nowStr
+          ]
+        });
       }
-      
-      rowData[21] = packageType;
-      rowData[22] = ""; // Payment Slip (Late Update - W)
-      rowData[23] = ""; // X (เว้นว่างให้บัญชี)
-      rowData[24] = ""; // Y (เว้นว่างให้บัญชี)
-      rowData[25] = "Yes"; // Z: By checking this box, you agree that this payment is non-refundable.
-      rowData[26] = childMediaPerm; // AA: I give permission...
-      rowData[27] = childNoPhotoPerm; // AB: I agree not to take pictures...
+    } else if (form_type === 'credit_transaction') {
+      const { data: tx } = await supabase.from('credit_transactions').select('*').eq('id', transactionId).single();
+      if (tx) {
+        await sendToGoogleSheets(webhookUrl, {
+          tab_name: '📝 ประวัติการใช้เครดิต',
+          action: 'append_row',
+          rowData: [
+            formatDateTimeStr(tx.created_at),
+            parent.name,
+            tx.action_type,
+            tx.amount,
+            tx.notes || ''
+          ]
+        });
+        
+        await sendToGoogleSheets(webhookUrl, {
+          tab_name: '💳 เครดิตคงเหลือ',
+          action: 'upsert_credit',
+          phone: parent.phone,
+          rowData: [
+            parent.name,
+            parent.phone,
+            currentBalance,
+            packageName,
+            nowStr
+          ]
+        });
+      }
     }
-    
-    // 36 (Index 35): Transaction ID for Late Update
-    rowData[35] = transactionId;
 
-    // Forward the JSON payload to Google Apps Script
-    const gasResponse = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: 'append_row', rowData: rowData })
-    });
+    return new Response(JSON.stringify({ status: "success" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-    const resultText = await gasResponse.text();
-    let resultJson;
-    try {
-      resultJson = JSON.parse(resultText);
-    } catch (e) {
-      resultJson = { success: false, error: "Invalid response from Google Apps Script", raw: resultText };
-    }
-
-    return new Response(
-      JSON.stringify(resultJson),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
-  } catch (err: any) {
-    console.error("Append to sheets error:", err);
-    return new Response(
-      JSON.stringify({ success: false, error: err.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+  } catch (error) {
+    return new Response(JSON.stringify({ status: "error", message: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
   }
 });

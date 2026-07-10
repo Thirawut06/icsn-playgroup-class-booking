@@ -59,19 +59,9 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
     setErrorMsg('');
     
     try {
-      const result = await PackageService.submitTopUp(parentId, packageType, paymentSlipFile, true);
-      
-      // Fire and forget to Google Sheets webhook via Edge Function
-      if (result && result.id) {
-        supabase.functions.invoke('append-to-sheets', {
-          body: {
-            form_type: 'payment',
-            parentId: parentId,
-            transactionId: result.id
-          }
-        }).catch(err => console.error("Failed to invoke append-to-sheets", err));
-      }
-
+      await PackageService.submitTopUp(parentId, packageType, paymentSlipFile, true);
+      // Snapshot sync is now handled automatically via database triggers (pg_net)
+        
       await refreshData(false);
       setShowSuccess(true);
     } catch (e: any) {

@@ -13,8 +13,8 @@ export class SessionModule {
     return this.sessionRepository.getOrCreateSessionsForDate(dateStr);
   }
 
-  async updateSessionCapacity(sessionId: string, totalCapacity: number): Promise<Session> {
-    return this.sessionRepository.updateSessionCapacity(sessionId, totalCapacity);
+  async updateSessionCapacity(sessionId: string, totalCapacity: number, trialCapacity?: number): Promise<Session> {
+    return this.sessionRepository.updateSessionCapacity(sessionId, totalCapacity, trialCapacity);
   }
 
   async toggleSessionActive(sessionId: string, isActive: boolean): Promise<void> {

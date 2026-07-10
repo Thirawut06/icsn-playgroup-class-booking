@@ -148,7 +148,7 @@ export function SignupForm() {
         )}
       </button>
 
-      <div className="text-center mt-4">
+      {/* <div className="text-center mt-4">
         <p className="text-xs text-muted-foreground leading-relaxed">
           การสมัครสมาชิกหมายความว่าคุณยอมรับ{' '}
           <a href={ROUTES.TERMS(lang)} target="_blank" className="text-icsn-teal hover:underline font-bold">
@@ -160,7 +160,7 @@ export function SignupForm() {
           </a>
           {' '}ของเรา
         </p>
-      </div>
+      </div> */}
 
       <div className="pt-2">
         <LineSupportCard className="!mt-0" />

@@ -49,7 +49,7 @@ export function ResetPasswordForm() {
       }, 2000);
       
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : dict.auth.genericError || 'An error occurred');
+      setErrorMessage(error instanceof Error ? error.message : (dict.auth as any).genericError || 'An error occurred');
     } finally {
       setLoading(false);
     }

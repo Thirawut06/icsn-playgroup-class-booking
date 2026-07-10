@@ -122,6 +122,27 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 7. Parent Name Changed
+    if (table === 'parents' && type === 'UPDATE') {
+      if (old_record.name !== record.name) {
+        message = `📝 *มีการแก้ไขชื่อบัญชีผู้ใช้งาน*\n*ชื่อเดิม:* ${old_record.name || 'ไม่ระบุ'}\n*ชื่อใหม่:* ${record.name || 'ไม่ระบุ'}\n*เบอร์โทร:* ${record.phone || 'ไม่ระบุ'}`
+      }
+    }
+
+    // 8. Child Name Changed
+    if (table === 'children' && type === 'UPDATE') {
+      if (old_record.full_name !== record.full_name || old_record.nickname !== record.nickname) {
+        const { data: parent } = await supabase.from('parents').select('name, phone').eq('id', record.parent_id).single()
+        const parentName = parent?.name || 'ไม่ระบุ'
+        const parentPhone = parent?.phone || 'ไม่ระบุ'
+        
+        const oldName = (old_record.full_name && old_record.nickname) ? `${old_record.full_name} (${old_record.nickname})` : (old_record.full_name || old_record.nickname || 'ไม่ระบุ')
+        const newName = (record.full_name && record.nickname) ? `${record.full_name} (${record.nickname})` : (record.full_name || record.nickname || 'ไม่ระบุ')
+        
+        message = `📝 *มีการแก้ไขชื่อเด็ก*\n*ผู้ปกครอง:* ${parentName} (${parentPhone})\n*ชื่อเดิม:* ${oldName}\n*ชื่อใหม่:* ${newName}`
+      }
+    }
+
     if (message) {
       await sendGoogleChat(message)
     }

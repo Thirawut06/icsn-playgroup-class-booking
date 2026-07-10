@@ -109,11 +109,15 @@ export const AdminUserService = {
   },
 
   async updateAdminNotes(parentId: string, notes: string): Promise<void> {
-    const { error } = await supabase
-      .from('parents')
-      .update({ admin_notes: notes })
-      .eq('id', parentId);
-    if (error) throw error;
+    await this.adminEditUser('parents', parentId, { admin_notes: notes });
+  },
+
+  async updateParentName(parentId: string, newName: string): Promise<void> {
+    await this.adminEditUser('parents', parentId, { name: newName });
+  },
+
+  async updateChildName(childId: string, newFullName: string, newNickname: string): Promise<void> {
+    await this.adminEditUser('children', childId, { full_name: newFullName, nickname: newNickname });
   },
 
   async getAllParentsWithCredits(): Promise<Record<string, unknown>[]> {
@@ -191,11 +195,6 @@ export const AdminUserService = {
   },
 
   async updateChildProfile(childId: string, updates: Record<string, unknown>): Promise<void> {
-    const { error } = await supabase
-      .from('children')
-      .update(updates)
-      .eq('id', childId);
-
-    if (error) throw error;
+    await this.adminEditUser('children', childId, updates);
   }
 };

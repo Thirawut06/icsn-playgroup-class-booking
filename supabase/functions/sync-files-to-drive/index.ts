@@ -32,15 +32,17 @@ async function uploadToGasWebhook(
   parentFolderName: string, 
   subFolderName: string,
   parentPhone: string,
+  fileType: string,
   gasWebhookUrl: string
 ) {
   const base64Data = await blobToBase64(blob);
   const payload = {
     action: 'sync_file',
     parentFolderName,
-    subFolderName,
+    childFolderName: subFolderName, // Use childFolderName to match GAS script
     parentPhone,
     fileName,
+    fileType, // Include fileType for GAS overwrite logic
     mimeType: blob.type || 'application/octet-stream',
     base64Data
   };
@@ -62,30 +64,21 @@ async function uploadToGasWebhook(
   return data;
 }
 
-async function updateGoogleSheetsLink(
-  gasSheetsWebhookUrl: string, 
-  transactionId: string, 
-  type: string, 
+async function updateGoogleDriveUrl(
+  supabase: any,
+  parentId: string,
   url: string
 ) {
-  if (!gasSheetsWebhookUrl) return;
-  const payload = {
-    action: 'update_drive_link',
-    transactionId,
-    type,
-    url
-  };
-  
-  const res = await fetch(gasSheetsWebhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-  
-  if (!res.ok) {
-    console.error(`GAS Sheets Webhook failed to update link: ${await res.text()}`);
+  if (!url || !parentId) return;
+  const { error } = await supabase
+    .from('parents')
+    .update({ google_drive_url: url })
+    .eq('id', parentId);
+    
+  if (error) {
+    console.error(`Failed to update google_drive_url for parent ${parentId}:`, error.message);
   } else {
-    console.log(`Updated Sheets link for ${transactionId} (${type})`);
+    console.log(`Saved Google Drive URL for parent ${parentId}`);
   }
 }
 
@@ -178,6 +171,11 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const expectedSecret = Deno.env.get('WEBHOOK_SECRET');
+    if (expectedSecret && req.headers.get('x-webhook-secret') !== expectedSecret) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+
     const payload = await req.json();
     const { type, table, record, old_record } = payload;
     
@@ -221,11 +219,11 @@ Deno.serve(async (req) => {
       const dateStr = getFormattedDateStr(createdAt);
       
       const safePhone = sanitizeForFilename(parentPhone) || 'no_phone';
-      const fileName = `slip_${record.id}.${ext}`;
+      const fileName = `slip_${safePhone}_${dateStr}.${ext}`;
       
-      const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, 'สลิป', parentPhone, gasWebhookUrl);
-      if (gasResponse && gasResponse.url && gasSheetsWebhookUrl) {
-        await updateGoogleSheetsLink(gasSheetsWebhookUrl, record.id, 'slip', gasResponse.url);
+      const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, '', parentPhone, 'slip', gasWebhookUrl);
+      if (gasResponse && gasResponse.url && record.parent_id) {
+        await updateGoogleDriveUrl(supabase, record.parent_id, gasResponse.url);
       }
       console.log(`Synced slip ${record.id} to folder: ${folderName}`);
     } 
@@ -244,10 +242,9 @@ Deno.serve(async (req) => {
           const namePart = [safeFullName, safeNickname].filter(Boolean).join('_') || 'unknown';
           const fileName = `profile_${namePart}.${ext}`;
           
-          const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl);
-          if (gasResponse && gasResponse.url && gasSheetsWebhookUrl) {
-            // For children, transaction ID is parent_id (since we combine children into 1 row per parent)
-            await updateGoogleSheetsLink(gasSheetsWebhookUrl, record.parent_id, 'child_photo', gasResponse.url);
+          const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, 'child_photo', gasWebhookUrl);
+          if (gasResponse && gasResponse.url && record.parent_id) {
+            await updateGoogleDriveUrl(supabase, record.parent_id, gasResponse.url);
           }
         }
       }
@@ -269,10 +266,9 @@ Deno.serve(async (req) => {
           const safeParentName = sanitizeForFilename(extractedParentName) || 'unknown';
           const fileName = `parent_profile_${safeParentName}.${ext}`;
           
-          const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl);
-          if (gasResponse && gasResponse.url && gasSheetsWebhookUrl) {
-            // For parents, transaction ID is parent_id
-            await updateGoogleSheetsLink(gasSheetsWebhookUrl, record.id, 'parent_photo', gasResponse.url);
+          const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, '', parentPhone, 'parent_photo', gasWebhookUrl);
+          if (gasResponse && gasResponse.url && record.id) {
+            await updateGoogleDriveUrl(supabase, record.id, gasResponse.url);
           }
         }
       }
@@ -291,7 +287,7 @@ Deno.serve(async (req) => {
       const safeChildName = sanitizeForFilename(childNickname) || 'unknown';
       const fileName = `signature_${safeChildName}_${dateStr}.${ext}`;
       
-      await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl);
+      await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, 'signature', gasWebhookUrl);
       console.log(`Synced signature for booking ${record.id} to folder: ${folderName}`);
     }
 

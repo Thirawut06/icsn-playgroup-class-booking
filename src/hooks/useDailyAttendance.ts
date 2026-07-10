@@ -29,6 +29,7 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
   
   // Capacity form state
   const [capacityEdit, setCapacityEdit] = useState('');
+  const [trialCapacityEdit, setTrialCapacityEdit] = useState('');
   const [savingCapacity, setSavingCapacity] = useState(false);
   const [togglingSession, setTogglingSession] = useState(false);
 
@@ -72,6 +73,7 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
       const activeSess = sessions.find(s => s.id === selectedSessionId);
       if (activeSess) {
         setCapacityEdit(String(activeSess.total_capacity));
+        setTrialCapacityEdit(String(activeSess.trial_capacity ?? 2));
       }
     } catch (err) {
       console.error('Failed to load attendance:', err);
@@ -153,13 +155,18 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
   const handleSaveCapacity = async () => {
     if (!selectedSessionId) return;
     const cap = parseInt(capacityEdit, 10);
+    const trialCap = parseInt(trialCapacityEdit, 10);
     if (!cap || cap < 1) {
       toast.error(COPY.ALERTS.INVALID_CAPACITY);
       return;
     }
+    if (isNaN(trialCap) || trialCap < 0) {
+      toast.error('กรุณาระบุโควต้า Trial ที่ถูกต้อง');
+      return;
+    }
     setSavingCapacity(true);
     try {
-      const updated = await sessionModule.updateSessionCapacity(selectedSessionId, cap);
+      const updated = await sessionModule.updateSessionCapacity(selectedSessionId, cap, trialCap);
       // Update local sessions array
       setSessions(prev => prev.map(s => s.id === selectedSessionId ? updated : s));
       toast.success(COPY.ALERTS.UPDATE_CAPACITY_SUCCESS);
@@ -226,6 +233,8 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     walkinLoading,
     capacityEdit,
     setCapacityEdit,
+    trialCapacityEdit,
+    setTrialCapacityEdit,
     savingCapacity,
     bookedCount,
     totalCapacity,

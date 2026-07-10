@@ -32,6 +32,8 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
     walkinLoading,
     capacityEdit,
     setCapacityEdit,
+    trialCapacityEdit,
+    setTrialCapacityEdit,
     savingCapacity,
     sessionIsActive,
     togglingSession,
@@ -166,6 +168,9 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
                   </span>
                   <span className="text-base text-muted-foreground">
                     · จอง <strong className="text-icsn-teal">{session.booked_count}</strong>/{session.total_capacity} คน
+                    <span className="ml-2 px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full text-sm font-bold border border-purple-200">
+                      Trial ว่าง {Math.max(0, (session.trial_capacity ?? 0) - attendance.filter(r => r.is_trial).length)}/{session.trial_capacity ?? 0}
+                    </span>
                   </span>
                 </div>
 
@@ -185,14 +190,24 @@ export function AdminDailyOps({ onRefresh }: { onRefresh?: () => void }) {
                       min={1}
                       value={capacityEdit}
                       onChange={e => setCapacityEdit(e.target.value)}
-                      className="w-16 px-2 text-center font-bold text-base outline-none text-icsn-navy bg-transparent"
-                      title="จำนวนที่นั่งสูงสุด"
+                      className="w-16 px-2 text-center font-bold text-base outline-none text-icsn-navy bg-transparent border-r border-border"
+                      title="จำนวนที่นั่งรวมสูงสุด"
                     />
+                    <div className="flex items-center bg-purple-50 px-2 border-r border-border" title="โควต้า Trial">
+                       <span className="text-sm font-bold text-purple-700 mr-1">Trial:</span>
+                       <input
+                         type="number"
+                         min={0}
+                         value={trialCapacityEdit}
+                         onChange={e => setTrialCapacityEdit(e.target.value)}
+                         className="w-12 text-center font-bold text-base outline-none text-purple-700 bg-transparent"
+                       />
+                    </div>
                     <button
                       type="button"
                       onClick={handleSaveCapacity}
                       disabled={savingCapacity}
-                      className="px-4 bg-muted hover:bg-muted/80 text-foreground font-bold border-l border-border transition disabled:opacity-50 text-sm"
+                      className="px-4 bg-muted hover:bg-muted/80 text-foreground font-bold transition disabled:opacity-50 text-sm"
                     >
                       บันทึก
                     </button>
