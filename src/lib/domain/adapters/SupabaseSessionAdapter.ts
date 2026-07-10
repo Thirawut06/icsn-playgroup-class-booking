@@ -61,9 +61,9 @@ export class SupabaseSessionAdapter implements ISessionRepository {
     if (error) throw new AppError(error.message || 'Failed to toggle session', error.code, error);
   }
 
-  async updateSessionCapacity(sessionId: string, totalCapacity: number): Promise<Session> {
+  async updateSessionCapacity(sessionId: string, totalCapacity: number, trialCapacity?: number): Promise<Session> {
     const { data, error } = await supabase.functions.invoke('admin-actions', {
-      body: { action: 'update-session', payload: { sessionId, totalCapacity } }
+      body: { action: 'update-session', payload: { sessionId, totalCapacity, trialCapacity } }
     });
     
     if (error) throw error;

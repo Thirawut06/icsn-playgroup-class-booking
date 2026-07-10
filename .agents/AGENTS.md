@@ -315,7 +315,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Line Height:** NEVER use `leading-none` or `leading-tight` on text elements that display Thai characters. The vertical space is required for Thai vowels and tone marks. ALWAYS use `leading-normal` or `leading-relaxed` and control vertical spacing using explicit margins (e.g., `mb-1`).
 
 ## Google Sheets Sync Architecture (Crucial)
-- **Google Sheets Snapshot Sync:** For Google Sheets, always use a stateless "Snapshot Sync" (Clear & Rewrite) pattern in the GAS script to ensure 100% data accuracy and avoid drift.
+- **Google Sheets Snapshot Sync:** For Google Sheets, always use a stateless "Snapshot Sync" (Clear & Rewrite) pattern in the GAS script to ensure 100% data accuracy and avoid drift. Treat the Google Apps Script (`.gs`) strictly as a "dumb receiver". ALL complex logic (e.g., calculating ages, injecting spacer rows, formatting timezones, generating links) MUST happen inside the Supabase Edge Function in TypeScript. The GAS script should ONLY use `.clearContents()` and `.setValues()` to blindly dump the provided 2D array.
 - **Event-Driven Triggers:** Never use Deno.cron for syncing. Use Supabase Database Triggers (via pg_net extension) to call the Edge Function only when data changes.
 - **GAS Webhook Pattern:** Similar to Drive, always use the Google Apps Script (GAS) Webhook pattern for syncing data to Google Sheets.
 
@@ -325,6 +325,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## JavaScript Date Timezone Safety (CRITICAL)
 - **Timezone-Safe Date Math:** When parsing or manipulating pure date strings (e.g., `"YYYY-MM-DD"`) in JavaScript, ALWAYS append `T00:00:00Z` to force UTC parsing, and exclusively use `.setUTCDate()` and `.getUTCDate()` for date arithmetic. Relying on standard `new Date()` and `.getDate()` operates in the user's local timezone, causing catastrophic date-shifting bugs across timezones.
+- **Edge Function Timezones (Deno is UTC):** When formatting dates to a local string inside a Supabase Edge Function (e.g., `new Date().toLocaleString('th-TH')`), it will default to UTC time. You MUST explicitly provide the timezone options (e.g., `{ timeZone: 'Asia/Bangkok' }`) to ensure correct local time formatting.
 
 ## Admin Data Pagination (CRITICAL)
 - **Bounded Queries:** NEVER write unbounded `.select()` queries for admin history tables (e.g., `getTransactionHistory`). Always include a safety cap (e.g., `.limit(1000)`) or implement proper server-side pagination to prevent memory spikes on the client and database.
@@ -344,3 +345,50 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Environment & Vercel Constraints
 - **Vercel Preview Isolation:** To maintain strict staging isolation, Vercel environment variables MUST be explicitly split by environment (Production vs. Preview/Development). Crucially, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` must have separate Staging values for Preview builds. Additionally, external IDs like `GOOGLE_SHEET_ID`, `GOOGLE_DRIVE_ROOT_ID`, and `GOOGLE_CHAT_WEBHOOK_URL` should be split to prevent staging data from polluting production systems. Service account credentials can remain shared.
+
+## Google Drive Sync Architecture & Naming Conventions
+- **Main Folder Name:** The root folder name in Google Drive for all operations is strictly "ICSN Panda Playgroup Files and Pay Slip". Never assume variations like "ICSN Panda Playgroup".
+- **Filename Sanitization:** Never use spaces or parentheses () in filenames before uploading to Google Drive via GAS Webhooks. Always sanitize them by replacing spaces with underscores _ and removing invalid characters.
+- **Strict Naming Formats:** 
+  - Payment Slips: "slip_[parentPhone]_[DD-MM-YYYY].ext"
+  - Child Profiles: "profile_[full_name]_[nickname].ext"
+  - Parent Profiles: "parent_profile_[parentName].ext"
+  - Signatures: "signature_[full_name]_[nickname]_[DD-MM-YYYY].ext"
+- **Drive Link Generation without DB Bloat:** Do not store dynamically generated Google Drive folder URLs in the Supabase database. To link from Google Sheets to a user's Google Drive folder, generate a direct Google Drive Search URL dynamically within the Edge Function (e.g., `https://drive.google.com/drive/search?q=type:folder+title:"<folder_name>"`) and push it as a string to Google Sheets. This is more robust, automatically linkified by Sheets, and prevents unnecessary database schema changes.
+
+## Edge Function Data Logic (Bookings Table)
+- **Compound Relationships:** When extracting nested relationship data for "bookings" (which contain BOTH "parent_id" and "child_id"), NEVER write if-else chains that evaluate "parent_id" first and skip querying the "children" table. Both pieces of data must be fetched to compose the complete folder and file names (e.g. "parent_name" for the folder, "child_nickname" for the signature file).
+
+## Drive Backfill Strategy & Deployment
+- **Avoid GAS Rename Scripts:** Do not write complex Google Apps Script code to rename or move existing files in Drive. It is safer to manually delete the incorrectly named subfolders in Google Drive and run a backfill.
+- **Backfill Execution:** To trigger a backfill, temporarily deploy the "backfill-drive" Edge Function with "--no-verify-jwt", and instruct the user to run "Invoke-RestMethod" via PowerShell directly.
+- **Production Edge Deployments:** When deploying Edge Functions targeting the production environment, always append "--project-ref psusuyesaxuhiondxqie".
+
+## Edge Function Architecture & Clean Code (CRITICAL)
+- **Parallel Query Execution:** When an Edge Function needs to query multiple unrelated Supabase tables (e.g., getting bookings, children, and packages for a report), NEVER use sequential `await` calls. ALWAYS use `Promise.all` to fetch the data in parallel. This is critical for performance and reducing execution timeouts.
+- **Single Responsibility (Avoid God Functions):** Do not write massive "God Functions" (200+ lines) inside the main `serve` block of an Edge Function. Always extract data formatting and transformation logic into dedicated helper functions (e.g., `formatRosterData`) to keep the main orchestration flow clean, readable, and easy to maintain.
+- **Webhook Resilience (Timeouts):** When an Edge Function makes external HTTP requests to Webhooks (like Google Apps Script), ALWAYS use an `AbortController` with a strict timeout (e.g., 10 seconds). Do not allow the Edge Function to hang indefinitely if the external service is unresponsive.
+
+## ICSN Playgroup Legal, Compliance, & Tone Preferences
+- **Enterprise Grade but Business-Friendly:** Legal documents (PDPA, Terms) must be 100% compliant but flexible enough not to restrict business operations (e.g., using "Compelling Legitimate Grounds" exceptions to protect school marketing).
+- **Common Sense over Bureaucracy:** Use friendly, accessible language. Focus on "We will quickly fix and notify you" rather than citing scary government bodies (PDPC) unless strictly necessary.
+- **Executive Sensitivity:** When drafting constraints or legal clauses (like Intellectual Property), evaluate if it might sound too aggressive or restrictive for a kindergarten/playgroup environment. Do not over-legislate if the school management didn't request it.
+- **No Assumptions (The Grilling Process):** Never guess or assume on sensitive legal/business flows. Always pause, present a "Legal Briefing" or options, and let the user decide. Act as a meticulous Auditor scanning for blind spots.
+- **Domain Specifics - Refunds:** Credits do not expire. Manual refunds happen via LINE `@792sitws`.
+- **Domain Specifics - Automated Cancellations:** The `admin_close_session` RPC automatically cancels and refunds 100% of credits.
+- **Domain Specifics - Liability:** Always include "As-Is" clauses to protect against software bugs.
+- **Domain Specifics - Sensitive Data:** Health/allergy data must explicitly rely on the "Consent" basis (PDPA Art. 26).
+
+## Supabase SSR & PKCE Cross-Browser Limitations (CRITICAL)
+- **Password Reset Cross-Device Issue:** By default, `@supabase/ssr` uses the PKCE flow which stores a `code_verifier` cookie in the browser. If a user clicks a "Reset Password" or "Magic Link" email on a different device or in an in-app browser (WebView), the cookie is missing and `exchangeCodeForSession` will fail with `invalid_token`.
+- **Token Hash Workaround:** To allow cross-browser password resets, NEVER use the default `{{ .ConfirmationURL }}` in email templates. Instead, construct a custom link using `{{ .TokenHash }}` (e.g., `{{ .SiteURL }}/th/auth/verify-reset?token_hash={{ .TokenHash }}`).
+- **Custom Verification Route:** Create a custom GET route handler that extracts `token_hash` from the URL and calls `await supabase.auth.verifyOtp({ token_hash, type: 'recovery' })`. This verifies the token server-side and establishes the session without relying on PKCE cookies, then redirects the user to the reset password form.
+
+## Resend & SMTP Domain Verification
+- **Internal Server Error 500 on Auth:** If `resetPasswordForEmail` or OTP emails throw a 500 error when using Resend as a custom SMTP provider, it is almost always because the sender domain is unverified (Sandbox mode restrictions).
+- **DirectAdmin DNS Gotcha:** When instructing users to add MX or CNAME records in DirectAdmin/cPanel (e.g., pointing to `feedback-smtp.us-east-1.amazonses.com`), ALWAYS emphasize adding a **trailing dot (`.`)** at the end of the target value. Without the trailing dot, DirectAdmin will automatically append the local domain name, causing the DNS verification to fail silently.
+
+## Email Template Management
+- **Dashboard Syncing:** Editing `.html` email templates locally in `supabase/templates` does NOT automatically update Supabase. The user MUST manually copy and paste the HTML code into the Supabase Dashboard (Authentication > Email Templates).
+- **Staging vs Production Testing:** When testing on `localhost:3000` (which points to the Staging database `ykyifdoufyadgtemkhdd`), remind the user to paste the email templates into the **Staging** project's dashboard, otherwise they will see stale English templates.
+- **Image Formatting for Gmail:** Always include explicit `height` and `width` attributes (e.g., `height="48"`) and `display: block;` in `<img>` tags for email templates. Gmail aggressively blocks images from new domains, and missing dimensions can cause layout breakage when the "broken image" icon is displayed. Avoid explicit `<br>` tags that break text wrapping prematurely.

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { PackageOption } from '@/types';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
+import { LineSupportCard } from '@/components/ui/LineSupportCard';
 
 interface PaymentSectionProps {
   path: 'trial' | 'payment' | null;
@@ -79,6 +80,10 @@ export function PaymentSection({
             <img src={paymentSlipData} alt="Preview" className="w-full h-auto object-contain" />
           </div>
         )}
+      </div>
+
+      <div className="pt-2">
+        <LineSupportCard />
       </div>
     </div>
   );

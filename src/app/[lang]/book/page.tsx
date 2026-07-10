@@ -21,6 +21,7 @@ import { sessionModule } from '@/lib/domain';
 import { supabase } from '@/lib/supabase';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
 import { ROUTES } from '@/config/routes';
+import { LineSupportCard } from '@/components/ui/LineSupportCard';
 
 export default function Book() {
   return (
@@ -295,6 +296,10 @@ function BookPageContent() {
           />
 
           <ClosureNotificationBanner />
+          
+          <div className="py-4 mt-auto">
+            <LineSupportCard />
+          </div>
         </main>
 
         <TopUpModal

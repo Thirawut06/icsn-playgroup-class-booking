@@ -20,6 +20,7 @@ interface TimeSlot {
   id: string;
   time_label: string;
   capacity: number;
+  trial_capacity?: number;
   is_active: boolean;
   created_at?: string;
 }
@@ -33,6 +34,7 @@ export function AdminTimeSlots() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState('');
   const [editCapacity, setEditCapacity] = useState('');
+  const [editTrialCapacity, setEditTrialCapacity] = useState('');
   
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -55,9 +57,9 @@ export function AdminTimeSlots() {
   const handleSeedDefaults = async () => {
     setIsProcessing(true);
     try {
-      await AdminService.addSessionTemplate('9.00 - 10.30', CLASS_CONFIG.DEFAULT_CAPACITY);
-      await AdminService.addSessionTemplate('11.00 - 12.30', CLASS_CONFIG.DEFAULT_CAPACITY);
-      await AdminService.addSessionTemplate('13.15 - 14.45', CLASS_CONFIG.DEFAULT_CAPACITY);
+      await AdminService.addSessionTemplate('9.00 - 10.30', CLASS_CONFIG.DEFAULT_CAPACITY, 2);
+      await AdminService.addSessionTemplate('11.00 - 12.30', CLASS_CONFIG.DEFAULT_CAPACITY, 2);
+      await AdminService.addSessionTemplate('13.15 - 14.45', CLASS_CONFIG.DEFAULT_CAPACITY, 2);
       toast.success('เพิ่มค่าเริ่มต้นสำเร็จ');
       await fetchSlots();
     } catch (err: any) {
@@ -70,18 +72,21 @@ export function AdminTimeSlots() {
   const handleSave = async () => {
     if (!editLabel.trim()) return toast.error('กรุณาระบุช่วงเวลา');
     const cap = parseInt(editCapacity);
+    const trialCap = parseInt(editTrialCapacity);
     if (!cap || cap < 1) return toast.error('กรุณาระบุความจุที่ถูกต้อง');
+    if (isNaN(trialCap) || trialCap < 0) return toast.error('กรุณาระบุโควต้า Trial ที่ถูกต้อง');
 
     setIsProcessing(true);
     try {
       if (editingId) {
         await AdminService.updateSessionTemplate(editingId, {
           time_label: editLabel.trim(),
-          capacity: cap
+          capacity: cap,
+          trial_capacity: trialCap
         });
         toast.success('บันทึกการแก้ไขสำเร็จ');
       } else {
-        await AdminService.addSessionTemplate(editLabel.trim(), cap);
+        await AdminService.addSessionTemplate(editLabel.trim(), cap, trialCap);
         toast.success('เพิ่มช่วงเวลาใหม่สำเร็จ');
       }
       setIsModalOpen(false);
@@ -124,6 +129,7 @@ export function AdminTimeSlots() {
     setEditingId(slot.id);
     setEditLabel(slot.time_label);
     setEditCapacity(String(slot.capacity));
+    setEditTrialCapacity(String(slot.trial_capacity ?? 2));
     setIsModalOpen(true);
   };
 
@@ -131,6 +137,7 @@ export function AdminTimeSlots() {
     setEditingId(null);
     setEditLabel('');
     setEditCapacity(String(CLASS_CONFIG.DEFAULT_CAPACITY));
+    setEditTrialCapacity('2');
     setIsModalOpen(true);
   };
 
@@ -163,20 +170,21 @@ export function AdminTimeSlots() {
           <AdminDataTable
             headers={[
               { label: 'ช่วงเวลา (Time Label)' },
-              { label: 'ความจุนักเรียน', align: 'center' },
+              { label: 'ความจุรวม', align: 'center' },
+              { label: 'โควต้า Trial', align: 'center' },
               { label: 'สถานะ', align: 'center' },
               { label: 'จัดการ', align: 'right' },
             ]}
           >
             {loading ? (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
+                <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
                   <Loader2 className="w-6 h-6 animate-spin mx-auto text-icsn-teal" />
                 </td>
               </tr>
             ) : slots.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
+                <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
                   <p className="mb-4">ยังไม่มีข้อมูลช่วงเวลาเรียน</p>
                   <button onClick={handleSeedDefaults} disabled={isProcessing} className="px-6 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-xl font-bold transition">
                     เพิ่มค่าเริ่มต้น (9.00, 11.00, 13.15)
@@ -193,6 +201,11 @@ export function AdminTimeSlots() {
                     <td className="px-6 py-4 text-center">
                       <span className="inline-flex items-center justify-center min-w-[2.5rem] h-7 bg-muted text-foreground rounded-full text-sm font-bold border border-border">
                         {slot.capacity}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="inline-flex items-center justify-center min-w-[2.5rem] h-7 bg-purple-50 text-purple-700 rounded-full text-sm font-bold border border-purple-200">
+                        {slot.trial_capacity ?? 0}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -244,15 +257,27 @@ export function AdminTimeSlots() {
               autoFocus
             />
           </div>
-          <div>
-            <AdminFieldLabel>ความจุนักเรียน (Capacity)</AdminFieldLabel>
-            <input
-              type="number"
-              value={editCapacity}
-              onChange={(e) => setEditCapacity(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-border rounded-xl focus:ring-2 focus:ring-icsn-teal/30 focus:border-icsn-teal/50 outline-none transition-all text-icsn-navy"
-              min="1"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <AdminFieldLabel>ความจุรวม (Total)</AdminFieldLabel>
+              <input
+                type="number"
+                value={editCapacity}
+                onChange={(e) => setEditCapacity(e.target.value)}
+                className="w-full px-4 py-3 bg-white border border-border rounded-xl focus:ring-2 focus:ring-icsn-teal/30 focus:border-icsn-teal/50 outline-none transition-all text-icsn-navy"
+                min="1"
+              />
+            </div>
+            <div>
+              <AdminFieldLabel>โควต้า Trial (จำกัด)</AdminFieldLabel>
+              <input
+                type="number"
+                value={editTrialCapacity}
+                onChange={(e) => setEditTrialCapacity(e.target.value)}
+                className="w-full px-4 py-3 bg-white border border-border rounded-xl focus:ring-2 focus:ring-icsn-teal/30 focus:border-icsn-teal/50 outline-none transition-all text-icsn-navy"
+                min="0"
+              />
+            </div>
           </div>
           
           <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">

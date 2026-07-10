@@ -256,5 +256,74 @@ describe('Core Flow Integration Tests', () => {
       // Cleanup
       await supabaseAdmin.from('sessions').delete().eq('id', newSession.id);
     });
+
+    it('[Edge Case] should not allow trial booking if trial capacity is full', async () => {
+      // Create a fresh session with total_capacity 10 but trial_capacity 1
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 3);
+      
+      const { data: newSession, error: sessionErr } = await supabaseAdmin.from('sessions').insert({
+        session_date: tomorrow.toISOString().split('T')[0],
+        time_label: `10:00-12:00 Trial Test ${Date.now()}`,
+        total_capacity: 10,
+        trial_capacity: 1,
+        booked_count: 0,
+        is_active: true
+      }).select().single();
+      if (sessionErr) throw sessionErr;
+
+      const p1Email = `trial1_${Date.now()}@test.com`;
+      const p1Phone = `081${Math.floor(100000 + Math.random() * 900000)}`;
+      const p2Email = `trial2_${Date.now()}@test.com`;
+      const p2Phone = `081${Math.floor(100000 + Math.random() * 900000)}`;
+
+      const parent1 = await ParentService.signUp(p1Email, 'testpassword123', 'Parent 1', p1Phone);
+      const child1 = await ParentService.submitNewChild({
+        parentId: parent1.id, childName: 'Trial1', childNickname: 'T1', childDob: '2021-01-01',
+        childPhotoFile: null, parentPhotoFile: null, allergy: 'None', info: '', mediaPerm: true, noPhotoPerm: false
+      });
+      // Add trial package
+      const { data: pkg1, error: pkg1Err } = await supabaseAdmin.from('packages').insert({ parent_id: parent1.id, type: 'trial', credits_remaining: 1, non_refundable: true }).select().single();
+      if (pkg1Err) throw pkg1Err;
+
+      const parent2 = await ParentService.signUp(p2Email, 'testpassword123', 'Parent 2', p2Phone);
+      const child2 = await ParentService.submitNewChild({
+        parentId: parent2.id, childName: 'Trial2', childNickname: 'T2', childDob: '2021-01-01',
+        childPhotoFile: null, parentPhotoFile: null, allergy: 'None', info: '', mediaPerm: true, noPhotoPerm: false
+      });
+      const { data: pkg2, error: pkg2Err } = await supabaseAdmin.from('packages').insert({ parent_id: parent2.id, type: 'trial', credits_remaining: 1, non_refundable: true }).select().single();
+      if (pkg2Err) throw pkg2Err;
+
+      // First trial booking should succeed
+      const { data: res1, error: err1 } = await supabaseAdmin.rpc('book_class_transactionally', {
+        p_session_id: newSession.id,
+        p_child_id: child1.id,
+        p_parent_id: parent1.id,
+        p_child_name: child1.nickname,
+        p_parent_phone: p1Phone
+      });
+      expect(err1).toBeNull();
+      expect(res1?.success).toBe(true);
+
+      // Second trial booking should fail because trial_capacity is 1
+      const { data: res2, error: err2 } = await supabaseAdmin.rpc('book_class_transactionally', {
+        p_session_id: newSession.id,
+        p_child_id: child2.id,
+        p_parent_id: parent2.id,
+        p_child_name: child2.nickname,
+        p_parent_phone: p2Phone
+      });
+      expect(res2?.success).toBe(false);
+      expect(res2?.error).toMatch(/Trial slots for this session are fully booked/i);
+
+      // Cleanup
+      await supabaseAdmin.from('bookings').delete().eq('session_id', newSession.id);
+      await supabaseAdmin.from('sessions').delete().eq('id', newSession.id);
+      await supabaseAdmin.from('packages').delete().in('parent_id', [parent1.id, parent2.id]);
+      await supabaseAdmin.from('children').delete().in('id', [child1.id, child2.id]);
+      await supabaseAdmin.from('parents').delete().in('id', [parent1.id, parent2.id]);
+      await supabaseAdmin.auth.admin.deleteUser(parent1.id);
+      await supabaseAdmin.auth.admin.deleteUser(parent2.id);
+    });
   });
 });

@@ -7,7 +7,7 @@ export const BookingService = {
   async getSessions(startDate: string, endDate: string): Promise<Session[]> {
     const { data, error } = await supabase
       .from('sessions')
-      .select('id, session_date, time_label, total_capacity, booked_count, is_active, theme, activity_desc')
+      .select('id, session_date, time_label, total_capacity, trial_capacity, booked_count, is_active, theme, activity_desc')
       .gte('session_date', startDate)
       .lte('session_date', endDate)
       .order('session_date', { ascending: true });

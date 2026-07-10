@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { ParentService } from '@/lib/supabase';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
 import { ROUTES } from '@/config/routes';
+import { LineSupportCard } from '@/components/ui/LineSupportCard';
 
 export function SignupForm() {
   const router = useRouter();
@@ -146,6 +147,24 @@ export function SignupForm() {
           </div>
         )}
       </button>
+
+      {/* <div className="text-center mt-4">
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          การสมัครสมาชิกหมายความว่าคุณยอมรับ{' '}
+          <a href={ROUTES.TERMS(lang)} target="_blank" className="text-icsn-teal hover:underline font-bold">
+            ข้อตกลงการใช้งาน
+          </a>
+          {' '}และ{' '}
+          <a href={ROUTES.PRIVACY(lang)} target="_blank" className="text-icsn-teal hover:underline font-bold">
+            นโยบายความเป็นส่วนตัว
+          </a>
+          {' '}ของเรา
+        </p>
+      </div> */}
+
+      <div className="pt-2">
+        <LineSupportCard className="!mt-0" />
+      </div>
     </form>
   );
 }

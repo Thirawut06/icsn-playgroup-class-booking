@@ -3,6 +3,7 @@ import { CalendarCheck, AlertCircle, Loader2 } from 'lucide-react';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
 import type { Session, SchoolClosure } from '@/types';
 import { checkIsBookableDate } from '@/utils/dateUtils';
+import { LineSupportCard } from '@/components/ui/LineSupportCard';
 
 interface BookingSummaryProps {
   selectedDates: string[];
@@ -126,9 +127,12 @@ export function BookingSummary({
       </div>
 
       {bookingError && (
-        <div className="bg-error/10 text-error p-3 rounded-xl text-sm border border-error/20 flex items-start gap-2 mb-4">
-          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-          <p className="font-medium leading-relaxed">{bookingError}</p>
+        <div className="mb-4 space-y-2">
+          <div className="bg-error/10 text-error p-3 rounded-xl text-sm border border-error/20 flex items-start gap-2">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <p className="font-medium leading-relaxed">{bookingError}</p>
+          </div>
+          <LineSupportCard className="!mt-0" />
         </div>
       )}
 

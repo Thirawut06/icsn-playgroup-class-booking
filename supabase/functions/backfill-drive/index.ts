@@ -61,6 +61,16 @@ async function uploadToGasWebhook(
   return data;
 }
 
+// Helpers for string sanitization
+function sanitizeForFilename(str: string): string {
+  if (!str) return '';
+  return str
+    .trim()
+    .replace(/\s+/g, '_')     // Replace spaces with underscores
+    .replace(/[()\/\\:*?"<>|]/g, '') // Remove invalid file characters and parentheses
+    .replace(/_+/g, '_');     // Replace multiple underscores with single underscore
+}
+
 function getFormattedDateStr(date: Date): string {
   const d = String(date.getDate()).padStart(2, '0');
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -92,31 +102,33 @@ async function resolveFolderInfo(table: string, record: any, supabase: any) {
       const childNicknames = parent.children?.map((c: any) => c.nickname).filter(Boolean).join(', ');
       const childStr = childNicknames ? ` (${childNicknames})` : '';
       folderName = `${parent.name}${childStr}`.trim();
-      
-      if (table === 'children') {
-        const fn = record.full_name ? record.full_name.trim() : '';
-        const nn = record.nickname ? record.nickname.trim() : '';
-        if (fn && nn) childNickname = `${fn} (${nn})`;
-        else if (fn) childNickname = fn;
-        else if (nn) childNickname = nn;
-      }
     }
+  }
+
+  if (table === 'children') {
+    const fn = record.full_name ? record.full_name.trim() : '';
+    const nn = record.nickname ? record.nickname.trim() : '';
+    if (fn && nn) childNickname = `${fn} (${nn})`;
+    else if (fn) childNickname = fn;
+    else if (nn) childNickname = nn;
   } else if (table === 'bookings' && record.child_id) {
     const { data: child } = await supabase
       .from('children')
-      .select('nickname, full_name, parents(id, name, phone)')
+      .select('nickname, full_name')
       .eq('id', record.child_id)
       .single();
       
-    if (child && child.parents) {
-      parentPhone = child.parents.phone || '';
+    if (child) {
       const fn = child.full_name ? child.full_name.trim() : '';
       const nn = child.nickname ? child.nickname.trim() : '';
       if (fn && nn) childNickname = `${fn} (${nn})`;
       else if (fn) childNickname = fn;
       else if (nn) childNickname = nn;
-      
-      folderName = `${child.parents.name} (${child.nickname})`.trim();
+    }
+    
+    // Fallback if child is somehow not found or has no name
+    if (!childNickname && record.child_name_snapshot) {
+      childNickname = record.child_name_snapshot.trim();
     }
   }
 
@@ -184,7 +196,10 @@ Deno.serve(async (req) => {
            const blob = await res.blob();
            const ext = record.file_url.split('?')[0].split('.').pop() || 'jpg';
            const createdAt = new Date(record.created_at || new Date());
-           const fileName = `slip_${getFormattedDateStr(createdAt)}.${ext}`;
+           const dateStr = getFormattedDateStr(createdAt);
+           
+           const safePhone = sanitizeForFilename(parentPhone) || 'no_phone';
+           const fileName = `slip_${safePhone}_${dateStr}.${ext}`;
            
            await uploadToGasWebhook(blob, fileName, folderName, 'สลิป', parentPhone, gasWebhookUrl);
            results.push({ id: record.id, status: 'synced slip' });
@@ -199,7 +214,14 @@ Deno.serve(async (req) => {
              if (res.ok) {
                const blob = await res.blob();
                const ext = record.photo_url.split('?')[0].split('.').pop() || 'jpg';
-               const fileName = `profile_${getFormattedDateStr(new Date(record.created_at || new Date()))}.${ext}`;
+               const createdAt = new Date(record.created_at || new Date());
+               const dateStr = getFormattedDateStr(createdAt);
+               
+               const safeFullName = sanitizeForFilename(record.full_name);
+               const safeNickname = sanitizeForFilename(record.nickname);
+               const namePart = [safeFullName, safeNickname].filter(Boolean).join('_') || 'unknown';
+               const fileName = `profile_${namePart}.${ext}`;
+               
                await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl);
                syncedPhoto = true;
              }
@@ -210,7 +232,13 @@ Deno.serve(async (req) => {
              if (res.ok) {
                const blob = await res.blob();
                const ext = record.parent_photo_url.split('?')[0].split('.').pop() || 'jpg';
-               const fileName = `parent_profile_${getFormattedDateStr(new Date(record.created_at || new Date()))}.${ext}`;
+               const createdAt = new Date(record.created_at || new Date());
+               const dateStr = getFormattedDateStr(createdAt);
+               
+               const extractedParentName = folderName.split(' (')[0];
+               const safeParentName = sanitizeForFilename(extractedParentName) || 'unknown';
+               const fileName = `parent_profile_${safeParentName}.${ext}`;
+               
                await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl);
                syncedParent = true;
              }
@@ -225,7 +253,11 @@ Deno.serve(async (req) => {
               const blob = await res.blob();
               const ext = record.signature_url.split('?')[0].split('.').pop() || 'png';
               const checkinDate = record.checkin_at ? new Date(record.checkin_at) : new Date();
-              const fileName = `signature_${getFormattedDateStr(checkinDate)}_${getFormattedTimeStr(checkinDate)}.${ext}`;
+              const dateStr = getFormattedDateStr(checkinDate);
+              
+              const safeChildName = sanitizeForFilename(childNickname) || 'unknown';
+              const fileName = `signature_${safeChildName}_${dateStr}.${ext}`;
+              
               await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, gasWebhookUrl);
               results.push({ id: record.id, status: 'synced signature' });
               console.log(`Synced signature for booking ${record.id}`);

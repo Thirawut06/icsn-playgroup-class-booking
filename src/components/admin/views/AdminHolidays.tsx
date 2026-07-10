@@ -170,12 +170,10 @@ export function AdminHolidays() {
         if (selectionMode === 'range' || selectionMode === 'single') {
           if (!rangeStart || !rangeEnd) { toast.error('กรุณาระบุช่วงวันที่'); setSavingOverride(false); return; }
           if (rangeStart > rangeEnd) { toast.error('วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด'); setSavingOverride(false); return; }
-          if (overrideStatus === 'closed' && !overrideReason) { toast.error('กรุณาระบุสาเหตุ'); setSavingOverride(false); return; }
 
           await AdminService.setDateStatus(rangeStart, rangeEnd, overrideStatus === 'open', overrideReason);
         } else {
           if (multiDates.length === 0) { toast.error('กรุณาเลือกอย่างน้อย 1 วัน'); setSavingOverride(false); return; }
-          if (overrideStatus === 'closed' && !overrideReason) { toast.error('กรุณาระบุสาเหตุ'); setSavingOverride(false); return; }
 
           await Promise.all(multiDates.map(date =>
             AdminService.setDateStatus(date, date, overrideStatus === 'open', overrideReason)
@@ -572,7 +570,7 @@ export function AdminHolidays() {
                       type="text"
                       value={overrideReason}
                       onChange={e => setOverrideReason(e.target.value)}
-                      placeholder="สาเหตุการปิด (เช่น ปิดเทอมซัมเมอร์)"
+                      placeholder="สาเหตุการปิด (ไม่บังคับ)"
                       className="w-full px-3 py-2 text-sm bg-muted/50 border border-border/80 rounded-lg focus:ring-1 focus:ring-icsn-teal outline-none"
                     />
                   </div>

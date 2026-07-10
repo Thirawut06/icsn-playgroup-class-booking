@@ -177,6 +177,8 @@ export default function Apply() {
         noPhotoPerm
       });
 
+      let transactionId = parentId; // Default to parentId for Trial
+
       if (path === 'payment') {
         if (!paymentSlipFile || !packageType) {
           throw new Error(dict.apply.uploadSlipRequired);
@@ -184,7 +186,10 @@ export default function Apply() {
         if (!nonRefundable) {
           throw new Error(dict.apply.confirmNonRefundable);
         }
-        await PackageService.submitTopUp(parentId, packageType, paymentSlipFile, nonRefundable);
+        const result = await PackageService.submitTopUp(parentId, packageType, paymentSlipFile, nonRefundable);
+        if (result && typeof result.id === 'string') {
+          transactionId = result.id;
+        }
       } else if (path === 'trial') {
         await PackageService.grantTrialPackage(parentId);
       }

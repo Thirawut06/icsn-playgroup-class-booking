@@ -41,6 +41,9 @@ function LoginFormContent() {
 
       {/* Form Container */}
       <div className="p-8 sm:p-10 flex-1">
+        <div className="flex justify-center mb-6">
+          <img src="/main-logo-icsn.png" alt="ICSN Logo" className="w-24 h-auto object-contain" />
+        </div>
         {/* Tab Selector Switch */}
         <div className="grid grid-cols-2 p-1.5 bg-muted rounded-2xl mb-8">
           <button

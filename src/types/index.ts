@@ -56,6 +56,7 @@ export interface DailyAttendanceRow {
   parent_phone: string;
   created_at: string;
   is_walkin?: boolean;
+  is_trial?: boolean;
   signature_url?: string | null;
   checkin_at?: string | null;
 }
@@ -107,6 +108,7 @@ export interface Session {
   session_date: string;
   time_label?: string;
   total_capacity: number;
+  trial_capacity?: number;
   booked_count?: number;
   is_active: boolean;
   theme?: string;
@@ -121,6 +123,7 @@ export interface Booking {
   session_date: string;
   status: 'confirmed' | 'cancelled';
   booking_date: string;
+  is_trial?: boolean;
   child_name_snapshot?: string | null;
   parent_phone_snapshot?: string | null;
   session?: Session;
@@ -141,6 +144,7 @@ export interface SessionTemplate {
   id: string;
   time_label: string;
   capacity: number;
+  trial_capacity?: number;
   is_active: boolean;
   created_at: string;
 }

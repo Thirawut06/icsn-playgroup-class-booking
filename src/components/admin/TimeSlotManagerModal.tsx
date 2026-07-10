@@ -56,7 +56,7 @@ export function TimeSlotManagerModal({ isOpen, onClose }: TimeSlotManagerModalPr
     
     setAdding(true);
     try {
-      await AdminService.addSessionTemplate(newLabel.trim(), newCapacity);
+      await AdminService.addSessionTemplate(newLabel.trim(), newCapacity, 2);
       toast.success('เพิ่มรอบเวลาพื้นฐานเรียบร้อย');
       setNewLabel('');
       setNewCapacity(12);
@@ -108,7 +108,7 @@ export function TimeSlotManagerModal({ isOpen, onClose }: TimeSlotManagerModalPr
       return;
     }
     try {
-      await AdminService.updateSessionTemplate(id, { time_label: editLabel.trim(), capacity: editCapacity });
+      await AdminService.updateSessionTemplate(id, { time_label: editLabel.trim(), capacity: editCapacity, trial_capacity: 2 });
       toast.success('อัปเดตข้อมูลเรียบร้อย');
       setTemplates(curr => curr.map(t => t.id === id ? { ...t, time_label: editLabel.trim(), capacity: editCapacity } : t));
       setEditingId(null);

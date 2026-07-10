@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { ParentService, supabase } from '@/lib/supabase';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
 import { ROUTES } from '@/config/routes';
+import { LineSupportCard } from '@/components/ui/LineSupportCard';
+import Link from 'next/link';
 
 export function LoginForm() {
   const router = useRouter();
@@ -150,6 +152,14 @@ export function LoginForm() {
                   className="block w-full pl-11 pr-4 py-2 border border-border rounded-xl focus:outline-none focus:border-icsn-teal text-foreground bg-muted/50 transition-colors min-h-12 text-base leading-normal"
                 />
               </div>
+              <div className="flex justify-end mt-2">
+                <Link
+                  href={ROUTES.FORGOT_PASSWORD(lang)}
+                  className="text-sm font-medium text-icsn-teal hover:text-icsn-navy transition-colors"
+                >
+                  {dict.auth.forgotPassword}
+                </Link>
+              </div>
             </div>
           </>
         )}
@@ -183,6 +193,10 @@ export function LoginForm() {
           isCompletingProfile ? dict.auth.saveProfile : dict.auth.signInBtn
         )}
       </button>
+
+      <div className="pt-2">
+        <LineSupportCard className="!mt-0" />
+      </div>
     </form>
   );
 }

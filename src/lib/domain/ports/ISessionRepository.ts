@@ -34,7 +34,7 @@ export interface ISessionRepository {
   /**
    * Update session total capacity.
    */
-  updateSessionCapacity(sessionId: string, totalCapacity: number): Promise<Session>;
+  updateSessionCapacity(sessionId: string, totalCapacity: number, trialCapacity?: number): Promise<Session>;
 
   /**
    * Close a specific session (Day off รายครั้ง). Cancels bookings and refunds.

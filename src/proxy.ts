@@ -5,7 +5,13 @@ const SUPPORTED_LOCALES = ['th', 'en'];
 const DEFAULT_LOCALE = 'th';
 
 function getPreferredLocale(request: NextRequest): string {
-  // Check Accept-Language header
+  // 1. Check user's saved preference in cookie
+  const cookieLocale = request.cookies.get('NEXT_LOCALE')?.value;
+  if (cookieLocale && SUPPORTED_LOCALES.includes(cookieLocale)) {
+    return cookieLocale;
+  }
+
+  // 2. Check Accept-Language header
   const acceptLang = request.headers.get('accept-language') || '';
   
   // Simple parsing: look for 'en' or 'th' in the header
@@ -40,12 +46,22 @@ export async function proxy(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // If pathname already has a locale, proceed normally
+  // If pathname already has a locale, proceed normally (or redirect if cookie differs)
   if (pathnameHasLocale(pathname)) {
     const { supabaseResponse, user } = await updateSession(request);
 
     // Extract lang from path
     const lang = pathname.split('/')[1];
+
+    // Check if the user has a different preferred locale in their cookies
+    const cookieLocale = request.cookies.get('NEXT_LOCALE')?.value;
+    if (cookieLocale && SUPPORTED_LOCALES.includes(cookieLocale) && cookieLocale !== lang) {
+      // The URL language doesn't match the user's explicit preference.
+      // Redirect to correct the language in the URL.
+      const url = request.nextUrl.clone();
+      url.pathname = pathname.replace(`/${lang}`, `/${cookieLocale}`);
+      return NextResponse.redirect(url);
+    }
 
     // Protect parent routes
     if (pathname.startsWith(`/${lang}/book`) || pathname.startsWith(`/${lang}/apply`)) {

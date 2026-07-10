@@ -97,20 +97,20 @@ export const AdminSessionService = {
   async getSessionTemplates() {
     const { data, error } = await supabase
       .from('session_templates')
-      .select('id, time_label, capacity, is_active, created_at')
+      .select('id, time_label, capacity, trial_capacity, is_active, created_at')
       .order('time_label', { ascending: true });
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
     return data;
   },
 
-  async addSessionTemplate(timeLabel: string, capacity: number): Promise<void> {
+  async addSessionTemplate(timeLabel: string, capacity: number, trialCapacity: number): Promise<void> {
     const { error } = await supabase
       .from('session_templates')
-      .insert([{ time_label: timeLabel, capacity, is_active: true }]);
+      .insert([{ time_label: timeLabel, capacity, trial_capacity: trialCapacity, is_active: true }]);
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
   },
 
-  async updateSessionTemplate(id: string, updates: { time_label?: string; capacity?: number; is_active?: boolean; }): Promise<void> {
+  async updateSessionTemplate(id: string, updates: { time_label?: string; capacity?: number; trial_capacity?: number; is_active?: boolean; }): Promise<void> {
     const { error } = await supabase
       .from('session_templates')
       .update(updates)
