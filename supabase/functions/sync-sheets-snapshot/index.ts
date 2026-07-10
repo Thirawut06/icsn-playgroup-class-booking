@@ -9,8 +9,9 @@ const corsHeaders = {
 function formatDateStr(dateStr: string | null): string {
   if (!dateStr) return "";
   try {
-    const d = new Date(dateStr);
-    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+    // Force UTC parsing per AGENTS.md timezone rule
+    const d = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00Z');
+    return `${d.getUTCDate().toString().padStart(2, '0')}/${(d.getUTCMonth() + 1).toString().padStart(2, '0')}/${d.getUTCFullYear()}`;
   } catch (e) {
     return dateStr;
   }
@@ -20,7 +21,8 @@ function formatDateTimeStr(dateStr: string | null): string {
   if (!dateStr) return "";
   try {
     const d = new Date(dateStr);
-    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
+    // Use UTC methods for consistency across environments
+    return `${d.getUTCDate().toString().padStart(2, '0')}/${(d.getUTCMonth() + 1).toString().padStart(2, '0')}/${d.getUTCFullYear()} ${d.getUTCHours().toString().padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}:${d.getUTCSeconds().toString().padStart(2, '0')}`;
   } catch (e) {
     return dateStr;
   }
@@ -29,16 +31,17 @@ function formatDateTimeStr(dateStr: string | null): string {
 function calculateAge(dobStr: string | null): string {
   if (!dobStr) return "";
   try {
-    const dob = new Date(dobStr);
+    // Force UTC parsing per AGENTS.md timezone rule
+    const dob = new Date(dobStr.includes('T') ? dobStr : dobStr + 'T00:00:00Z');
     const today = new Date();
-    let years = today.getFullYear() - dob.getFullYear();
-    let months = today.getMonth() - dob.getMonth();
-    let days = today.getDate() - dob.getDate();
+    let years = today.getUTCFullYear() - dob.getUTCFullYear();
+    let months = today.getUTCMonth() - dob.getUTCMonth();
+    let days = today.getUTCDate() - dob.getUTCDate();
 
     if (days < 0) {
       months--;
-      const previousMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-      days += previousMonth.getDate();
+      const previousMonth = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 0));
+      days += previousMonth.getUTCDate();
     }
     if (months < 0) {
       years--;
@@ -51,13 +54,30 @@ function calculateAge(dobStr: string | null): string {
   }
 }
 
-async function sendToGoogleSheets(webhookUrl: string, payload: any) {
+async function sendToGoogleSheets(webhookUrl: string, payload: Record<string, unknown>): Promise<void> {
   const response = await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
-  return response.text();
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`GAS returned ${response.status}: ${text}`);
+  }
+  // Parse GAS response to check for application-level errors
+  try {
+    const result = JSON.parse(text);
+    if (result.success === false) {
+      throw new Error(`GAS error: ${result.error || 'Unknown'}`);
+    }
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      // GAS returned non-JSON (likely HTML redirect), treat as success
+      console.warn('GAS returned non-JSON response:', text.substring(0, 200));
+    } else {
+      throw e;
+    }
+  }
 }
 
 serve(async (req) => {
@@ -84,7 +104,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // 1. Fetch Parents & Children
-    const { data: parents } = await supabase.from('parents').select('*, children(*)').order('created_at', { ascending: false });
+    const { data: parents } = await supabase.from('parents').select('id, name, phone, email, created_at, google_drive_url, children(full_name, nickname, dob, food_allergy, special_info, media_perm)').order('created_at', { ascending: false });
     const parentsData = [];
     if (parents) {
       for (const parent of parents) {
@@ -119,7 +139,7 @@ serve(async (req) => {
     }
 
     // 2. Fetch Credit Transactions (limit to 10000 to avoid pagination issues for now)
-    const { data: creditTxs } = await supabase.from('credit_transactions').select('*, parent:parents(*)').order('created_at', { ascending: false }).limit(10000);
+    const { data: creditTxs } = await supabase.from('credit_transactions').select('parent_id, action_type, amount, notes, created_at, parent:parents(name)').order('created_at', { ascending: false }).limit(10000);
     const usageData = [];
     if (creditTxs) {
       for (const tx of creditTxs) {
@@ -134,7 +154,7 @@ serve(async (req) => {
     }
 
     // 3. Fetch Bookings
-    const { data: bookings } = await supabase.from('bookings').select('*, session:sessions(session_date, time_label), child:children(*), parent:parents(*)').order('created_at', { ascending: false });
+    const { data: bookings } = await supabase.from('bookings').select('checkin_at, created_at, session:sessions(session_date, time_label), child:children(nickname, full_name, dob, media_perm, food_allergy), parent:parents(name, phone)').order('created_at', { ascending: false });
     const bookingData = [];
     if (bookings) {
       for (const booking of bookings) {
@@ -168,7 +188,7 @@ serve(async (req) => {
       }
 
       // Pre-fetch all packages
-      const { data: allPackages } = await supabase.from('packages').select('*').order('created_at', { ascending: false }).limit(10000);
+      const { data: allPackages } = await supabase.from('packages').select('parent_id, type, created_at').order('created_at', { ascending: false }).limit(10000);
       const latestPackagesMap: Record<string, string> = {};
       if (allPackages) {
         for (const pkg of allPackages) {

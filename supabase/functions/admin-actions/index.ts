@@ -163,12 +163,7 @@ Deno.serve(async (req) => {
       const result = data as { session_date: string; child_nickname: string }
       const dateParts = result.session_date.split('-')
       const displayDate = `${dateParts[2]}/${dateParts[1]}`
-      
-      let childName = result.child_nickname
-      const { data: child } = await supabase.from('children').select('full_name, nickname').eq('id', bk.child_id).single()
-      if (child) {
-        childName = (child.full_name && child.nickname) ? `${child.full_name} (${child.nickname})` : (child.full_name || child.nickname || 'ไม่ระบุ')
-      }
+      const childName = result.child_nickname || 'ไม่ระบุ'
 
       await sendGoogleChat(`🚫 *มีการยกเลิกคลาสเรียน (โดยแอดมิน)*\n*ชื่อเด็ก:* ${childName}\n*รอบเรียน:* วันที่ ${displayDate}\n*สาเหตุ:* ${cancelReason || 'ไม่ระบุ'}`)
 
