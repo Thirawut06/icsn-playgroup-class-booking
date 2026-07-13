@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest"
+    "test": "vitest",
+    "release": "release-it"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -33,6 +34,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
+    "@release-it/conventional-changelog": "^11.0.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -48,6 +50,7 @@
     "eslint-config-next": "16.2.9",
     "jsdom": "^29.1.1",
     "pg": "^8.22.0",
+    "release-it": "^20.2.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.9"
