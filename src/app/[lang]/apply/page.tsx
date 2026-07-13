@@ -195,11 +195,26 @@ export default function Apply() {
           throw new Error(dict.apply.confirmNonRefundable);
         }
         const result = await PackageService.submitTopUp(parentId, packageType, paymentSlipFile, nonRefundable);
-        if (result && typeof result.id === 'string') {
-          transactionId = result.id;
+        if (result && typeof result.slipId === 'string') {
+          transactionId = result.slipId;
         }
       } else if (path === 'trial') {
         await PackageService.grantTrialPackage(parentId);
+      }
+
+      // Fire and forget appending to Google Sheets
+      try {
+        const formDataPayload = {
+          form_type: path,
+          parentId: parentId,
+          transactionId: transactionId
+        };
+        
+        supabase.functions.invoke('append-to-sheets', {
+          body: formDataPayload
+        }).catch(err => console.error("Error appending to sheets:", err));
+      } catch (err) {
+        console.error("Failed to invoke append-to-sheets", err);
       }
 
       setShowSuccess(true);

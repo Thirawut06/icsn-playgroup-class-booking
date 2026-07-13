@@ -87,11 +87,26 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Pre-fetch all packages to filter active parents
+    const { data: allPackages } = await supabase.from('packages').select('*').order('created_at', { ascending: false }).limit(10000);
+    const latestPackagesMap: Record<string, string> = {};
+    if (allPackages) {
+      for (const pkg of allPackages) {
+        if (!latestPackagesMap[pkg.parent_id]) {
+          latestPackagesMap[pkg.parent_id] = pkg.type;
+        }
+      }
+    }
+    const activeParentIds = new Set(Object.keys(latestPackagesMap));
+
     // 1. Fetch Parents & Children
     const { data: parents } = await supabase.from('parents').select('*, children(*)').order('created_at', { ascending: false });
     const parentsData = [];
     if (parents) {
       for (const parent of parents) {
+        // Skip REGISTERED parents (no packages)
+        if (!activeParentIds.has(parent.id)) continue;
+
         if (parent.children && parent.children.length > 0) {
           for (const child of parent.children) {
             parentsData.push([
@@ -138,7 +153,7 @@ serve(async (req) => {
     }
 
     // 3. Fetch Bookings
-    const { data: bookings } = await supabase.from('bookings').select('*, session:sessions(session_date, time_label), child:children(*), parent:parents(*)').order('created_at', { ascending: false });
+    const { data: bookings } = await supabase.from('bookings').select('*, session:sessions(session_date, time_label), child:children(*), parent:parents(*)').order('created_at', { ascending: false }).limit(10000);
     const bookingData = [];
     if (bookings) {
       for (const booking of bookings) {
@@ -171,18 +186,10 @@ serve(async (req) => {
         }
       }
 
-      // Pre-fetch all packages
-      const { data: allPackages } = await supabase.from('packages').select('*').order('created_at', { ascending: false }).limit(10000);
-      const latestPackagesMap: Record<string, string> = {};
-      if (allPackages) {
-        for (const pkg of allPackages) {
-          if (!latestPackagesMap[pkg.parent_id]) {
-            latestPackagesMap[pkg.parent_id] = pkg.type;
-          }
-        }
-      }
-
       for (const parent of parents) {
+        // Skip REGISTERED parents (no packages)
+        if (!activeParentIds.has(parent.id)) continue;
+
         const balance = balancesMap[parent.id] || 0;
         const latestPackageType = latestPackagesMap[parent.id] || '';
         

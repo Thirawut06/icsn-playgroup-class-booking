@@ -10,8 +10,39 @@ import {
 
 // --- Specific Handlers ---
 
+async function updateGoogleSheetsLink(
+  gasSheetsWebhookUrl: string, 
+  transactionId: string, 
+  type: string, 
+  url: string
+) {
+  if (!gasSheetsWebhookUrl) return;
+  const payload = {
+    action: 'update_drive_link',
+    transactionId,
+    type,
+    url
+  };
+  
+  try {
+    const res = await fetch(gasSheetsWebhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!res.ok) {
+      console.error(`GAS Sheets Webhook failed to update link: ${await res.text()}`);
+    } else {
+      console.log(`Updated Sheets link for ${transactionId} (${type})`);
+    }
+  } catch (err) {
+    console.error(`Failed to invoke GAS Sheets Webhook:`, err);
+  }
+}
+
 // deno-lint-ignore no-explicit-any
-async function handleSlipUpload(record: any, folderName: string, parentPhone: string, supabaseUrl: string, supabase: any, gasWebhookUrl: string) {
+async function handleSlipUpload(record: any, folderName: string, parentPhone: string, supabaseUrl: string, supabase: any, gasWebhookUrl: string, gasSheetsWebhookUrl: string) {
   if (!record.file_url) return;
   const fetchUrl = resolveFetchUrl(record.file_url, supabaseUrl);
   const res = await fetch(fetchUrl);
@@ -26,12 +57,15 @@ async function handleSlipUpload(record: any, folderName: string, parentPhone: st
   const fileName = `slip_${safePhone}_${dateStr}.${ext}`;
   
   const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, '', parentPhone, 'slip', gasWebhookUrl);
-  if (gasResponse?.url && record.parent_id) await updateGoogleDriveUrl(supabase, record.parent_id, gasResponse.url);
+  if (gasResponse?.url) {
+    if (record.parent_id) await updateGoogleDriveUrl(supabase, record.parent_id, gasResponse.folderUrl || gasResponse.url);
+    if (gasSheetsWebhookUrl) await updateGoogleSheetsLink(gasSheetsWebhookUrl, record.id, 'slip', gasResponse.url);
+  }
   console.log(`Synced slip ${record.id} to folder: ${folderName}`);
 }
 
 // deno-lint-ignore no-explicit-any
-async function handleChildRecord(record: any, folderName: string, parentPhone: string, childNickname: string, supabaseUrl: string, supabase: any, gasWebhookUrl: string) {
+async function handleChildRecord(record: any, folderName: string, parentPhone: string, childNickname: string, supabaseUrl: string, supabase: any, gasWebhookUrl: string, gasSheetsWebhookUrl: string) {
   if (record.photo_url) {
     const fetchUrl = resolveFetchUrl(record.photo_url, supabaseUrl);
     const res = await fetch(fetchUrl);
@@ -45,7 +79,10 @@ async function handleChildRecord(record: any, folderName: string, parentPhone: s
       const fileName = `profile_${namePart}.${ext}`;
       
       const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, 'child_photo', gasWebhookUrl);
-      if (gasResponse?.url && record.parent_id) await updateGoogleDriveUrl(supabase, record.parent_id, gasResponse.url);
+      if (gasResponse?.url) {
+        if (record.parent_id) await updateGoogleDriveUrl(supabase, record.parent_id, gasResponse.folderUrl || gasResponse.url);
+        if (gasSheetsWebhookUrl) await updateGoogleSheetsLink(gasSheetsWebhookUrl, record.parent_id, 'child_photo', gasResponse.url);
+      }
     }
   }
   
@@ -61,7 +98,10 @@ async function handleChildRecord(record: any, folderName: string, parentPhone: s
       const fileName = `parent_profile_${safeParentName}.${ext}`;
       
       const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, '', parentPhone, 'parent_photo', gasWebhookUrl);
-      if (gasResponse?.url && record.id) await updateGoogleDriveUrl(supabase, record.id, gasResponse.url);
+      if (gasResponse?.url) {
+        if (record.parent_id) await updateGoogleDriveUrl(supabase, record.parent_id, gasResponse.folderUrl || gasResponse.url);
+        if (gasSheetsWebhookUrl) await updateGoogleSheetsLink(gasSheetsWebhookUrl, record.parent_id, 'parent_photo', gasResponse.url);
+      }
     }
   }
   console.log(`Synced child photos for ${record.id} to folder: ${folderName}`);
@@ -98,9 +138,10 @@ Deno.serve(async (req) => {
   }
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   const gasWebhookUrl = Deno.env.get('GOOGLE_APPS_SCRIPT_WEBHOOK_DRIVE');
+  const gasSheetsWebhookUrl = Deno.env.get('GOOGLE_APPS_SCRIPT_WEBHOOK_SHEETS');
 
-  if (!gasWebhookUrl || !supabaseUrl || !supabaseServiceKey) {
-    console.error('Missing required env vars: GOOGLE_APPS_SCRIPT_WEBHOOK_DRIVE is required');
+  if (!gasWebhookUrl || !supabaseUrl || !supabaseServiceKey || !gasSheetsWebhookUrl) {
+    console.error('Missing required env vars');
     return new Response('Config error', { status: 500 });
   }
 
@@ -130,10 +171,10 @@ Deno.serve(async (req) => {
 
     switch (table) {
       case 'slip_uploads':
-        await handleSlipUpload(record, folderName, parentPhone, supabaseUrl, supabase, gasWebhookUrl);
+        await handleSlipUpload(record, folderName, parentPhone, supabaseUrl, supabase, gasWebhookUrl, gasSheetsWebhookUrl);
         break;
       case 'children':
-        await handleChildRecord(record, folderName, parentPhone, childNickname, supabaseUrl, supabase, gasWebhookUrl);
+        await handleChildRecord(record, folderName, parentPhone, childNickname, supabaseUrl, supabase, gasWebhookUrl, gasSheetsWebhookUrl);
         break;
       case 'bookings':
         await handleBookingSignature(record, folderName, parentPhone, childNickname, supabaseUrl, supabase, gasWebhookUrl);
