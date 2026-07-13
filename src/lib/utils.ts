@@ -29,7 +29,7 @@ export function formatDateShort(dateStr: string | null | undefined): string {
 }
 
 export class AppError extends Error {
-  constructor(public message: string, public code?: string, public details?: any) {
+  constructor(public message: string, public code?: string, public details?: unknown) {
     super(message);
     this.name = 'AppError';
   }

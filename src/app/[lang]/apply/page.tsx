@@ -151,6 +151,14 @@ export default function Apply() {
 
     try {
       if (!parentId) throw new Error(dict.apply.parentNotFound);
+      
+      // Validate Name and Surname
+      if (!isReturningParent && parentName.trim().split(/\s+/).length < 2) {
+        throw new Error("กรุณากรอกทั้งชื่อและนามสกุลของผู้ปกครอง (เว้นวรรคระหว่างชื่อและนามสกุล)");
+      }
+      if (childName.trim().split(/\s+/).length < 2) {
+        throw new Error("กรุณากรอกทั้งชื่อและนามสกุลของน้อง (เว้นวรรคระหว่างชื่อและนามสกุล)");
+      }
 
       // Validate media permission
       if (!mediaPerm) {

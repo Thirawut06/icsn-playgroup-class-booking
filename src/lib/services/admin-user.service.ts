@@ -1,6 +1,30 @@
 import { supabase } from '../supabase';
 import { ClassifiedUser } from '../../types';
 
+// --- Shared Types ---
+type RawChild = { nickname: string; full_name?: string; created_at?: string };
+type RawPackage = { type?: string; credits_remaining?: number };
+type RawBooking = { status: string };
+
+type RawParent = {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  created_at: string;
+  children?: RawChild[];
+  packages?: RawPackage[];
+  bookings?: RawBooking[];
+};
+
+type RawParentSlim = {
+  id: string;
+  name: string;
+  phone: string;
+  children?: { nickname: string }[];
+  packages?: { credits_remaining?: number }[];
+};
+
 export const AdminUserService = {
   async adminEditUser(table: 'parents' | 'children', id: string, updateData: Record<string, unknown>): Promise<void> {
     const { error } = await supabase.rpc('admin_edit_user', {
@@ -15,29 +39,21 @@ export const AdminUserService = {
     const { data: parents, error } = await supabase
       .from('parents')
       .select(`
-        id,
-        name,
-        phone,
-        email,
-        created_at,
+        id, name, phone, email, created_at,
         children(nickname, full_name, created_at),
-        packages(
-          credits_remaining,
-          type
-        ),
+        packages(credits_remaining, type),
         bookings(status)
       `);
 
     if (error) throw error;
 
-    const mapped = (parents || []).map((p: any) => {
+    const mapped = ((parents as unknown as RawParent[]) || []).map((p) => {
       const children = p.children || [];
       const packages = p.packages || [];
       const bookings = p.bookings || [];
 
-      const totalCredits = packages.reduce((sum: number, pkg: any) => sum + (pkg.credits_remaining || 0), 0);
-      const totalBookings = bookings.filter((b: any) => b.status === 'confirmed').length;
-      
+      const totalCredits = packages.reduce((sum, pkg) => sum + (pkg.credits_remaining || 0), 0);
+      const totalBookings = bookings.filter((b) => b.status === 'confirmed').length;
       const category = this._classifyUserCategory(packages, p.email);
       const latestActivity = this._calculateLatestActivity(p.created_at, children);
 
@@ -46,8 +62,8 @@ export const AdminUserService = {
         name: p.name,
         email: p.email,
         phone: p.phone,
-        children_nicknames: children.map((c: { nickname: string }) => c.nickname).join(', '),
-        children_list: children.map((c: { nickname: string, full_name?: string }) => ({ nickname: c.nickname, full_name: c.full_name })),
+        children_nicknames: children.map((c) => c.nickname).join(', '),
+        children_list: children.map((c) => ({ nickname: c.nickname, full_name: c.full_name })),
         total_credits: totalCredits,
         total_bookings: totalBookings,
         category,
@@ -56,25 +72,19 @@ export const AdminUserService = {
       };
     });
 
-    // Sort by latest activity descending (newest first)
-    return mapped.sort((a: { latestActivity: number }, b: { latestActivity: number }) => b.latestActivity - a.latestActivity);
+    return mapped.sort((a, b) => b.latestActivity - a.latestActivity);
   },
 
-  _classifyUserCategory(packages: any[], email: string = ''): 'payment' | 'trial' | 'registered' | 'walk-in' {
+  _classifyUserCategory(packages: RawPackage[], email = ''): 'payment' | 'trial' | 'registered' | 'walk-in' {
     if (packages.length === 0) {
-      if (email && email.endsWith('@icsn.local')) {
-        return 'walk-in';
-      }
-      return 'registered';
+      return email?.endsWith('@icsn.local') ? 'walk-in' : 'registered';
     }
-    const hasNormal = packages.some((pkg: any) => pkg.type !== 'trial');
-    if (hasNormal) return 'payment';
-    return 'trial';
+    return packages.some((pkg) => pkg.type !== 'trial') ? 'payment' : 'trial';
   },
 
-  _calculateLatestActivity(parentCreatedAt: string, children: any[]): number {
+  _calculateLatestActivity(parentCreatedAt: string, children: { created_at?: string }[]): number {
     let latestActivity = new Date(parentCreatedAt).getTime();
-    children.forEach((c: { nickname: string; created_at?: string }) => {
+    children.forEach((c) => {
       if (c.created_at) {
         const childTime = new Date(c.created_at).getTime();
         if (childTime > latestActivity) latestActivity = childTime;
@@ -94,12 +104,8 @@ export const AdminUserService = {
           id, session_id, child_id, parent_id, session_date, status, booking_date, child_name_snapshot, parent_phone_snapshot,
           sessions(id, session_date, time_label, total_capacity, booked_count, is_active, theme, activity_desc)
         ),
-        credit_transactions(
-          id, parent_id, package_id, amount, action_type, notes, created_at
-        ),
-        slip_uploads(
-          id, parent_id, file_url, status, reviewed_at, created_at
-        )
+        credit_transactions(id, parent_id, package_id, amount, action_type, notes, created_at),
+        slip_uploads(id, parent_id, file_url, status, reviewed_at, created_at)
       `)
       .eq('id', parentId)
       .single();
@@ -124,10 +130,7 @@ export const AdminUserService = {
     const { data: parents, error } = await supabase
       .from('parents')
       .select(`
-        id,
-        name,
-        phone,
-        created_at,
+        id, name, phone, created_at,
         children(nickname),
         packages(credits_remaining)
       `)
@@ -135,20 +138,14 @@ export const AdminUserService = {
 
     if (error) throw error;
 
-    return (parents || []).map((p: any) => {
-      const children = p.children || [];
-      const packages = p.packages || [];
-      const totalCredits = packages.reduce((sum: number, pkg: any) => sum + (pkg.credits_remaining || 0), 0);
-
-      return {
-        id: p.id,
-        name: p.name,
-        phone: p.phone,
-        children_nicknames: children.map((c: { nickname: string }) => c.nickname).join(', '),
-        total_credits: totalCredits,
-        raw_parent: p
-      };
-    });
+    return ((parents as unknown as RawParentSlim[]) || []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      phone: p.phone,
+      children_nicknames: (p.children || []).map((c) => c.nickname).join(', '),
+      total_credits: (p.packages || []).reduce((sum, pkg) => sum + (pkg.credits_remaining || 0), 0),
+      raw_parent: p
+    }));
   },
 
   async searchParentByPhone(phone: string): Promise<Record<string, unknown> | null> {
@@ -171,11 +168,7 @@ export const AdminUserService = {
       .from('children')
       .select(`
         id, parent_id, nickname, full_name, dob, age, food_allergy, media_perm, no_photo_perm, parent_photo_url, photo_url, special_info, created_at,
-        parents (
-          name,
-          phone,
-          email
-        )
+        parents(name, phone, email)
       `)
       .order('created_at', { ascending: false });
 

@@ -11,7 +11,7 @@ function formatDateStr(dateStr: string | null): string {
   try {
     const d = new Date(dateStr);
     return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
-  } catch (e) {
+  } catch {
     return dateStr;
   }
 }
@@ -21,7 +21,7 @@ function formatDateTimeStr(dateStr: string | null): string {
   try {
     const d = new Date(dateStr);
     return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
-  } catch (e) {
+  } catch {
     return dateStr;
   }
 }
@@ -46,12 +46,12 @@ function calculateAge(dobStr: string | null): string {
     }
 
     return `${years} ปี ${months} เดือน ${days} วัน`;
-  } catch (e) {
+  } catch {
     return "";
   }
 }
 
-async function sendToGoogleSheets(webhookUrl: string, payload: any) {
+async function sendToGoogleSheets(webhookUrl: string, payload: Record<string, unknown>) {
   const response = await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -71,10 +71,14 @@ serve(async (req) => {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const payload = await req.json();
+    await req.json(); // consume request body
     
     const webhookUrl = Deno.env.get('GOOGLE_APPS_SCRIPT_WEBHOOK_SHEETS');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    if (supabaseUrl && !supabaseUrl.includes('psusuyesaxuhiondxqie')) {
+      console.log('Skipping sync: Not in production environment.');
+      return new Response(JSON.stringify({ status: "success", message: "Skipped: Not in production environment" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+    }
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
     if (!webhookUrl || !supabaseUrl || !supabaseKey) {
@@ -102,7 +106,7 @@ serve(async (req) => {
               child.special_info || '-',
               child.media_perm ? '✅ อนุญาต' : '❌ ไม่อนุญาต',
               formatDateTimeStr(parent.created_at),
-              parent.google_drive_url || ''
+              parent.google_drive_url ? `=HYPERLINK("${parent.google_drive_url}", "📁 เปิดโฟลเดอร์")` : ''
             ]);
           }
         } else {
@@ -112,7 +116,7 @@ serve(async (req) => {
             parent.email,
             '', '', '', '', '', '', '',
             formatDateTimeStr(parent.created_at),
-            parent.google_drive_url || ''
+            parent.google_drive_url ? `=HYPERLINK("${parent.google_drive_url}", "📁 เปิดโฟลเดอร์")` : ''
           ]);
         }
       }
@@ -203,7 +207,8 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ status: "success" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-  } catch (error) {
-    return new Response(JSON.stringify({ status: "error", message: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    return new Response(JSON.stringify({ status: "error", message: errorMsg }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
   }
 });

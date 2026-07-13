@@ -17,6 +17,10 @@ export function ParentContactSection({ parentId, data, onRefresh }: ParentContac
 
   const handleSave = async () => {
     if (!editName.trim()) return;
+    if (editName.trim().split(/\s+/).length < 2) {
+      toast.error('กรุณากรอกทั้งชื่อและนามสกุล (เว้นวรรคระหว่างชื่อและนามสกุล)');
+      return;
+    }
     setSaving(true);
     try {
       await AdminService.updateParentName(parentId, editName.trim());

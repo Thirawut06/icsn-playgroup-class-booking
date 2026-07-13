@@ -6,6 +6,12 @@ const corsHeaders = {
 }
 
 async function sendGoogleChat(message: string) {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+  if (!supabaseUrl.includes('psusuyesaxuhiondxqie')) {
+    console.log('Skipping Google Chat notify: Not in production environment.');
+    return true; // Skip sending, return success
+  }
+
   const WEBHOOK_URL = Deno.env.get('GOOGLE_CHAT_WEBHOOK_URL')
   if (!WEBHOOK_URL) {
     console.error('Webhook URL not configured in Edge Function Secrets')

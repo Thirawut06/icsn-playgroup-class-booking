@@ -1,14 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Lock, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
 import { ROUTES } from '@/config/routes';
 
 export function ResetPasswordForm() {
-  const router = useRouter();
   const { dict, lang } = useDictionary();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -49,7 +47,7 @@ export function ResetPasswordForm() {
       }, 2000);
       
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : (dict.auth as any).genericError || 'An error occurred');
+      setErrorMessage(error instanceof Error ? error.message : (dict.auth as Record<string, string>).genericError || 'An error occurred');
     } finally {
       setLoading(false);
     }
