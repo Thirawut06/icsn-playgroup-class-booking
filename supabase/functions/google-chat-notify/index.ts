@@ -66,9 +66,9 @@ Deno.serve(async (req) => {
         const isNewFamily = Math.abs(childCreatedMs - parentCreatedMs) < 5 * 60 * 1000
 
         if (isNewFamily) {
-          message = `🎉 *มีใบสมัครใหม่เข้าสู่ระบบ!*\n*ชื่อผู้ปกครอง:* ${parent.name}\n*เบอร์โทร:* ${parent.phone || 'ไม่ระบุ'}\n*ชื่อเด็ก:* ${childName}`
+          message = `🎉 *มีบัญชีใหม่เข้าสู่ระบบ!*\n*ชื่อผู้ปกครอง:* ${parent.name}\n*เบอร์โทร:* ${parent.phone || 'ไม่ระบุ'}\n*ชื่อเด็ก:* ${childName}`
         } else {
-          message = `👶 *ลูกค้าเดิมเพิ่มข้อมูลเด็กใหม่!*\n*ผู้ปกครอง:* ${parent.name}\n*ชื่อเด็กที่เพิ่ม:* ${childName}`
+          message = `👶 *ผปค.เดิมเพิ่มข้อมูลเด็กใหม่!*\n*ผู้ปกครอง:* ${parent.name}\n*ชื่อเด็กที่เพิ่ม:* ${childName}`
         }
       }
     }
