@@ -128,10 +128,15 @@ async function handleCancelBooking(payload: any, supabase: ReturnType<typeof cre
   return successResponse(result);
 }
 
-async function handleAdjustCredits(payload: any, userClient: ReturnType<typeof createClient>) {
+async function handleAdjustCredits(payload: any, supabase: ReturnType<typeof createClient>, userClient: ReturnType<typeof createClient>) {
   const { parentId, amount, reason } = payload;
   const { data, error } = await userClient.rpc('adjust_credits', { p_parent_id: parentId, p_amount: amount, p_reason: reason });
   if (error) throw error;
+  
+  const family = await getFamilyDetails(supabase, parentId);
+  const sign = amount >= 0 ? '+' : '';
+  await sendGoogleChat(`💰 *แอดมินปรับยอดเครดิต (Manual)*\n*ผู้ปกครองของ:* ${family.childName}\n*จำนวน:* ${sign}${amount} เครดิต\n*เหตุผล:* ${reason || 'ไม่ระบุ'}\n⭐ *เครดิตคงเหลือปัจจุบัน:* ${data} เครดิต`);
+
   return successResponse({ creditsRemaining: data });
 }
 
@@ -209,7 +214,7 @@ Deno.serve(async (req) => {
       case 'approve-slip': return await handleApproveSlip(payload, supabase, userClient);
       case 'reject-slip': return await handleRejectSlip(payload, supabase);
       case 'cancel-booking': return await handleCancelBooking(payload, supabase, userClient);
-      case 'adjust-credits': return await handleAdjustCredits(payload, userClient);
+      case 'adjust-credits': return await handleAdjustCredits(payload, supabase, userClient);
       case 'add-package': return await handleAddPackage(payload, supabase);
       case 'toggle-package': return await handleTogglePackage(payload, supabase);
       case 'update-session': return await handleUpdateSession(payload, supabase);

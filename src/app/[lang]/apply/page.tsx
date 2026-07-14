@@ -202,20 +202,7 @@ export default function Apply() {
         await PackageService.grantTrialPackage(parentId);
       }
 
-      // Fire and forget appending to Google Sheets
-      try {
-        const formDataPayload = {
-          form_type: path,
-          parentId: parentId,
-          transactionId: transactionId
-        };
-        
-        supabase.functions.invoke('append-to-sheets', {
-          body: formDataPayload
-        }).catch(err => console.error("Error appending to sheets:", err));
-      } catch (err) {
-        console.error("Failed to invoke append-to-sheets", err);
-      }
+      // Google Sheets sync is now handled purely by GAS Incremental Sync script
 
       setShowSuccess(true);
       // Clear cache so next visit is fresh

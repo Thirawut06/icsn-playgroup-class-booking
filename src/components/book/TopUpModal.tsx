@@ -61,22 +61,9 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
     try {
       const result = await PackageService.submitTopUp(parentId, packageType, paymentSlipFile, true);
       // Snapshot sync is now handled automatically via database triggers (pg_net)
+      // Google Sheets sync is now handled purely by GAS Incremental Sync script
       
-      // Fire and forget appending to Google Sheets
-      try {
-        const formDataPayload = {
-          form_type: 'manual',
-          parentId: parentId,
-          transactionId: result && typeof result.slipId === 'string' ? result.slipId : parentId
-        };
-        
-        supabase.functions.invoke('append-to-sheets', {
-          body: formDataPayload
-        }).catch(err => console.error("Error appending to sheets:", err));
-      } catch (err) {
-        console.error("Failed to invoke append-to-sheets", err);
-      }
-        
+
       await refreshData(false);
       setShowSuccess(true);
     } catch (e: any) {

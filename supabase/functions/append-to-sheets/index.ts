@@ -81,8 +81,8 @@ Deno.serve(async (req) => {
         rowData[11] = ''; // Individual Child's Photo (async)
         rowData[12] = child.allergy || '-';
         rowData[13] = child.info || '-';
-        rowData[14] = child.media_permission ? 'Yes' : 'No';
-        rowData[15] = child.no_photo_permission ? 'Yes' : 'No';
+        rowData[14] = child.media_perm ? 'Yes' : 'No';
+        rowData[15] = child.no_photo_perm ? 'Yes' : 'No';
       }
       
       rowData[35] = transactionId || parentId; // Column AJ (Transaction ID)
@@ -99,12 +99,14 @@ Deno.serve(async (req) => {
       }
 
       // Fetch package for payment
+      let pkg = null;
       if (transactionId) {
-        const { data: pkg } = await supabase
+        const { data: pkgData } = await supabase
           .from('packages')
-          .select('type')
+          .select('type, non_refundable')
           .eq('id', transactionId)
           .maybeSingle();
+        pkg = pkgData;
           
         if (pkg) {
           if (pkg.type === 'manual_adjustment') {
@@ -120,11 +122,11 @@ Deno.serve(async (req) => {
       rowData[22] = ''; // Payment Method (async)
       // rowData[23] = เลขที่ใบเสร็จ (Admin fills this)
       // rowData[24] = จำนวนเงิน (Admin fills this)
-      rowData[25] = 'Yes'; // Non-refundable agreement
+      rowData[25] = pkg?.non_refundable ? 'Yes' : 'No'; // Non-refundable agreement
       
       if (child) {
-        rowData[26] = child.media_permission ? 'Yes' : 'No';
-        rowData[27] = child.no_photo_permission ? 'Yes' : 'No';
+        rowData[26] = child.media_perm ? 'Yes' : 'No';
+        rowData[27] = child.no_photo_perm ? 'Yes' : 'No';
       }
       
       rowData[35] = transactionId || parentId; // Column AJ (Transaction ID)

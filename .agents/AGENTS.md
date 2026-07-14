@@ -93,6 +93,10 @@ You carefully provide accurate, factual, thoughtful answers, and are a genius at
 
 ## Supabase PostgREST Accuracy
 - **Query Column Matching:** When writing `select()` queries, always verify column names against the actual SQL migration files. Do not assume column names (e.g., `credit_transactions` uses `notes`, not `reason`).
+- **Children Date of Birth:** The column is `dob`, NEVER `date_of_birth`.
+- **Slip Uploads Relationship:** The `package_id` column in `slip_uploads` stores the package type STRING (e.g. "1 Course (5 Sessions)"), NOT a UUID. To join slips with packages, you MUST join via `parent_id` and match the type or rely on temporal proximity.
+- **Non-Refundable Source of Truth:** The `non_refundable` boolean on the `packages` table is always false. The actual user consent is captured on the `slip_uploads` table during checkout.
+- **Historical Data Assumption:** The `parents` table only contains records from the new web system. Old Google Form records were never migrated here. Do not apply `created_at` filters assuming old form data exists in the database.
 
 ## Google Drive Sync Architecture (Crucial)
 - **Service Account Limitations:** NEVER use Google Service Accounts for uploading files (Drive API) if the destination expects to consume the user's quota. Service Accounts have 0 bytes of storage and uploads will fail with quota errors.
@@ -154,6 +158,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Google Sheets Snapshot Sync:** For Google Sheets, always use a stateless "Snapshot Sync" (Clear & Rewrite) pattern in the GAS script to ensure 100% data accuracy and avoid drift.
 - **Event-Driven Triggers:** Never use Deno.cron for syncing. Use Supabase Database Triggers (via pg_net extension) to call the Edge Function only when data changes.
 - **GAS Webhook Pattern:** Similar to Drive, always use the Google Apps Script (GAS) Webhook pattern for syncing data to Google Sheets.
+- **Historical Backfills:** NEVER use Edge Functions to backfill historical data to Google Sheets. Always write a direct Google Apps Script (GAS) that fetches data from Supabase REST API. This avoids rate limits, webhook timeouts, and allows direct use of `DriveApp` to resolve image file URLs from the parent's `google_drive_url` folder.
 
 ## Automated Testing (vitest)
 - **Vitest Timeouts for External APIs:** When writing integration tests that invoke Edge Functions hitting slow external services (like GAS Webhooks), ALWAYS increase the test timeout (e.g., }, 30000);) to prevent flaky timeout failures.

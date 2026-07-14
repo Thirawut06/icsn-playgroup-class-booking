@@ -20,8 +20,8 @@ async function sleep(ms) {
 }
 
 // ⚠️ ระบุวันที่และเวลาที่ต้องการเริ่มดึงข้อมูล (เพื่อป้องกันการดึงข้อมูลเก่าจาก Google Form ที่มีอยู่แล้วไปต่อท้ายซ้ำ)
-// เช่น ถ้าระบบเว็บเริ่มใช้จริงวันที่ 10 ก.ค. ให้ใส่ '2026-07-10T00:00:00Z'
-const START_DATE = '2026-07-10T00:00:00Z'; 
+// ข้อมูลแรกสุดที่เข้ามาในระบบเว็บคือ 7/6/2026, 3:09:49 PM (Thai time = UTC+7)
+const START_DATE = '2026-07-06T08:09:49Z';
 
 async function backfillAll() {
   console.log(`Starting backfill to Form Responses 1 for data AFTER: ${START_DATE}...`);

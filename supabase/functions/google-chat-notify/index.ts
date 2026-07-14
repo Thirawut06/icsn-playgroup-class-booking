@@ -128,10 +128,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 7. Parent Name Changed
+    // 7. Parent Name/Phone Changed
     if (table === 'parents' && type === 'UPDATE') {
-      if (old_record.name !== record.name) {
-        message = `📝 *มีการแก้ไขชื่อบัญชีผู้ใช้งาน*\n*ชื่อเดิม:* ${old_record.name || 'ไม่ระบุ'}\n*ชื่อใหม่:* ${record.name || 'ไม่ระบุ'}\n*เบอร์โทร:* ${record.phone || 'ไม่ระบุ'}`
+      if (old_record.name !== record.name || old_record.phone !== record.phone) {
+        message = `📝 *มีการแก้ไขข้อมูลบัญชีผู้ใช้งาน*\n*ชื่อ:* ${record.name || 'ไม่ระบุ'} (เดิม: ${old_record.name || 'ไม่ระบุ'})\n*เบอร์โทร:* ${record.phone || 'ไม่ระบุ'} (เดิม: ${old_record.phone || 'ไม่ระบุ'})`
       }
     }
 

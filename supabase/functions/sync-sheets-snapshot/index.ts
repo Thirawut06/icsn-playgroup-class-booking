@@ -109,30 +109,36 @@ serve(async (req) => {
 
         if (parent.children && parent.children.length > 0) {
           for (const child of parent.children) {
-            parentsData.push([
+            parentsData.push({
+              id: `${parent.id}_${child.id}`,
+              values: [
+                parent.name,
+                parent.phone,
+                parent.email,
+                child.full_name,
+                child.nickname,
+                formatDateStr(child.dob),
+                calculateAge(child.dob),
+                child.food_allergy || '-',
+                child.special_info || '-',
+                child.media_perm ? '✅ อนุญาต' : '❌ ไม่อนุญาต',
+                formatDateTimeStr(parent.created_at),
+                parent.google_drive_url ? `=HYPERLINK("${parent.google_drive_url}", "📁 เปิดโฟลเดอร์")` : ''
+              ]
+            });
+          }
+        } else {
+          parentsData.push({
+            id: parent.id,
+            values: [
               parent.name,
               parent.phone,
               parent.email,
-              child.full_name,
-              child.nickname,
-              formatDateStr(child.dob),
-              calculateAge(child.dob),
-              child.food_allergy || '-',
-              child.special_info || '-',
-              child.media_perm ? '✅ อนุญาต' : '❌ ไม่อนุญาต',
+              '', '', '', '', '', '', '',
               formatDateTimeStr(parent.created_at),
               parent.google_drive_url ? `=HYPERLINK("${parent.google_drive_url}", "📁 เปิดโฟลเดอร์")` : ''
-            ]);
-          }
-        } else {
-          parentsData.push([
-            parent.name,
-            parent.phone,
-            parent.email,
-            '', '', '', '', '', '', '',
-            formatDateTimeStr(parent.created_at),
-            parent.google_drive_url ? `=HYPERLINK("${parent.google_drive_url}", "📁 เปิดโฟลเดอร์")` : ''
-          ]);
+            ]
+          });
         }
       }
     }
@@ -142,13 +148,16 @@ serve(async (req) => {
     const usageData = [];
     if (creditTxs) {
       for (const tx of creditTxs) {
-        usageData.push([
-          formatDateTimeStr(tx.created_at),
-          tx.parent?.name || 'Unknown',
-          tx.action_type,
-          tx.amount,
-          tx.notes || ''
-        ]);
+        usageData.push({
+          id: tx.id,
+          values: [
+            formatDateTimeStr(tx.created_at),
+            tx.parent?.name || 'Unknown',
+            tx.action_type,
+            tx.amount,
+            tx.notes || ''
+          ]
+        });
       }
     }
 
@@ -158,19 +167,22 @@ serve(async (req) => {
     if (bookings) {
       for (const booking of bookings) {
         if (!booking.session || !booking.child || !booking.parent) continue;
-        bookingData.push([
-          formatDateStr(booking.session.session_date),
-          booking.session.time_label,
-          booking.child.nickname,
-          booking.child.full_name,
-          calculateAge(booking.child.dob),
-          booking.parent.name,
-          booking.parent.phone,
-          booking.child.media_perm ? '✅ อนุญาต' : '❌ ไม่อนุญาต',
-          booking.child.food_allergy || '-',
-          booking.checkin_at ? formatDateTimeStr(booking.checkin_at) : 'ยังไม่เช็คชื่อ',
-          formatDateTimeStr(booking.created_at)
-        ]);
+        bookingData.push({
+          id: booking.id,
+          values: [
+            formatDateStr(booking.session.session_date),
+            booking.session.time_label,
+            booking.child.nickname,
+            booking.child.full_name,
+            calculateAge(booking.child.dob),
+            booking.parent.name,
+            booking.parent.phone,
+            booking.child.media_perm ? '✅ อนุญาต' : '❌ ไม่อนุญาต',
+            booking.child.food_allergy || '-',
+            booking.checkin_at ? formatDateTimeStr(booking.checkin_at) : 'ยังไม่เช็คชื่อ',
+            formatDateTimeStr(booking.created_at)
+          ]
+        });
       }
     }
 
@@ -193,13 +205,16 @@ serve(async (req) => {
         const balance = balancesMap[parent.id] || 0;
         const latestPackageType = latestPackagesMap[parent.id] || '';
         
-        balanceData.push([
-          parent.name,
-          parent.phone,
-          balance,
-          latestPackageType,
-          formatDateTimeStr(new Date().toISOString())
-        ]);
+        balanceData.push({
+          id: parent.id,
+          values: [
+            parent.name,
+            parent.phone,
+            balance,
+            latestPackageType,
+            formatDateTimeStr(new Date().toISOString())
+          ]
+        });
       }
     }
 
