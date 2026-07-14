@@ -101,7 +101,7 @@ async function handleRejectSlip(payload: any, supabase: ReturnType<typeof create
 
   const family = await getFamilyDetails(supabase, slip.parent_id);
   const creditsRemaining = await getRemainingCredits(supabase, slip.parent_id);
-  await sendGoogleChat(`❌ *ปฏิเสธสลิปชำระเงิน!*\n*ผู้ปกครอง:* ${family.parentName} (${family.childName})\n*เหตุผล:* สลิปไม่ถูกต้อง หรือยอดเงินไม่ตรง\n⭐ *เครดิตคงเหลือปัจจุบัน:* ${creditsRemaining} เครดิต`);
+  await sendGoogleChat(`❌ *ปฏิเสธสลิปชำระเงิน!*\n*ผู้ปกครอง:* ${family.parentName} (${family.childName})\n⭐ *เครดิตคงเหลือปัจจุบัน:* ${creditsRemaining} เครดิต`);
   return successResponse();
 }
 

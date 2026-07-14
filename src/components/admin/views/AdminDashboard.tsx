@@ -346,7 +346,7 @@ export function AdminDashboard({ onNavigate }: {
       hoverBorder: 'hover:border-blue-400/50',
       hoverBg: 'group-hover:bg-blue-100',
       hoverIcon: 'group-hover:text-blue-600',
-      onClick: () => window.open('https://drive.google.com/drive/u/0/folders/1xjcWjvRbE7qre-c8PUpMqnks3BY2VTpN', '_blank'),
+      onClick: () => window.open('https://drive.google.com/drive/u/0/folders/1x32LC1rL7AmB8IO_e2jIqr7oJrFGRiHX', '_blank'),
     },
     {
       label: 'Google Sheets ฐานข้อมูล',
@@ -355,7 +355,7 @@ export function AdminDashboard({ onNavigate }: {
       hoverBorder: 'hover:border-green-400/50',
       hoverBg: 'group-hover:bg-green-100',
       hoverIcon: 'group-hover:text-green-600',
-      onClick: () => window.open('https://docs.google.com/spreadsheets/d/1DtVGWisyY3WnGpize3ZG0Kodh_FRxVW4YjIEmyA0lOo/edit?usp=sharing', '_blank'),
+      onClick: () => window.open('https://docs.google.com/spreadsheets/d/1Draw8NNSHk7rv11YF_uDTGQcNc_0qFnNJfnyrFHK16A/edit?gid=1687370883#gid=1687370883', '_blank'),
     },
   ], [onNavigate, stats?.pendingSlips, handleScrollToRecent]);
 
