@@ -131,7 +131,7 @@ export class SupabaseParentAdapter implements IParentRepository {
   }
 
   async updateChildPhotos(childId: string, photoUrl: string | null, parentPhotoUrl: string | null): Promise<void> {
-    const updates: any = {};
+    const updates: Record<string, string> = {};
     if (photoUrl !== null) updates.photo_url = photoUrl;
     if (parentPhotoUrl !== null) updates.parent_photo_url = parentPhotoUrl;
 

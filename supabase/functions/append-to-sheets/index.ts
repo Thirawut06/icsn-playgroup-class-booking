@@ -1,260 +1,164 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Helper for date formatting
-function formatDateStr(dateStr: string | null): string {
-  if (!dateStr) return "";
-  try {
-    const d = new Date(dateStr);
-    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
-  } catch (e) {
-    return dateStr;
-  }
-}
-
-function formatDateTimeStr(dateStr: string | null): string {
-  if (!dateStr) return "";
-  try {
-    const d = new Date(dateStr);
-    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
-  } catch (e) {
-    return dateStr;
-  }
-}
-
-function calculateAge(dobStr: string | null): string {
-  if (!dobStr) return "";
-  try {
-    const birthDate = new Date(dobStr);
-    const today = new Date();
-    let years = today.getFullYear() - birthDate.getFullYear();
-    let months = today.getMonth() - birthDate.getMonth();
-    let days = today.getDate() - birthDate.getDate();
-    
-    if (days < 0) {
-      months--;
-      const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-      days += lastMonth.getDate();
-    }
-    if (months < 0) {
-      years--;
-      months += 12;
-    }
-    return `${years} ปี ${months} เทือน ${days} วัน`;
-  } catch (e) {
-    return "";
-  }
-}
-
-async function sendToGoogleSheets(webhookUrl: string, payload: any) {
-  const response = await fetch(webhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-  return response.text();
-}
-
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const gasWebhookUrl = Deno.env.get('GOOGLE_APPS_SCRIPT_WEBHOOK_SHEETS');
+
+  if (!supabaseUrl || !supabaseServiceKey || !gasWebhookUrl) {
+    return new Response(JSON.stringify({ error: 'Server configuration error' }), { 
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    });
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
   try {
     const payload = await req.json();
-    
-    const webhookUrl = Deno.env.get('GOOGLE_APPS_SCRIPT_WEBHOOK_SHEETS');
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
-    if (!webhookUrl || !supabaseUrl || !supabaseKey) {
-      throw new Error('Missing environment configuration in Supabase Secrets');
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     const { form_type, parentId, transactionId } = payload;
 
-    if (!parentId || !transactionId) {
-      throw new Error('parentId and transactionId are required');
+    if (!form_type || !parentId) {
+      return new Response(JSON.stringify({ error: 'Missing required parameters' }), { 
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
     }
 
-    // 1. Fetch Parent
+    // Fetch parent data
     const { data: parent, error: parentError } = await supabase
       .from('parents')
       .select('*')
       .eq('id', parentId)
       .single();
-
-    if (parentError || !parent) throw new Error("Parent not found");
-
-    // 2. Fetch Packages & Balance for Update
-    const { data: creditBalance } = await supabase.rpc('get_parent_balance', { p_parent_id: parentId });
-    const { data: latestPackage } = await supabase.from('packages').select('*').eq('parent_id', parentId).order('created_at', { ascending: false }).limit(1).maybeSingle();
-    const packageName = latestPackage ? latestPackage.type : '';
-    const currentBalance = creditBalance || 0;
-    const nowStr = formatDateTimeStr(new Date().toISOString());
-
-    // Routing Logic
-    if (form_type === 'trial' || form_type === 'manual') {
-      // EVENT: Parent Registration (Trial / Manual)
-      const { data: child } = await supabase.from('children').select('*').eq('parent_id', parentId).order('created_at', { ascending: false }).limit(1).maybeSingle();
-      const folderLookupName = child ? `${parent.name} - ${child.nickname}` : parent.name;
       
-      let rowData = [
-        parent.name,
-        parent.phone,
-        parent.email,
-        child ? child.full_name : '',
-        child ? child.nickname : '',
-        child ? formatDateStr(child.dob) : '',
-        child ? calculateAge(child.dob) : '',
-        child ? (child.food_allergy || '-') : '',
-        child ? (child.special_info || '-') : '',
-        child ? (child.media_perm ? '✅ อนุญาต' : '❌ ไม่อนุญาต') : '',
-        formatDateTimeStr(parent.created_at),
-        '' // Placeholder for Google Drive Link
-      ];
-
-      await sendToGoogleSheets(webhookUrl, {
-        tab_name: '👥 ฐานข้อมูลผู้ใช้',
-        action: 'append_row',
-        rowData: rowData,
-        lookup_phone: parent.phone
-      });
-
-    } else if (form_type === 'payment') {
-      // EVENT: Package Topup
-      const { data: slip } = await supabase.from('slip_uploads').select('*').eq('id', transactionId).single();
-      
-      const getPackageAmount = (packageId: string) => {
-        if (!packageId) return 0;
-        if (packageId.includes('1 Course')) return 5;
-        if (packageId.includes('2 Courses')) return 10;
-        if (packageId.includes('3 Courses')) return 15;
-        if (packageId.includes('4 Courses')) return 20;
-        if (packageId.includes('trial')) return 1;
-        if (packageId.includes('Drop-in')) return 1;
-        return 0;
-      };
-      const amount = slip && slip.status === 'approved' ? getPackageAmount(slip.package_id) : 0;
-
-      // 1. Insert Usage History
-      await sendToGoogleSheets(webhookUrl, {
-        tab_name: '📝 ประวัติการใช้เครดิต',
-        action: 'append_row',
-        rowData: [
-          formatDateTimeStr(slip ? (slip.reviewed_at || slip.created_at) : new Date().toISOString()),
-          parent.name,
-          'topup',
-          amount,
-          slip ? `slip approved: ${slip.id}` : 'slip approved'
-        ]
-      });
-
-      // 2. Update Remaining Credits
-      await sendToGoogleSheets(webhookUrl, {
-        tab_name: '💳 เครดิตคงเหลือ',
-        action: 'upsert_credit',
-        phone: parent.phone,
-        rowData: [
-          parent.name,
-          parent.phone,
-          currentBalance,
-          packageName,
-          nowStr
-        ]
-      });
-
-    } else if (form_type === 'booking') {
-      // EVENT: Class Booking
-      const { data: booking } = await supabase.from('bookings').select('*, session:sessions(session_date, time_label), child:children(*)').eq('id', transactionId).single();
-
-      if (booking && booking.session && booking.child) {
-        // 1. Insert Attendance History
-        await sendToGoogleSheets(webhookUrl, {
-          tab_name: '📅 ประวัติการเข้าเรียนทั้งหมด',
-          action: 'append_row',
-          rowData: [
-            formatDateStr(booking.session.session_date),
-            booking.session.time_label,
-            booking.child.nickname,
-            booking.child.full_name,
-            calculateAge(booking.child.dob),
-            parent.name,
-            parent.phone,
-            booking.child.media_perm ? '✅ อนุญาต' : '❌ ไม่อนุญาต',
-            booking.child.food_allergy || '-',
-            booking.checkin_at ? formatDateTimeStr(booking.checkin_at) : 'ยังไม่เช็คชื่อ',
-            formatDateTimeStr(booking.created_at)
-          ]
-        });
-
-        // 2. Insert Usage History
-        await sendToGoogleSheets(webhookUrl, {
-          tab_name: '📝 ประวัติการใช้เครดิต',
-          action: 'append_row',
-          rowData: [
-            formatDateTimeStr(booking.created_at),
-            parent.name,
-            'booking',
-            -1,
-            `Booked session ${booking.session_id}`
-          ]
-        });
-
-        // 3. Update Remaining Credits
-        await sendToGoogleSheets(webhookUrl, {
-          tab_name: '💳 เครดิตคงเหลือ',
-          action: 'upsert_credit',
-          phone: parent.phone,
-          rowData: [
-            parent.name,
-            parent.phone,
-            currentBalance,
-            packageName,
-            nowStr
-          ]
-        });
-      }
-    } else if (form_type === 'credit_transaction') {
-      const { data: tx } = await supabase.from('credit_transactions').select('*').eq('id', transactionId).single();
-      if (tx) {
-        await sendToGoogleSheets(webhookUrl, {
-          tab_name: '📝 ประวัติการใช้เครดิต',
-          action: 'append_row',
-          rowData: [
-            formatDateTimeStr(tx.created_at),
-            parent.name,
-            tx.action_type,
-            tx.amount,
-            tx.notes || ''
-          ]
-        });
-        
-        await sendToGoogleSheets(webhookUrl, {
-          tab_name: '💳 เครดิตคงเหลือ',
-          action: 'upsert_credit',
-          phone: parent.phone,
-          rowData: [
-            parent.name,
-            parent.phone,
-            currentBalance,
-            packageName,
-            nowStr
-          ]
-        });
-      }
+    if (parentError || !parent) {
+      throw new Error(`Parent not found: ${parentError?.message}`);
     }
 
-    return new Response(JSON.stringify({ status: "success" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    // Fetch child data (latest)
+    const { data: child } = await supabase
+      .from('children')
+      .select('*')
+      .eq('parent_id', parentId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  } catch (error) {
-    return new Response(JSON.stringify({ status: "error", message: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
+    // Initialize 37-column array with empty strings
+    const rowData = Array(37).fill('');
+    
+    // Format timestamp
+    const now = new Date();
+    const formattedTimestamp = now.toLocaleString('en-US', { 
+      month: 'numeric', day: 'numeric', year: 'numeric', 
+      hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true 
+    });
+
+    // Populate common fields
+    rowData[0] = formattedTimestamp; // Timestamp
+    rowData[1] = ''; // Status
+    rowData[2] = parent.email || ''; // Email Address
+
+    if (form_type === 'trial') {
+      rowData[3] = 'A free trial class / ทดลองเรียนฟรีครั้งแรก';
+      rowData[4] = ''; // Trial date (used to be in form, now usually set in booking)
+      rowData[5] = parent.name || ''; // Parent's full name
+      rowData[6] = parent.phone || ''; // Parent's telephone number
+      rowData[7] = ''; // Individual Parent's Photo (async)
+      
+      if (child) {
+        rowData[8] = child.full_name || '';
+        rowData[9] = child.nickname || '';
+        rowData[10] = child.date_of_birth ? new Date(child.date_of_birth).toLocaleDateString('en-GB') : '';
+        rowData[11] = ''; // Individual Child's Photo (async)
+        rowData[12] = child.allergy || '-';
+        rowData[13] = child.info || '-';
+        rowData[14] = child.media_perm ? 'Yes' : 'No';
+        rowData[15] = child.no_photo_perm ? 'Yes' : 'No';
+      }
+      
+      rowData[35] = transactionId || parentId; // Column AJ (Transaction ID)
+
+    } else if (form_type === 'payment' || form_type === 'manual') {
+      rowData[3] = 'Make a Payment / ชำระเงิน';
+      rowData[16] = parent.name || '';
+      rowData[17] = parent.phone || '';
+      
+      if (child) {
+        rowData[18] = child.full_name || '';
+        rowData[19] = child.nickname || '';
+        rowData[20] = child.date_of_birth ? new Date(child.date_of_birth).toLocaleDateString('en-GB') : '';
+      }
+
+      // Fetch package for payment
+      let pkg = null;
+      if (transactionId) {
+        const { data: pkgData } = await supabase
+          .from('packages')
+          .select('type, non_refundable')
+          .eq('id', transactionId)
+          .maybeSingle();
+        pkg = pkgData;
+          
+        if (pkg) {
+          if (pkg.type === 'manual_adjustment') {
+            console.log('Skipping Google Sheets append for manual_adjustment package');
+            return new Response(JSON.stringify({ success: true, message: 'Skipped manual adjustment' }), { 
+              status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            });
+          }
+          rowData[21] = pkg.type;
+        }
+      }
+
+      rowData[22] = ''; // Payment Method (async)
+      // rowData[23] = เลขที่ใบเสร็จ (Admin fills this)
+      // rowData[24] = จำนวนเงิน (Admin fills this)
+      rowData[25] = pkg?.non_refundable ? 'Yes' : 'No'; // Non-refundable agreement
+      
+      if (child) {
+        rowData[26] = child.media_perm ? 'Yes' : 'No';
+        rowData[27] = child.no_photo_perm ? 'Yes' : 'No';
+      }
+      
+      rowData[35] = transactionId || parentId; // Column AJ (Transaction ID)
+    }
+
+    // Send payload to Google Apps Script Webhook
+    const gasPayload = {
+      action: 'append_row',
+      rowData: rowData
+    };
+
+    const gasResponse = await fetch(gasWebhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(gasPayload)
+    });
+
+    if (!gasResponse.ok) {
+      const errorText = await gasResponse.text();
+      throw new Error(`Google Apps Script responded with ${gasResponse.status}: ${errorText}`);
+    }
+
+    return new Response(JSON.stringify({ success: true }), { 
+      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    });
+
+  } catch (error: any) {
+    console.error('Error appending to sheets:', error);
+    return new Response(JSON.stringify({ error: error.message }), { 
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    });
   }
 });

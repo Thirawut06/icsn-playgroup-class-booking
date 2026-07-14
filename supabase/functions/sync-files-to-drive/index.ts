@@ -1,204 +1,166 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import {
+  resolveFetchUrl,
+  uploadToGasWebhook,
+  updateGoogleDriveUrl,
+  sanitizeForFilename,
+  getFormattedDateStr,
+  resolveFolderInfo,
+} from '../_shared/drive-utils.ts';
 
-function resolveFetchUrl(fileUrl: string, supabaseUrl: string): string {
-  if (!fileUrl) return fileUrl;
-  try {
-    if (fileUrl.includes('localhost') || fileUrl.includes('127.0.0.1')) {
-      const urlObj = new URL(fileUrl);
-      const supaObj = new URL(supabaseUrl);
-      return `${supaObj.origin}${urlObj.pathname}${urlObj.search}`;
-    }
-  } catch (e) {
-    // ignore
-  }
-  return fileUrl;
-}
+// --- Specific Handlers ---
 
-async function blobToBase64(blob: Blob): Promise<string> {
-  const buffer = await blob.arrayBuffer();
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  // Chunking to ensure no call stack limits are hit
-  const chunkSize = 8192;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunkSize)));
-  }
-  return btoa(binary);
-}
-
-async function uploadToGasWebhook(
-  blob: Blob, 
-  fileName: string, 
-  parentFolderName: string, 
-  subFolderName: string,
-  parentPhone: string,
-  fileType: string,
-  gasWebhookUrl: string
-) {
-  const base64Data = await blobToBase64(blob);
-  const payload = {
-    action: 'sync_file',
-    parentFolderName,
-    childFolderName: subFolderName, // Use childFolderName to match GAS script
-    parentPhone,
-    fileName,
-    fileType, // Include fileType for GAS overwrite logic
-    mimeType: blob.type || 'application/octet-stream',
-    base64Data
-  };
-
-  const res = await fetch(gasWebhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-
-  if (!res.ok) {
-    throw new Error(`GAS Webhook failed: ${await res.text()}`);
-  }
-
-  const data = await res.json();
-  if (data.error) {
-    throw new Error(`GAS Error: ${data.error}`);
-  }
-  return data;
-}
-
-async function updateGoogleDriveUrl(
-  supabase: any,
-  parentId: string,
+async function updateGoogleSheetsLink(
+  gasSheetsWebhookUrl: string, 
+  transactionId: string, 
+  type: string, 
   url: string
 ) {
-  if (!url || !parentId) return;
-  const { error } = await supabase
-    .from('parents')
-    .update({ google_drive_url: url })
-    .eq('id', parentId);
+  if (!gasSheetsWebhookUrl) return;
+  const payload = {
+    action: 'update_drive_link',
+    transactionId,
+    type,
+    url
+  };
+  
+  try {
+    const res = await fetch(gasSheetsWebhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
     
-  if (error) {
-    console.error(`Failed to update google_drive_url for parent ${parentId}:`, error.message);
-  } else {
-    console.log(`Saved Google Drive URL for parent ${parentId}`);
+    if (!res.ok) {
+      console.error(`GAS Sheets Webhook failed to update link: ${await res.text()}`);
+    } else {
+      console.log(`Updated Sheets link for ${transactionId} (${type})`);
+    }
+  } catch (err) {
+    console.error(`Failed to invoke GAS Sheets Webhook:`, err);
   }
 }
 
-// Helpers for string sanitization
-function sanitizeForFilename(str: string): string {
-  if (!str) return '';
-  return str
-    .trim()
-    .replace(/\s+/g, '_')     // Replace spaces with underscores
-    .replace(/[()\/\\:*?"<>|]/g, '') // Remove invalid file characters and parentheses
-    .replace(/_+/g, '_');     // Replace multiple underscores with single underscore
+// deno-lint-ignore no-explicit-any
+async function handleSlipUpload(record: any, folderName: string, parentPhone: string, supabaseUrl: string, supabase: any, gasWebhookUrl: string, gasSheetsWebhookUrl: string) {
+  if (!record.file_url) return;
+  const fetchUrl = resolveFetchUrl(record.file_url, supabaseUrl);
+  const res = await fetch(fetchUrl);
+  if (!res.ok) throw new Error(`Could not fetch file: ${res.status}`);
+  
+  const blob = await res.blob();
+  const ext = record.file_url.split('?')[0].split('.').pop() || 'jpg';
+  const createdAt = new Date((record.created_at as string) || new Date());
+  const dateStr = getFormattedDateStr(createdAt);
+  
+  const safePhone = sanitizeForFilename(parentPhone) || 'no_phone';
+  const fileName = `slip_${safePhone}_${dateStr}.${ext}`;
+  
+  const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, '', parentPhone, 'slip', gasWebhookUrl);
+  if (gasResponse?.url) {
+    if (record.parent_id) await updateGoogleDriveUrl(supabase, record.parent_id, gasResponse.folderUrl || gasResponse.url);
+    if (gasSheetsWebhookUrl) await updateGoogleSheetsLink(gasSheetsWebhookUrl, record.id, 'slip', gasResponse.url);
+  }
+  console.log(`Synced slip ${record.id} to folder: ${folderName}`);
 }
 
-// Helpers for Date Formatting (DD-MM-YYYY)
-function getFormattedDateStr(date: Date): string {
-  const d = String(date.getDate()).padStart(2, '0');
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const y = date.getFullYear();
-  return `${d}-${m}-${y}`;
-}
-
-function getFormattedTimeStr(date: Date): string {
-  const h = String(date.getHours()).padStart(2, '0');
-  const min = String(date.getMinutes()).padStart(2, '0');
-  const s = String(date.getSeconds()).padStart(2, '0');
-  return `${h}${min}${s}`;
-}
-
-async function resolveFolderInfo(table: string, record: any, supabase: any) {
-  let folderName = 'Unknown Parent';
-  let parentPhone = '';
-  let childNickname = '';
-
-  if (record.parent_id) {
-    const { data: parent } = await supabase
-      .from('parents')
-      .select('name, phone, children(nickname)')
-      .eq('id', record.parent_id)
-      .single();
+// deno-lint-ignore no-explicit-any
+async function handleChildRecord(record: any, folderName: string, parentPhone: string, childNickname: string, supabaseUrl: string, supabase: any, gasWebhookUrl: string, gasSheetsWebhookUrl: string) {
+  if (record.photo_url) {
+    const fetchUrl = resolveFetchUrl(record.photo_url, supabaseUrl);
+    const res = await fetch(fetchUrl);
+    if (res.ok) {
+      const blob = await res.blob();
+      const ext = record.photo_url.split('?')[0].split('.').pop() || 'jpg';
       
-    if (parent) {
-      parentPhone = parent.phone || '';
-      const childNicknames = parent.children?.map((c: any) => c.nickname).filter(Boolean).join(', ');
-      const childStr = childNicknames ? ` (${childNicknames})` : '';
-      folderName = `${parent.name}${childStr}`.trim();
-    }
-  }
-
-  if (table === 'children') {
-    const fn = record.full_name ? record.full_name.trim() : '';
-    const nn = record.nickname ? record.nickname.trim() : '';
-    if (fn && nn) childNickname = `${fn} (${nn})`;
-    else if (fn) childNickname = fn;
-    else if (nn) childNickname = nn;
-  } else if (table === 'bookings' && record.child_id) {
-    const { data: child } = await supabase
-      .from('children')
-      .select('nickname, full_name')
-      .eq('id', record.child_id)
-      .single();
+      const safeFullName = sanitizeForFilename(record.full_name);
+      const safeNickname = sanitizeForFilename(record.nickname);
+      const namePart = [safeFullName, safeNickname].filter(Boolean).join('_') || 'unknown';
+      const fileName = `profile_${namePart}.${ext}`;
       
-    if (child) {
-      const fn = child.full_name ? child.full_name.trim() : '';
-      const nn = child.nickname ? child.nickname.trim() : '';
-      if (fn && nn) childNickname = `${fn} (${nn})`;
-      else if (fn) childNickname = fn;
-      else if (nn) childNickname = nn;
-    }
-    
-    // Fallback if child is somehow not found or has no name
-    if (!childNickname && record.child_name_snapshot) {
-      childNickname = record.child_name_snapshot.trim();
+      const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, 'child_photo', gasWebhookUrl);
+      if (gasResponse?.url) {
+        if (record.parent_id) await updateGoogleDriveUrl(supabase, record.parent_id, gasResponse.folderUrl || gasResponse.url);
+        if (gasSheetsWebhookUrl) await updateGoogleSheetsLink(gasSheetsWebhookUrl, record.parent_id, 'child_photo', gasResponse.url);
+      }
     }
   }
-
-  return { folderName, parentPhone, childNickname };
+  
+  if (record.parent_photo_url) {
+    const fetchUrl = resolveFetchUrl(record.parent_photo_url, supabaseUrl);
+    const res = await fetch(fetchUrl);
+    if (res.ok) {
+      const blob = await res.blob();
+      const ext = record.parent_photo_url.split('?')[0].split('.').pop() || 'jpg';
+      
+      const extractedParentName = folderName.split(' (')[0];
+      const safeParentName = sanitizeForFilename(extractedParentName) || 'unknown';
+      const fileName = `parent_profile_${safeParentName}.${ext}`;
+      
+      const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, '', parentPhone, 'parent_photo', gasWebhookUrl);
+      if (gasResponse?.url) {
+        if (record.parent_id) await updateGoogleDriveUrl(supabase, record.parent_id, gasResponse.folderUrl || gasResponse.url);
+        if (gasSheetsWebhookUrl) await updateGoogleSheetsLink(gasSheetsWebhookUrl, record.parent_id, 'parent_photo', gasResponse.url);
+      }
+    }
+  }
+  console.log(`Synced child photos for ${record.id} to folder: ${folderName}`);
 }
+
+// deno-lint-ignore no-explicit-any
+async function handleBookingSignature(record: any, folderName: string, parentPhone: string, childNickname: string, supabaseUrl: string, _supabase: any, gasWebhookUrl: string) {
+  if (!record.signature_url) return;
+  const fetchUrl = resolveFetchUrl(record.signature_url, supabaseUrl);
+  const res = await fetch(fetchUrl);
+  if (!res.ok) throw new Error(`Could not fetch signature: ${res.status}`);
+  
+  const blob = await res.blob();
+  const ext = record.signature_url.split('?')[0].split('.').pop() || 'png';
+  const checkinDate = record.checkin_at ? new Date(record.checkin_at) : new Date();
+  const dateStr = getFormattedDateStr(checkinDate);
+  
+  const safeChildName = sanitizeForFilename(childNickname) || 'unknown';
+  const fileName = `signature_${safeChildName}_${dateStr}.${ext}`;
+  
+  await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, 'signature', gasWebhookUrl);
+  console.log(`Synced signature for booking ${record.id} to folder: ${folderName}`);
+}
+
+// --- Main Handler ---
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  if (supabaseUrl && !supabaseUrl.includes('psusuyesaxuhiondxqie')) {
+    console.log('Skipping sync: Not in production environment.');
+    return new Response('Ignored - Not in production environment', { status: 200 });
+  }
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   const gasWebhookUrl = Deno.env.get('GOOGLE_APPS_SCRIPT_WEBHOOK_DRIVE');
   const gasSheetsWebhookUrl = Deno.env.get('GOOGLE_APPS_SCRIPT_WEBHOOK_SHEETS');
 
-  if (!gasWebhookUrl || !supabaseUrl || !supabaseServiceKey) {
-    console.error('Missing required env vars: GOOGLE_APPS_SCRIPT_WEBHOOK_DRIVE is required');
+  if (!gasWebhookUrl || !supabaseUrl || !supabaseServiceKey || !gasSheetsWebhookUrl) {
+    console.error('Missing required env vars');
     return new Response('Config error', { status: 500 });
   }
 
   try {
-    const expectedSecret = Deno.env.get('WEBHOOK_SECRET');
-    if (expectedSecret && req.headers.get('x-webhook-secret') !== expectedSecret) {
-      return new Response('Unauthorized', { status: 401 });
-    }
-
     const payload = await req.json();
     const { type, table, record, old_record } = payload;
     
-    // Process INSERTs, or UPDATEs where a file was just added
-    if (type !== 'INSERT' && type !== 'UPDATE') {
-      return new Response('Ignored', { status: 200 });
-    }
+    if (type !== 'INSERT' && type !== 'UPDATE') return new Response('Ignored', { status: 200 });
     
+    // Ignore early based on specific table rules
     if (table === 'slip_uploads') {
-      if (type === 'INSERT') {
-        return new Response('Ignored - Slips only uploaded upon approval', { status: 200 });
-      }
-      if (type === 'UPDATE') {
-        const justApproved = record.status === 'approved' && old_record?.status !== 'approved';
-        if (!justApproved) {
-          return new Response('Ignored - Slip status did not change to approved', { status: 200 });
-        }
+      if (type === 'INSERT') return new Response('Ignored - Slips only uploaded upon approval', { status: 200 });
+      if (type === 'UPDATE' && !(record.status === 'approved' && old_record?.status !== 'approved')) {
+        return new Response('Ignored - Slip status did not change to approved', { status: 200 });
       }
     } else if (type === 'UPDATE') {
       if (table === 'children' && record.photo_url === old_record?.photo_url && record.parent_photo_url === old_record?.parent_photo_url) {
         return new Response('Ignored', { status: 200 });
       }
-      
       if (table === 'bookings' && record.signature_url === old_record?.signature_url) {
         return new Response('Ignored', { status: 200 });
       }
@@ -207,93 +169,24 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const { folderName, parentPhone, childNickname } = await resolveFolderInfo(table, record, supabase);
 
-
-    if (table === 'slip_uploads' && record.file_url) {
-      const fetchUrl = resolveFetchUrl(record.file_url, supabaseUrl);
-      const res = await fetch(fetchUrl);
-      if (!res.ok) throw new Error(`Could not fetch file: ${res.status}`);
-      
-      const blob = await res.blob();
-      const ext = record.file_url.split('?')[0].split('.').pop() || 'jpg';
-      const createdAt = new Date(record.created_at || new Date());
-      const dateStr = getFormattedDateStr(createdAt);
-      
-      const safePhone = sanitizeForFilename(parentPhone) || 'no_phone';
-      const fileName = `slip_${safePhone}_${dateStr}.${ext}`;
-      
-      const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, '', parentPhone, 'slip', gasWebhookUrl);
-      if (gasResponse && gasResponse.url && record.parent_id) {
-        await updateGoogleDriveUrl(supabase, record.parent_id, gasResponse.url);
-      }
-      console.log(`Synced slip ${record.id} to folder: ${folderName}`);
-    } 
-    else if (table === 'children') {
-      if (record.photo_url) {
-        const fetchUrl = resolveFetchUrl(record.photo_url, supabaseUrl);
-        const res = await fetch(fetchUrl);
-        if (res.ok) {
-          const blob = await res.blob();
-          const ext = record.photo_url.split('?')[0].split('.').pop() || 'jpg';
-          const createdAt = new Date(record.created_at || new Date());
-          const dateStr = getFormattedDateStr(createdAt);
-          
-          const safeFullName = sanitizeForFilename(record.full_name);
-          const safeNickname = sanitizeForFilename(record.nickname);
-          const namePart = [safeFullName, safeNickname].filter(Boolean).join('_') || 'unknown';
-          const fileName = `profile_${namePart}.${ext}`;
-          
-          const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, 'child_photo', gasWebhookUrl);
-          if (gasResponse && gasResponse.url && record.parent_id) {
-            await updateGoogleDriveUrl(supabase, record.parent_id, gasResponse.url);
-          }
-        }
-      }
-      
-      if (record.parent_photo_url) {
-        const fetchUrl = resolveFetchUrl(record.parent_photo_url, supabaseUrl);
-        const res = await fetch(fetchUrl);
-        if (res.ok) {
-          const blob = await res.blob();
-          const ext = record.parent_photo_url.split('?')[0].split('.').pop() || 'jpg';
-          const createdAt = new Date(record.created_at || new Date());
-          const dateStr = getFormattedDateStr(createdAt);
-          
-          // parent_profile uses parent's name from resolveFolderInfo via query, but we can't easily get it here directly.
-          // Wait, folderName is `${parent.name} (${childStr})`. Let's just use parent.name which we can extract, 
-          // or we can query parent name if needed.
-          // Actually, we can get parent name from folderName by splitting at ' ('.
-          const extractedParentName = folderName.split(' (')[0];
-          const safeParentName = sanitizeForFilename(extractedParentName) || 'unknown';
-          const fileName = `parent_profile_${safeParentName}.${ext}`;
-          
-          const gasResponse = await uploadToGasWebhook(blob, fileName, folderName, '', parentPhone, 'parent_photo', gasWebhookUrl);
-          if (gasResponse && gasResponse.url && record.id) {
-            await updateGoogleDriveUrl(supabase, record.id, gasResponse.url);
-          }
-        }
-      }
-      console.log(`Synced child photos for ${record.id} to folder: ${folderName}`);
-    }
-    else if (table === 'bookings' && record.signature_url) {
-      const fetchUrl = resolveFetchUrl(record.signature_url, supabaseUrl);
-      const res = await fetch(fetchUrl);
-      if (!res.ok) throw new Error(`Could not fetch signature: ${res.status}`);
-      
-      const blob = await res.blob();
-      const ext = record.signature_url.split('?')[0].split('.').pop() || 'png';
-      const checkinDate = record.checkin_at ? new Date(record.checkin_at) : new Date();
-      const dateStr = getFormattedDateStr(checkinDate);
-      
-      const safeChildName = sanitizeForFilename(childNickname) || 'unknown';
-      const fileName = `signature_${safeChildName}_${dateStr}.${ext}`;
-      
-      await uploadToGasWebhook(blob, fileName, folderName, childNickname, parentPhone, 'signature', gasWebhookUrl);
-      console.log(`Synced signature for booking ${record.id} to folder: ${folderName}`);
+    switch (table) {
+      case 'slip_uploads':
+        await handleSlipUpload(record, folderName, parentPhone, supabaseUrl, supabase, gasWebhookUrl, gasSheetsWebhookUrl);
+        break;
+      case 'children':
+        await handleChildRecord(record, folderName, parentPhone, childNickname, supabaseUrl, supabase, gasWebhookUrl, gasSheetsWebhookUrl);
+        break;
+      case 'bookings':
+        await handleBookingSignature(record, folderName, parentPhone, childNickname, supabaseUrl, supabase, gasWebhookUrl);
+        break;
+      default:
+        console.log(`No sync logic defined for table: ${table}`);
     }
 
     return new Response('Success', { status: 200 });
-  } catch (err: any) {
-    console.error('Error syncing to drive:', err.message);
-    return new Response(err.message, { status: 500 });
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error('Error syncing to drive:', errorMsg);
+    return new Response(errorMsg, { status: 500 });
   }
 });

@@ -48,6 +48,10 @@ export function ChildrenProfileSection({ childrenData, onRefresh }: ChildrenProf
       toast.error('กรุณากรอกชื่อจริงและชื่อเล่นให้ครบ');
       return;
     }
+    if (editChildFullName.trim().split(/\s+/).length < 2) {
+      toast.error('กรุณากรอกทั้งชื่อและนามสกุล (เว้นวรรคระหว่างชื่อและนามสกุล)');
+      return;
+    }
     setSavingChild(true);
     try {
       await AdminService.updateChildName(childId, editChildFullName.trim(), editChildNickname.trim());

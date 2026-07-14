@@ -13,6 +13,15 @@ Deno.serve(async (req) => {
 
   try {
     const { text } = await req.json()
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    if (!supabaseUrl.includes('psusuyesaxuhiondxqie')) {
+      console.log('Skipping Google Chat notify: Not in production environment.');
+      return new Response(JSON.stringify({ success: true, message: "Skipped: Not in production environment" }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      });
+    }
+
     const WEBHOOK_URL = Deno.env.get('GOOGLE_CHAT_WEBHOOK_URL')
 
     if (!WEBHOOK_URL) {

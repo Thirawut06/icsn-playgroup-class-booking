@@ -36,9 +36,17 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
       toast.error('กรุณาระบุชื่อผู้ปกครอง');
       return;
     }
+    if (editParentName.trim().split(/\s+/).length < 2) {
+      toast.error('กรุณากรอกทั้งชื่อและนามสกุลของผู้ปกครอง (เว้นวรรคระหว่างชื่อและนามสกุล)');
+      return;
+    }
     for (const c of editChildren) {
       if (!c.full_name.trim() || !c.nickname.trim()) {
         toast.error('กรุณาระบุชื่อจริงและชื่อเล่นของนักเรียนให้ครบถ้วน');
+        return;
+      }
+      if (c.full_name.trim().split(/\s+/).length < 2) {
+        toast.error('กรุณากรอกทั้งชื่อและนามสกุลของนักเรียน (เว้นวรรคระหว่างชื่อและนามสกุล)');
         return;
       }
     }

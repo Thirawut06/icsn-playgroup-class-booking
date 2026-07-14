@@ -1,13 +1,13 @@
 import { supabase } from '../supabase';
-import { Session, Booking, SessionTemplate, ConfirmedBookingRow } from '../../types';
-import { BOOKING_STATUS, CLASS_CONFIG } from '@/config/constants';
+import { Session, Booking, ConfirmedBookingRow } from '../../types';
+import { BOOKING_STATUS } from '@/config/constants';
 import { AppError } from '../utils';
 
 export const BookingService = {
   async getSessions(startDate: string, endDate: string): Promise<Session[]> {
     const { data, error } = await supabase
       .from('sessions')
-      .select('id, session_date, time_label, total_capacity, trial_capacity, booked_count, is_active, theme, activity_desc')
+      .select('id, session_date, time_label, total_capacity, trial_capacity, booked_count, trial_booked_count, is_active, theme, activity_desc')
       .gte('session_date', startDate)
       .lte('session_date', endDate)
       .order('session_date', { ascending: true });
@@ -30,7 +30,7 @@ export const BookingService = {
     const { data, error } = await supabase
       .from('bookings')
       .select(`
-        id, session_id, child_id, parent_id, session_date, status, booking_date, child_name_snapshot, parent_phone_snapshot,
+        id, session_id, child_id, parent_id, session_date, status, booking_date, child_name_snapshot, parent_phone_snapshot, package_id,
         session:sessions!inner(id, session_date, time_label, total_capacity, booked_count, is_active, theme, activity_desc),
         child:children!inner(id, parent_id, nickname, full_name, dob, age, food_allergy, media_perm, no_photo_perm, parent_photo_url, photo_url, special_info)
       `)
@@ -58,7 +58,8 @@ export const BookingService = {
       .order('created_at', { ascending: true });
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
 
-    return (data || []).map((row: any) => ({
+    type RawRow = { id: string; session_date: string; parent?: { name?: string; phone?: string }; child?: { nickname?: string } };
+    return ((data as unknown as RawRow[]) || []).map((row) => ({
       id: row.id,
       session_date: row.session_date,
       parent_name: row.parent?.name || '-',
@@ -83,7 +84,8 @@ export const BookingService = {
 
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
     
-    return (data || []).map((row: any) => ({
+    type RawRow = { id: string; session_date: string; parent?: { name?: string; phone?: string }; child?: { nickname?: string } };
+    return ((data as unknown as RawRow[]) || []).map((row) => ({
       id: row.id,
       session_date: row.session_date,
       parent_name: row.parent?.name || '-',
@@ -134,7 +136,8 @@ export const BookingService = {
     const { data, error } = await query.order('session_date', { ascending: true });
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
 
-    return (data || []).map((row: any) => ({
+    type RawRow = { id: string; session_date: string; parent?: { name?: string; phone?: string }; child?: { nickname?: string } };
+    return ((data as unknown as RawRow[]) || []).map((row) => ({
       id: row.id,
       session_date: row.session_date,
       parent_name: row.parent?.name || '-',

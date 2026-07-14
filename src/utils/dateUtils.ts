@@ -2,7 +2,7 @@
  * Constants for date calculations
  */
 const THAI_YEAR_OFFSET = 543;
-const CUTOFF_HOUR_FOR_SAME_DAY_BOOKING = 7;
+
 const THAI_MONTHS = [
   "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
   "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"

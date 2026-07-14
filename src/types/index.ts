@@ -110,6 +110,7 @@ export interface Session {
   total_capacity: number;
   trial_capacity?: number;
   booked_count?: number;
+  trial_booked_count?: number;
   is_active: boolean;
   theme?: string;
   activity_desc?: string;
@@ -124,6 +125,7 @@ export interface Booking {
   status: 'confirmed' | 'cancelled';
   booking_date: string;
   is_trial?: boolean;
+  package_id?: string;
   child_name_snapshot?: string | null;
   parent_phone_snapshot?: string | null;
   session?: Session;
@@ -160,7 +162,7 @@ export interface ClassifiedUser {
   total_bookings: number;
   category: 'payment' | 'trial' | 'registered' | 'walk-in';
   latestActivity: number;
-  raw_parent?: any;
+  raw_parent?: unknown;
 }
 
 export interface SubmitChildPayload {

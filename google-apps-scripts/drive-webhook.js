@@ -19,11 +19,12 @@ function doPost(e) {
     const data = JSON.parse(e.postData.contents);
 
     if (data.action === 'sync_file') {
-      const driveUrl = handleFileSync(data);
+      const driveResult = handleFileSync(data);
       return ContentService.createTextOutput(JSON.stringify({
         success: true,
         message: "File synced to Drive",
-        url: driveUrl
+        url: driveResult.fileUrl,
+        folderUrl: driveResult.folderUrl
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -101,7 +102,10 @@ function handleFileSync(data) {
   const existingFiles = targetFolder.getFilesByName(fileName);
   if (existingFiles.hasNext()) {
     const oldFile = existingFiles.next();
-    return oldFile.getUrl();
+    return {
+      fileUrl: oldFile.getUrl(),
+      folderUrl: parentFolder.getUrl()
+    };
   }
 
   // 5. แปลงไฟล์และบันทึกลง Drive (ทำเฉพาะเมื่อไม่มีไฟล์เดิม)
@@ -109,7 +113,10 @@ function handleFileSync(data) {
   const newFile = targetFolder.createFile(blob);
   newFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
-  return newFile.getUrl();
+  return {
+    fileUrl: newFile.getUrl(),
+    folderUrl: parentFolder.getUrl()
+  };
 }
 
 function doOptions(e) {

@@ -13,7 +13,7 @@ describe('Core Flow Integration Tests', () => {
   const testPassword = 'testpassword123';
   const testPhone = `081${Math.floor(1000000 + Math.random() * 9000000)}`;
   const testName = 'Integration Test Parent';
-  
+
   let parentId: string;
   let childId: string;
 
@@ -32,13 +32,13 @@ describe('Core Flow Integration Tests', () => {
     it('[Success] should sign up a new parent successfully', async () => {
       // Act
       const parent = await ParentService.signUp(testEmail, testPassword, testName, testPhone);
-      
+
       // Assert
       expect(parent).toBeDefined();
       expect(parent.id).toBeDefined();
       expect(parent.phone).toBe(testPhone);
       expect(parent.name).toBe(testName);
-      
+
       parentId = parent.id;
     });
 
@@ -71,13 +71,13 @@ describe('Core Flow Integration Tests', () => {
         mediaPerm: true,
         noPhotoPerm: false
       });
-      
+
       // Assert
       expect(child).toBeDefined();
       expect(child.id).toBeDefined();
       expect(child.nickname).toBe('TestChild');
       expect(child.parent_id).toBe(parentId);
-      
+
       childId = child.id;
     });
   });
@@ -112,7 +112,7 @@ describe('Core Flow Integration Tests', () => {
         .from('packages')
         .select('credits_remaining')
         .eq('parent_id', parentId);
-        
+
       expect(pkgsError).toBeNull();
       const totalCredits = packages?.reduce((sum, p) => sum + p.credits_remaining, 0);
       expect(totalCredits).toBe(10);
@@ -122,7 +122,7 @@ describe('Core Flow Integration Tests', () => {
       // We simulate an invalid adjustment by checking the DB constraint (or just logic)
       // Actually, we test booking to deduct credits in the next block.
       // Here, we just verify the total credits sum up correctly.
-      
+
       // Let's add another package of 5 credits
       const { data: pkg2 } = await supabaseAdmin.from('packages').insert({
         parent_id: parentId,
@@ -136,7 +136,7 @@ describe('Core Flow Integration Tests', () => {
         .from('packages')
         .select('credits_remaining')
         .eq('parent_id', parentId);
-        
+
       const totalCredits = packages?.reduce((sum, p) => sum + p.credits_remaining, 0);
       expect(totalCredits).toBe(15);
     });
@@ -145,12 +145,12 @@ describe('Core Flow Integration Tests', () => {
   describe('3. Class Booking', () => {
     let sessionId: string;
     let initialBookedCount = 0;
-    
+
     beforeAll(async () => {
       // Admin sets up a session for tomorrow
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      
+
       const { data: sessionData, error } = await supabaseAdmin.from('sessions').insert({
         session_date: tomorrow.toISOString().split('T')[0],
         time_label: '14:00-16:00 (Integration Test)',
@@ -158,7 +158,7 @@ describe('Core Flow Integration Tests', () => {
         booked_count: 0,
         is_active: true
       }).select().single();
-      
+
       if (error) throw error;
       sessionId = sessionData.id;
     });
@@ -176,7 +176,7 @@ describe('Core Flow Integration Tests', () => {
       const bookingModule = new SupabaseBookingAdapter();
 
       const result = await bookingModule.bookClass(parentId, childId, sessionId);
-      
+
       expect(result.success).toBe(true);
 
       // Verify credits went down (Started at 15 from previous test)
@@ -193,7 +193,7 @@ describe('Core Flow Integration Tests', () => {
         .select('booked_count')
         .eq('id', sessionId)
         .single();
-      
+
       expect(sessionData?.booked_count).toBe(1);
     });
 
@@ -237,7 +237,7 @@ describe('Core Flow Integration Tests', () => {
       // Create a fresh session that is not full
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 2);
-      
+
       const { data: newSession } = await supabaseAdmin.from('sessions').insert({
         session_date: tomorrow.toISOString().split('T')[0],
         time_label: '10:00-12:00',
@@ -261,7 +261,7 @@ describe('Core Flow Integration Tests', () => {
       // Create a fresh session with total_capacity 10 but trial_capacity 1
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 3);
-      
+
       const { data: newSession, error: sessionErr } = await supabaseAdmin.from('sessions').insert({
         session_date: tomorrow.toISOString().split('T')[0],
         time_label: `10:00-12:00 Trial Test ${Date.now()}`,
@@ -324,6 +324,72 @@ describe('Core Flow Integration Tests', () => {
       await supabaseAdmin.from('parents').delete().in('id', [parent1.id, parent2.id]);
       await supabaseAdmin.auth.admin.deleteUser(parent1.id);
       await supabaseAdmin.auth.admin.deleteUser(parent2.id);
+    });
+  });
+
+  describe('4. Class Cancellation & Refunds', () => {
+    it('[Success] should refund credits to the exact package used for booking, not the newest one', async () => {
+      // Setup: Parent, Child, Session
+      const pEmail = `refund_${Date.now()}@test.com`;
+      const pPhone = `081${Math.floor(100000 + Math.random() * 900000)}`;
+      const parent = await ParentService.signUp(pEmail, 'testpassword123', 'Refund Test Parent', pPhone);
+      const child = await ParentService.submitNewChild({
+        parentId: parent.id, childName: 'Refund Child', childNickname: 'RefChild', childDob: '2021-01-01',
+        childPhotoFile: null, parentPhotoFile: null, allergy: 'None', info: '', mediaPerm: true, noPhotoPerm: false
+      });
+
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 4);
+      const { data: session, error: sessionErr } = await supabaseAdmin.from('sessions').insert({
+        session_date: tomorrow.toISOString().split('T')[0],
+        time_label: `10:00-12:00 Refund Test ${Date.now()}`,
+        total_capacity: 10,
+        booked_count: 0,
+        is_active: true
+      }).select().single();
+      if (sessionErr) throw sessionErr;
+
+      // Give Package A (Payment)
+      const { data: pkgA } = await supabaseAdmin.from('packages').insert({
+        parent_id: parent.id, type: '10 Classes', credits_remaining: 10, non_refundable: false
+      }).select().single();
+
+      // Book class with Package A
+      const { SupabaseBookingAdapter } = await import('@/lib/domain/adapters/SupabaseBookingAdapter');
+      const bookingModule = new SupabaseBookingAdapter();
+      const bookRes = await bookingModule.bookClass(parent.id, child.id, session.id);
+      expect(bookRes.success).toBe(true);
+
+      // Verify Package A deducted
+      const { data: pkgACheck } = await supabaseAdmin.from('packages').select('credits_remaining').eq('id', pkgA.id).single();
+      expect(pkgACheck?.credits_remaining).toBe(9);
+
+      // Give Package B (Trial)
+      const { data: pkgB } = await supabaseAdmin.from('packages').insert({
+        parent_id: parent.id, type: 'trial', credits_remaining: 1, non_refundable: true
+      }).select().single();
+
+      // Cancel the booking (Should refund to Package A, not B!)
+      // Note: We need to get the booking ID
+      const { data: booking } = await supabaseAdmin.from('bookings').select('id').eq('session_id', session.id).eq('child_id', child.id).single();
+
+      await bookingModule.cancelBooking(booking!.id, parent.id);
+
+      // Verify Package A got refunded
+      const { data: pkgARefunded } = await supabaseAdmin.from('packages').select('credits_remaining').eq('id', pkgA.id).single();
+      expect(pkgARefunded?.credits_remaining).toBe(10); // Back to 10
+
+      // Verify Package B is untouched
+      const { data: pkgBCheck } = await supabaseAdmin.from('packages').select('credits_remaining').eq('id', pkgB.id).single();
+      expect(pkgBCheck?.credits_remaining).toBe(1); // Still 1
+
+      // Cleanup
+      await supabaseAdmin.from('bookings').delete().eq('session_id', session.id);
+      await supabaseAdmin.from('sessions').delete().eq('id', session.id);
+      await supabaseAdmin.from('packages').delete().in('parent_id', [parent.id]);
+      await supabaseAdmin.from('children').delete().eq('id', child.id);
+      await supabaseAdmin.from('parents').delete().eq('id', parent.id);
+      await supabaseAdmin.auth.admin.deleteUser(parent.id);
     });
   });
 });

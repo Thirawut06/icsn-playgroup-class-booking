@@ -115,23 +115,10 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     const signatureUrl = await signatureModule.uploadSignature(bookingId, signatureBlob);
     await signatureModule.saveCheckinSignature(bookingId, signatureUrl);
 
-    // 2. Trigger Google Drive sync in the background (fire-and-forget)
+    // Google Drive sync is handled automatically by DB trigger (on_bookings_sync_drive)
+    // when signature_url is updated on the booking row above.
+
     const row = attendance.find(r => r.id === bookingId);
-    if (row && activeSession) {
-      fetch('/api/trigger-drive-sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bookingId,
-          signatureUrl,
-          parentName: row.parent_name,
-          parentPhone: row.parent_phone,
-          childName: row.nickname,
-          sessionDate: dailyDate,
-          sessionLabel: activeSession.time_label,
-        }),
-      }).catch(err => console.error('[drive-sync] background sync failed:', err));
-    }
 
     // 3. Refresh the table to show ✅ badge
     await loadAttendance();

@@ -175,8 +175,24 @@ function BookPageContent() {
       console.error("Failed to fetch sessions for date", err);
     }
 
-    // Auto-select first available active session
-    const firstActiveSession = currentSessions?.find((s: Session) => s.is_active) || null;
+    // Auto-select first available active session that has capacity
+    const activePackage = packages
+      .filter(p => p.credits_remaining > 0)
+      .sort((a, b) => new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime())[0];
+    const isTrialUser = activePackage?.type === 'trial';
+
+    const firstActiveSession = currentSessions?.find((s: Session) => {
+      if (!s.is_active) return false;
+      const booked = s.booked_count || 0;
+      if (booked >= s.total_capacity) return false;
+      if (isTrialUser) {
+        const trialBooked = s.trial_booked_count || 0;
+        const trialCap = s.trial_capacity || 0;
+        if (trialBooked >= trialCap) return false;
+      }
+      return true;
+    }) || null;
+
     if (firstActiveSession) {
       setSelectedSessionsMap(prev => ({ ...prev, [dateStr]: firstActiveSession }));
     }

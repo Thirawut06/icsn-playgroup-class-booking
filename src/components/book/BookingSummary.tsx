@@ -4,6 +4,7 @@ import { useDictionary } from '@/lib/i18n/dictionary-context';
 import type { Session, SchoolClosure } from '@/types';
 import { checkIsBookableDate } from '@/utils/dateUtils';
 import { LineSupportCard } from '@/components/ui/LineSupportCard';
+import { useBookingContext } from './BookingContext';
 
 interface BookingSummaryProps {
   selectedDates: string[];
@@ -37,10 +38,48 @@ export function BookingSummary({
   cutoffHour = 7
 }: BookingSummaryProps) {
   const { dict, lang } = useDictionary();
+  const { packages } = useBookingContext();
 
   if (selectedDates.length === 0) return null;
 
   const sortedDates = [...selectedDates].sort();
+
+  const activePackage = packages
+    .filter(p => p.credits_remaining > 0)
+    .sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime())[0];
+  const isTrialUser = activePackage?.type === 'trial';
+
+  const dateInfoList = sortedDates.map(dateStr => {
+    const sessionsForDate = sessions
+      .filter(s => s.session_date === dateStr && s.is_active)
+      .sort((a, b) => {
+        const timeA = parseFloat(a.time_label?.split('-')[0].trim() || "0");
+        const timeB = parseFloat(b.time_label?.split('-')[0].trim() || "0");
+        return timeA - timeB;
+      });
+    
+    const getIsDisabled = (session: Session) => {
+        const bookedCount = session.booked_count || 0;
+        const isFull = bookedCount >= session.total_capacity;
+        const trialBookedCount = session.trial_booked_count || 0;
+        const isTrialFull = isTrialUser && session.trial_capacity !== undefined && trialBookedCount >= session.trial_capacity;
+        return isFull || isTrialFull;
+    };
+
+    const firstAvailable = sessionsForDate.find(s => !getIsDisabled(s));
+    const selectedSession = selectedSessionsMap[dateStr] || firstAvailable || sessionsForDate[0];
+    const isSelectedSessionDisabled = selectedSession ? getIsDisabled(selectedSession) : true;
+    
+    return {
+        dateStr,
+        sessionsForDate,
+        selectedSession,
+        isSelectedSessionDisabled,
+        getIsDisabled
+    };
+  });
+
+  const isAnySessionFull = dateInfoList.some(info => info.isSelectedSessionDisabled);
 
   return (
     <div className="px-4 py-6 border-t border-border bg-white mt-auto rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.03)] relative z-20">
@@ -50,7 +89,7 @@ export function BookingSummary({
       </h3>
       
       <div className="space-y-3 mb-6">
-        {sortedDates.map((dateStr, index) => {
+        {dateInfoList.map(({ dateStr, sessionsForDate, selectedSession, getIsDisabled }, index) => {
           // Format date based on locale
           const d = new Date(dateStr);
           const locale = lang === 'th' ? 'th-TH' : 'en-US';
@@ -59,9 +98,6 @@ export function BookingSummary({
             day: 'numeric',
             month: 'short'
           });
-          
-          const sessionsForDate = sessions.filter(s => s.session_date === dateStr && s.is_active);
-          const selectedSession = selectedSessionsMap[dateStr] || sessionsForDate[0];
 
           // Re-evaluate bookability specifically for this date's dropdown
           const isBookable = checkIsBookableDate(dateStr, closures, operatingDays, cutoffHour);
@@ -90,11 +126,16 @@ export function BookingSummary({
                     <option value="">{dict.book.closed}</option>
                   ) : (
                     sessionsForDate.map(session => {
+                      const isDisabled = getIsDisabled(session);
+                      
                       const bookedCount = session.booked_count || 0;
                       const isFull = bookedCount >= session.total_capacity;
+                      const trialBookedCount = session.trial_booked_count || 0;
+                      const isTrialFull = isTrialUser && session.trial_capacity !== undefined && trialBookedCount >= session.trial_capacity;
+                      
                       return (
-                        <option key={session.id} value={session.id} disabled={isFull}>
-                          {session.time_label} {isFull ? `(${dict.book.full})` : `(${dict.book.available} ${session.total_capacity - bookedCount})`}
+                        <option key={session.id} value={session.id} disabled={isDisabled}>
+                          {session.time_label} {isTrialFull ? (lang === 'th' ? '(ทดลองเรียนเต็ม)' : '(Trial Full)') : isFull ? `(${dict.book.full})` : `(${dict.book.available} ${session.total_capacity - bookedCount})`}
                         </option>
                       );
                     })
@@ -145,7 +186,7 @@ export function BookingSummary({
 
       <button
         onClick={onBookClass}
-        disabled={isSubmitting || selectedDates.length === 0 || !selectedChildObj}
+        disabled={isSubmitting || selectedDates.length === 0 || !selectedChildObj || isAnySessionFull}
         className="w-full bg-icsn-teal hover:bg-icsn-teal/90 disabled:bg-foreground/10 disabled:text-muted-foreground disabled:cursor-not-allowed text-white py-4 px-4 rounded-full font-bold shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-lg"
       >
         {isSubmitting ? (

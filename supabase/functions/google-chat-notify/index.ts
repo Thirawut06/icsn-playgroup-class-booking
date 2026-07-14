@@ -6,6 +6,12 @@ const corsHeaders = {
 }
 
 async function sendGoogleChat(message: string) {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+  if (!supabaseUrl.includes('psusuyesaxuhiondxqie')) {
+    console.log('Skipping Google Chat notify: Not in production environment.');
+    return true; // Skip sending, return success
+  }
+
   const WEBHOOK_URL = Deno.env.get('GOOGLE_CHAT_WEBHOOK_URL')
   if (!WEBHOOK_URL) {
     console.error('Webhook URL not configured in Edge Function Secrets')
@@ -122,10 +128,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 7. Parent Name Changed
+    // 7. Parent Name/Phone Changed
     if (table === 'parents' && type === 'UPDATE') {
-      if (old_record.name !== record.name) {
-        message = `📝 *มีการแก้ไขชื่อบัญชีผู้ใช้งาน*\n*ชื่อเดิม:* ${old_record.name || 'ไม่ระบุ'}\n*ชื่อใหม่:* ${record.name || 'ไม่ระบุ'}\n*เบอร์โทร:* ${record.phone || 'ไม่ระบุ'}`
+      if (old_record.name !== record.name || old_record.phone !== record.phone) {
+        message = `📝 *มีการแก้ไขข้อมูลบัญชีผู้ใช้งาน*\n*ชื่อ:* ${record.name || 'ไม่ระบุ'} (เดิม: ${old_record.name || 'ไม่ระบุ'})\n*เบอร์โทร:* ${record.phone || 'ไม่ระบุ'} (เดิม: ${old_record.phone || 'ไม่ระบุ'})`
       }
     }
 

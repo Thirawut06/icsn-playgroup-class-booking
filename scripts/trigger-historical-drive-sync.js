@@ -1,8 +1,8 @@
 const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config({ path: '.env.production' });
+require('dotenv').config({ path: '.env.prod' });
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.PROD_SUPABASE_URL;
+const supabaseKey = process.env.PROD_SERVICE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error("Missing env vars. Please check .env.local");

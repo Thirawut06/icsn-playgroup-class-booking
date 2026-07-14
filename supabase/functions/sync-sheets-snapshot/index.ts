@@ -11,7 +11,7 @@ function formatDateStr(dateStr: string | null): string {
   try {
     const d = new Date(dateStr);
     return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
-  } catch (e) {
+  } catch {
     return dateStr;
   }
 }
@@ -21,7 +21,7 @@ function formatDateTimeStr(dateStr: string | null): string {
   try {
     const d = new Date(dateStr);
     return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
-  } catch (e) {
+  } catch {
     return dateStr;
   }
 }
@@ -46,12 +46,12 @@ function calculateAge(dobStr: string | null): string {
     }
 
     return `${years} ปี ${months} เดือน ${days} วัน`;
-  } catch (e) {
+  } catch {
     return "";
   }
 }
 
-async function sendToGoogleSheets(webhookUrl: string, payload: any) {
+async function sendToGoogleSheets(webhookUrl: string, payload: Record<string, unknown>) {
   const response = await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -71,10 +71,14 @@ serve(async (req) => {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const payload = await req.json();
+    await req.json(); // consume request body
     
     const webhookUrl = Deno.env.get('GOOGLE_APPS_SCRIPT_WEBHOOK_SHEETS');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    if (supabaseUrl && !supabaseUrl.includes('psusuyesaxuhiondxqie')) {
+      console.log('Skipping sync: Not in production environment.');
+      return new Response(JSON.stringify({ status: "success", message: "Skipped: Not in production environment" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+    }
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
     if (!webhookUrl || !supabaseUrl || !supabaseKey) {
@@ -83,37 +87,58 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Pre-fetch all packages to filter active parents
+    const { data: allPackages } = await supabase.from('packages').select('*').order('created_at', { ascending: false }).limit(10000);
+    const latestPackagesMap: Record<string, string> = {};
+    if (allPackages) {
+      for (const pkg of allPackages) {
+        if (!latestPackagesMap[pkg.parent_id]) {
+          latestPackagesMap[pkg.parent_id] = pkg.type;
+        }
+      }
+    }
+    const activeParentIds = new Set(Object.keys(latestPackagesMap));
+
     // 1. Fetch Parents & Children
     const { data: parents } = await supabase.from('parents').select('*, children(*)').order('created_at', { ascending: false });
     const parentsData = [];
     if (parents) {
       for (const parent of parents) {
+        // Skip REGISTERED parents (no packages)
+        if (!activeParentIds.has(parent.id)) continue;
+
         if (parent.children && parent.children.length > 0) {
           for (const child of parent.children) {
-            parentsData.push([
+            parentsData.push({
+              id: `${parent.id}_${child.id}`,
+              values: [
+                parent.name,
+                parent.phone,
+                parent.email,
+                child.full_name,
+                child.nickname,
+                formatDateStr(child.dob),
+                calculateAge(child.dob),
+                child.food_allergy || '-',
+                child.special_info || '-',
+                child.media_perm ? '✅ อนุญาต' : '❌ ไม่อนุญาต',
+                formatDateTimeStr(parent.created_at),
+                parent.google_drive_url ? `=HYPERLINK("${parent.google_drive_url}", "📁 เปิดโฟลเดอร์")` : ''
+              ]
+            });
+          }
+        } else {
+          parentsData.push({
+            id: parent.id,
+            values: [
               parent.name,
               parent.phone,
               parent.email,
-              child.full_name,
-              child.nickname,
-              formatDateStr(child.dob),
-              calculateAge(child.dob),
-              child.food_allergy || '-',
-              child.special_info || '-',
-              child.media_perm ? '✅ อนุญาต' : '❌ ไม่อนุญาต',
+              '', '', '', '', '', '', '',
               formatDateTimeStr(parent.created_at),
-              parent.google_drive_url || ''
-            ]);
-          }
-        } else {
-          parentsData.push([
-            parent.name,
-            parent.phone,
-            parent.email,
-            '', '', '', '', '', '', '',
-            formatDateTimeStr(parent.created_at),
-            parent.google_drive_url || ''
-          ]);
+              parent.google_drive_url ? `=HYPERLINK("${parent.google_drive_url}", "📁 เปิดโฟลเดอร์")` : ''
+            ]
+          });
         }
       }
     }
@@ -123,35 +148,41 @@ serve(async (req) => {
     const usageData = [];
     if (creditTxs) {
       for (const tx of creditTxs) {
-        usageData.push([
-          formatDateTimeStr(tx.created_at),
-          tx.parent?.name || 'Unknown',
-          tx.action_type,
-          tx.amount,
-          tx.notes || ''
-        ]);
+        usageData.push({
+          id: tx.id,
+          values: [
+            formatDateTimeStr(tx.created_at),
+            tx.parent?.name || 'Unknown',
+            tx.action_type,
+            tx.amount,
+            tx.notes || ''
+          ]
+        });
       }
     }
 
     // 3. Fetch Bookings
-    const { data: bookings } = await supabase.from('bookings').select('*, session:sessions(session_date, time_label), child:children(*), parent:parents(*)').order('created_at', { ascending: false });
+    const { data: bookings } = await supabase.from('bookings').select('*, session:sessions(session_date, time_label), child:children(*), parent:parents(*)').order('created_at', { ascending: false }).limit(10000);
     const bookingData = [];
     if (bookings) {
       for (const booking of bookings) {
         if (!booking.session || !booking.child || !booking.parent) continue;
-        bookingData.push([
-          formatDateStr(booking.session.session_date),
-          booking.session.time_label,
-          booking.child.nickname,
-          booking.child.full_name,
-          calculateAge(booking.child.dob),
-          booking.parent.name,
-          booking.parent.phone,
-          booking.child.media_perm ? '✅ อนุญาต' : '❌ ไม่อนุญาต',
-          booking.child.food_allergy || '-',
-          booking.checkin_at ? formatDateTimeStr(booking.checkin_at) : 'ยังไม่เช็คชื่อ',
-          formatDateTimeStr(booking.created_at)
-        ]);
+        bookingData.push({
+          id: booking.id,
+          values: [
+            formatDateStr(booking.session.session_date),
+            booking.session.time_label,
+            booking.child.nickname,
+            booking.child.full_name,
+            calculateAge(booking.child.dob),
+            booking.parent.name,
+            booking.parent.phone,
+            booking.child.media_perm ? '✅ อนุญาต' : '❌ ไม่อนุญาต',
+            booking.child.food_allergy || '-',
+            booking.checkin_at ? formatDateTimeStr(booking.checkin_at) : 'ยังไม่เช็คชื่อ',
+            formatDateTimeStr(booking.created_at)
+          ]
+        });
       }
     }
 
@@ -167,28 +198,23 @@ serve(async (req) => {
         }
       }
 
-      // Pre-fetch all packages
-      const { data: allPackages } = await supabase.from('packages').select('*').order('created_at', { ascending: false }).limit(10000);
-      const latestPackagesMap: Record<string, string> = {};
-      if (allPackages) {
-        for (const pkg of allPackages) {
-          if (!latestPackagesMap[pkg.parent_id]) {
-            latestPackagesMap[pkg.parent_id] = pkg.type;
-          }
-        }
-      }
-
       for (const parent of parents) {
+        // Skip REGISTERED parents (no packages)
+        if (!activeParentIds.has(parent.id)) continue;
+
         const balance = balancesMap[parent.id] || 0;
         const latestPackageType = latestPackagesMap[parent.id] || '';
         
-        balanceData.push([
-          parent.name,
-          parent.phone,
-          balance,
-          latestPackageType,
-          formatDateTimeStr(new Date().toISOString())
-        ]);
+        balanceData.push({
+          id: parent.id,
+          values: [
+            parent.name,
+            parent.phone,
+            balance,
+            latestPackageType,
+            formatDateTimeStr(new Date().toISOString())
+          ]
+        });
       }
     }
 
@@ -203,7 +229,8 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ status: "success" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-  } catch (error) {
-    return new Response(JSON.stringify({ status: "error", message: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    return new Response(JSON.stringify({ status: "error", message: errorMsg }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
   }
 });

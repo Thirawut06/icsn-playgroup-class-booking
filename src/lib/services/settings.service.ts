@@ -1,10 +1,21 @@
 import { supabase } from '../supabase';
 
+export interface AutoApproveFullDay {
+  id: string;
+  name: string;
+  date: string;
+  is_active: boolean;
+}
+
 export interface SystemSettings {
   cutoff_hour: number;
   default_capacity: number;
   announcement_text: string;
   operating_days: number[];
+  auto_approve_slip_enabled: boolean;
+  auto_approve_slip_start: string;
+  auto_approve_slip_end: string;
+  auto_approve_full_days: AutoApproveFullDay[];
 }
 
 const DEFAULT_SETTINGS: SystemSettings = {
@@ -12,6 +23,10 @@ const DEFAULT_SETTINGS: SystemSettings = {
   default_capacity: 12,
   announcement_text: '',
   operating_days: [0, 1, 2, 3, 4, 5, 6],
+  auto_approve_slip_enabled: true,
+  auto_approve_slip_start: '17:00',
+  auto_approve_slip_end: '07:00',
+  auto_approve_full_days: [],
 };
 
 export const SettingsService = {

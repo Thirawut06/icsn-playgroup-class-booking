@@ -151,6 +151,14 @@ export default function Apply() {
 
     try {
       if (!parentId) throw new Error(dict.apply.parentNotFound);
+      
+      // Validate Name and Surname
+      if (!isReturningParent && parentName.trim().split(/\s+/).length < 2) {
+        throw new Error("กรุณากรอกทั้งชื่อและนามสกุลของผู้ปกครอง (เว้นวรรคระหว่างชื่อและนามสกุล)");
+      }
+      if (childName.trim().split(/\s+/).length < 2) {
+        throw new Error("กรุณากรอกทั้งชื่อและนามสกุลของน้อง (เว้นวรรคระหว่างชื่อและนามสกุล)");
+      }
 
       // Validate media permission
       if (!mediaPerm) {
@@ -187,12 +195,14 @@ export default function Apply() {
           throw new Error(dict.apply.confirmNonRefundable);
         }
         const result = await PackageService.submitTopUp(parentId, packageType, paymentSlipFile, nonRefundable);
-        if (result && typeof result.id === 'string') {
-          transactionId = result.id;
+        if (result && typeof result.slipId === 'string') {
+          transactionId = result.slipId;
         }
       } else if (path === 'trial') {
         await PackageService.grantTrialPackage(parentId);
       }
+
+      // Google Sheets sync is now handled purely by GAS Incremental Sync script
 
       setShowSuccess(true);
       // Clear cache so next visit is fresh

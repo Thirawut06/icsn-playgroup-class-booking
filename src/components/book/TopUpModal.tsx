@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2, Wallet, Loader2, AlertCircle } from 'lucide-react';
-import { PackageService } from '@/lib/supabase';
+import { PackageService, supabase } from '@/lib/supabase';
 import { FILE_UPLOAD } from '@/config/constants';
 import type { PackageOption } from '@/types';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
@@ -59,9 +59,11 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
     setErrorMsg('');
     
     try {
-      await PackageService.submitTopUp(parentId, packageType, paymentSlipFile, true);
+      const result = await PackageService.submitTopUp(parentId, packageType, paymentSlipFile, true);
       // Snapshot sync is now handled automatically via database triggers (pg_net)
-        
+      // Google Sheets sync is now handled purely by GAS Incremental Sync script
+      
+
       await refreshData(false);
       setShowSuccess(true);
     } catch (e: any) {
