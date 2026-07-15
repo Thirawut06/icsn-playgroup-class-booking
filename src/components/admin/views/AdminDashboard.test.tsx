@@ -35,13 +35,15 @@ describe('AdminDashboard Component', () => {
     render(<AdminDashboard />);
     
     expect(await screen.findByText('0 / 12 คน')).toBeInTheDocument();
-    expect(screen.getByText(/Quick Actions/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Quick Actions/i)).toBeInTheDocument();
   });
 
   it('renders the recent bookings section', async () => {
     render(<AdminDashboard />);
     
     expect(await screen.findByText('การจองล่าสุด')).toBeInTheDocument();
-    expect(screen.getByText('ยังไม่มีการจองในระบบ')).toBeInTheDocument();
+    expect(await screen.findByText((content) =>
+      content.replace(/\s+/g, ' ').includes('ยังไม่มีการจองในระบบ')
+    )).toBeInTheDocument();
   });
 });
