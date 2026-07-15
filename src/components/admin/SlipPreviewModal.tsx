@@ -68,7 +68,7 @@ export function SlipPreviewModal({
               <div className="w-full flex flex-col items-center justify-center space-y-4">
                 {previewUrl ? (
                   <>
-                    <img src={previewUrl} alt="Preview" className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-sm" />
+                    <img src={previewUrl} alt="Preview" loading="lazy" className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-sm" />
                     <button 
                       onClick={() => { setSelectedFile(null); setPreviewUrl(null); }}
                       className="text-error font-bold text-sm hover:underline"

@@ -19,82 +19,102 @@ export function BookHeader({ parentName, creditsRemaining, parentPhotoUrl, onLog
 
   return (
     <>
-      {/* Sticky Top Navbar */}
-      <header className="bg-white/95 backdrop-blur-md border-b border-border sticky top-0 z-50">
-        <div className="px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 shrink-0">
-              <Image src="/main-logo-icsn.png" alt="ICSN Logo" width={48} height={48} className="w-full h-auto object-contain" priority />
+      <header className="bg-white/95 backdrop-blur-md border-b border-border">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between lg:px-4">
+          
+          {/* Top Navbar Row (Mobile) / Left Side (Desktop) */}
+          <div className="px-4 lg:px-0 py-3 flex items-center justify-between w-full lg:w-auto border-b border-border/40 lg:border-none">
+            <div className="flex items-center gap-2.5 lg:gap-3">
+              <div className="w-9 h-9 lg:w-11 lg:h-11 shrink-0 flex items-center justify-center">
+                <Image src="/main-logo-icsn.png" alt="ICSN Logo" width={48} height={48} className="w-full h-auto object-contain" priority />
+              </div>
+              <div className="flex flex-col justify-center">
+                <h1 className="font-bold text-icsn-navy text-base leading-tight">
+                  {dict.common.brandName}
+                </h1>
+                <p className="text-xs text-icsn-teal font-medium mt-0.5">
+                  {dict.common.tagline}
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="font-bold text-icsn-navy text-base leading-tight">
-                {dict.common.brandName}
-              </h1>
-              <p className="text-xs text-icsn-teal font-medium">
-                {dict.common.tagline}
-              </p>
+
+            {/* Mobile-only Lang & Logout */}
+            <div className="flex lg:hidden items-center gap-1">
+              <LanguageSwitcherLight />
+              <button
+                onClick={onLogout}
+                className="w-11 h-11 flex items-center justify-center text-muted-foreground hover:text-error hover:bg-error/10 rounded-xl transition active:scale-95"
+                aria-label={dict.book.logout}
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
-            <LanguageSwitcherLight />
-            <button
-              onClick={onLogout}
-              className="w-11 h-11 flex items-center justify-center text-muted-foreground hover:text-error hover:bg-error/10 rounded-xl transition active:scale-95"
-              aria-label={dict.book.logout}
-              title={dict.book.logout}
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+          {/* Profile Strip Row (Mobile) / Right Side (Desktop) */}
+          <div className="px-4 lg:px-0 py-3 flex items-center justify-between gap-3 w-full lg:w-auto">
+            
+            <div className="flex items-center gap-3 min-w-0">
+              {/* Avatar */}
+              <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-muted">
+                {parentPhotoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={parentPhotoUrl} alt="Profile" loading="lazy" className="w-full h-full object-cover" />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${parentName || 'Parent'}&backgroundColor=e2e8f0`} alt="Profile" loading="lazy" className="w-full h-full object-cover" />
+                )}
+              </div>
+
+              {/* Name + Credits */}
+              <div className="min-w-0 flex flex-col justify-center">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <p className="text-base font-bold text-icsn-navy truncate leading-none">
+                    {parentName || dict.book.parentFallback}
+                  </p>
+                  <button 
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="text-muted-foreground hover:text-icsn-teal transition-colors p-1 rounded-md hover:bg-icsn-teal/10 -ml-1"
+                    aria-label="Edit Profile"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <p className="text-sm text-muted-foreground leading-none mt-1">
+                  {dict.book.creditsRemaining}{' '}
+                  <span className="font-black text-icsn-teal">{creditsRemaining}</span>
+                  {' '}{dict.common.creditsUnit}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 lg:gap-3 shrink-0">
+              {/* Top Up Button */}
+              <button
+                onClick={onTopUpClick}
+                className="flex items-center gap-1.5 px-4 h-10 lg:h-11 bg-icsn-navy text-white text-sm font-bold rounded-xl hover:bg-icsn-navy/90 transition active:scale-95"
+              >
+                <Wallet className="w-4 h-4" />
+                {dict.book.topUp}
+              </button>
+
+              {/* Desktop-only Lang & Logout */}
+              <div className="hidden lg:flex items-center gap-1 border-l border-border pl-2 ml-1">
+                <LanguageSwitcherLight />
+                <button
+                  onClick={onLogout}
+                  className="w-11 h-11 flex items-center justify-center text-muted-foreground hover:text-error hover:bg-error/10 rounded-xl transition active:scale-95"
+                  aria-label={dict.book.logout}
+                  title={dict.book.logout}
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       </header>
-
-      {/* Profile Strip — flat row, no card, no shadow */}
-      <div className="px-4 py-3 flex items-center justify-between gap-3 border-b border-border/40">
-        <div className="flex items-center gap-3 min-w-0">
-          {/* Avatar */}
-          <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-muted">
-            {parentPhotoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={parentPhotoUrl} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${parentName || 'Parent'}&backgroundColor=e2e8f0`} alt="Profile" className="w-full h-full object-cover" />
-            )}
-          </div>
-
-          {/* Name + Credits */}
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <p className="text-base font-bold text-icsn-navy truncate leading-normal">
-                {parentName || dict.book.parentFallback}
-              </p>
-              <button 
-                onClick={() => setIsEditModalOpen(true)}
-                className="text-muted-foreground hover:text-icsn-teal transition-colors p-1 rounded-md hover:bg-icsn-teal/10"
-                aria-label="Edit Profile"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <p className="text-sm text-muted-foreground leading-normal">
-              {dict.book.creditsRemaining}{' '}
-              <span className="font-black text-icsn-teal">{creditsRemaining}</span>
-              {' '}{dict.common.creditsUnit}
-            </p>
-          </div>
-        </div>
-
-        {/* Top Up — 44px touch target for elderly */}
-        <button
-          onClick={onTopUpClick}
-          className="flex items-center gap-1.5 px-4 h-11 bg-icsn-navy text-white text-sm font-bold rounded-xl hover:bg-icsn-navy/90 transition active:scale-95 shrink-0"
-        >
-          <Wallet className="w-4 h-4" />
-          {dict.book.topUp}
-        </button>
-      </div>
 
       <EditProfileModal 
         isOpen={isEditModalOpen} 

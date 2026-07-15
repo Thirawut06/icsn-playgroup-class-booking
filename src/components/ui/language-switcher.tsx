@@ -50,7 +50,7 @@ export function LanguageSwitcher() {
       aria-label={`Switch to ${LABELS[otherLang]}`}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={FLAGS[lang]} alt={lang} className="w-4 h-auto rounded-[2px] object-cover" />
+      <img src={FLAGS[lang]} alt={lang} loading="lazy" className="w-4 h-auto rounded-[2px] object-cover" />
       <span>{LABELS[lang]}</span>
     </button>
   );
@@ -88,7 +88,7 @@ export function LanguageSwitcherLight() {
       aria-label={`Switch to ${LABELS[otherLang]}`}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={FLAGS[lang]} alt={lang} className="w-4 h-auto rounded-[2px] object-cover shadow-[0_0_2px_rgba(0,0,0,0.1)]" />
+      <img src={FLAGS[lang]} alt={lang} loading="lazy" className="w-4 h-auto rounded-[2px] object-cover shadow-[0_0_2px_rgba(0,0,0,0.1)]" />
       <span>{LABELS[lang]}</span>
     </button>
   );

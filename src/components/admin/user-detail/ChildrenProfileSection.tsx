@@ -79,7 +79,7 @@ export function ChildrenProfileSection({ childrenData, onRefresh }: ChildrenProf
             <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-4 mb-5">
               <div className="flex items-center gap-4">
                 {child.photo_url ? (
-                  <img src={child.photo_url} alt="Child" className="w-16 h-16 rounded-full object-cover border border-border shadow-sm" />
+                  <img src={child.photo_url} alt="Child" loading="lazy" className="w-16 h-16 rounded-full object-cover border border-border shadow-sm" />
                 ) : (
                   <div className="w-16 h-16 rounded-full bg-info/10 text-info flex items-center justify-center font-semibold text-2xl border border-border shadow-sm">
                     {child.nickname?.[0]?.toUpperCase()}
@@ -142,7 +142,7 @@ export function ChildrenProfileSection({ childrenData, onRefresh }: ChildrenProf
               
               {child.parent_photo_url && (
                 <div className="flex flex-col items-end shrink-0">
-                  <img src={child.parent_photo_url} alt="Parent & Child" className="h-32 w-auto rounded-lg object-cover border-2 border-muted shadow-sm" />
+                  <img src={child.parent_photo_url} alt="Parent & Child" loading="lazy" className="h-32 w-auto rounded-lg object-cover border-2 border-muted shadow-sm" />
                   <p className="text-sm text-muted-foreground mt-2 font-medium">รูปถ่ายคู่ผู้ปกครอง</p>
                 </div>
               )}

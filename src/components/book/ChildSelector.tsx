@@ -32,10 +32,10 @@ export function ChildSelector() {
           <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-muted">
             {selectedChild?.photo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={selectedChild.photo_url} alt={selectedChild.nickname} className="w-full h-full object-cover" />
+              <img src={selectedChild.photo_url} alt={selectedChild.nickname} loading="lazy" className="w-full h-full object-cover" />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={`https://api.dicebear.com/7.x/fun-emoji/svg?seed=${selectedChild?.nickname || 'Child'}&backgroundColor=c0aede`} alt="Child Avatar" className="w-full h-full object-cover" />
+              <img src={`https://api.dicebear.com/7.x/fun-emoji/svg?seed=${selectedChild?.nickname || 'Child'}&backgroundColor=c0aede`} alt="Child Avatar" loading="lazy" className="w-full h-full object-cover" />
             )}
           </div>
         )}

@@ -18,7 +18,7 @@ export default function ErrorPage({
   }, [error]);
 
   return (
-    <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center p-6 text-center">
+    <div className="max-w-[480px] mx-auto bg-white min-h-[100dvh] shadow-[0_0_20px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center p-6 text-center">
       <div className="w-20 h-20 bg-error/10 rounded-full flex items-center justify-center mb-6">
         <AlertOctagon className="w-10 h-10 text-error" />
       </div>

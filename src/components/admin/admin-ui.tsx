@@ -1,5 +1,5 @@
 import React from 'react';
-import type { LucideIcon } from 'lucide-react';
+import { Search, X, ChevronLeft, ChevronRight, Loader2, AlertTriangle, type LucideIcon } from 'lucide-react';
 
 export function AdminPanel({
   children,
@@ -203,14 +203,16 @@ export function AdminIconButton({
 export function AdminDataTable({
   headers,
   children,
+  minWidth = "min-w-[600px]",
 }: {
-  headers: { label: string; align?: 'left' | 'center' | 'right' }[];
+  headers: { label: string; align?: 'left' | 'center' | 'right'; width?: string }[];
   children: React.ReactNode;
+  minWidth?: string;
 }) {
   return (
     <div className="bg-white border border-border rounded-2xl shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[600px]">
+        <table className={`w-full text-left border-collapse ${minWidth}`}>
           <thead>
             <tr className="bg-muted/50/80 border-b border-border/50 text-sm">
               {headers.map((h, i) => (
@@ -219,6 +221,7 @@ export function AdminDataTable({
                   className={`px-6 py-4 font-bold text-foreground/80 ${
                     h.align === 'center' ? 'text-center' : h.align === 'right' ? 'text-right' : 'text-left'
                   }`}
+                  style={{ width: h.width }}
                 >
                   {h.label}
                 </th>
@@ -271,5 +274,343 @@ export function AdminModal({
         </div>
       </div>
     </div>
+  );
+}
+
+
+export function AdminSearch({
+  value,
+  onChange,
+  placeholder = "ค้นหา...",
+  className = "",
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+  className?: string;
+}) {
+  return (
+    <div className={`relative w-full ${className}`}>
+      <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full pl-10 pr-10 h-[44px] border border-border rounded-xl focus:border-icsn-teal focus:ring-2 focus:ring-icsn-teal/20 outline-none text-foreground text-sm bg-white shadow-sm transition-all"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-colors"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function AdminPagination({
+  currentPage,
+  totalPages,
+  totalItems,
+  itemsPerPage,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  totalItems?: number;
+  itemsPerPage?: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border">
+      <p className="text-sm text-muted-foreground">
+        {totalItems && itemsPerPage ? (
+          <>
+            แสดงผล <span className="font-bold text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span> ถึง <span className="font-bold text-foreground">{Math.min(currentPage * itemsPerPage, totalItems)}</span> จากทั้งหมด <span className="font-bold text-foreground">{totalItems}</span> รายการ
+          </>
+        ) : (
+          <>
+            หน้า <span className="font-bold text-foreground">{currentPage}</span> จาก <span className="font-bold text-foreground">{totalPages}</span>
+          </>
+        )}
+      </p>
+      
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          disabled={currentPage === 1}
+          className="w-9 h-9 flex items-center justify-center border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <div className="flex items-center gap-1 hidden sm:flex">
+          {Array.from({ length: totalPages }).map((_, idx) => {
+            const pageNum = idx + 1;
+            // Show current, first, last, and pages around current
+            if (pageNum === 1 || pageNum === totalPages || (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)) {
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => onPageChange(pageNum)}
+                  className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-colors ${
+                    currentPage === pageNum ? 'bg-icsn-teal text-white shadow-sm' : 'hover:bg-muted text-foreground'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            } else if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+              return <span key={pageNum} className="text-muted-foreground w-9 text-center">...</span>;
+            }
+            return null;
+          })}
+        </div>
+        <button
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+          disabled={currentPage === totalPages}
+          className="w-9 h-9 flex items-center justify-center border border-border rounded-lg hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function AdminButton({
+  children,
+  variant = 'primary',
+  size = 'md',
+  icon: Icon,
+  isLoading = false,
+  className = '',
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'icon';
+  size?: 'sm' | 'md' | 'icon';
+  icon?: LucideIcon;
+  isLoading?: boolean;
+}) {
+  const baseClasses = "inline-flex items-center justify-center font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed";
+  
+  let variantClasses = "";
+  switch (variant) {
+    case 'primary':
+      variantClasses = "bg-icsn-teal text-white hover:bg-icsn-teal/90 shadow-sm";
+      break;
+    case 'secondary':
+      variantClasses = "bg-white text-foreground border border-border hover:bg-muted hover:text-icsn-navy shadow-sm";
+      break;
+    case 'danger':
+      variantClasses = "bg-error text-white hover:bg-error/90 shadow-sm";
+      break;
+    case 'ghost':
+      variantClasses = "text-muted-foreground hover:bg-muted hover:text-foreground";
+      break;
+    case 'icon': // Special variant for action icons in tables
+      variantClasses = "text-muted-foreground hover:bg-muted rounded-lg";
+      break;
+  }
+  
+  // Override icon size styles
+  let sizeClasses = "";
+  if (variant === 'icon') {
+    sizeClasses = "w-8 h-8";
+  } else {
+    switch (size) {
+      case 'sm':
+        sizeClasses = "px-3 py-1.5 text-sm rounded-lg";
+        break;
+      case 'md':
+      default:
+        sizeClasses = "px-4 py-2.5 text-sm rounded-xl";
+        break;
+      case 'icon':
+        sizeClasses = "w-10 h-10 rounded-xl";
+        break;
+    }
+  }
+
+  return (
+    <button 
+      type="button"
+      className={`${baseClasses} ${variantClasses} ${sizeClasses} ${className}`}
+      disabled={isLoading || props.disabled}
+      {...props}
+    >
+      {isLoading ? (
+        <Loader2 className={`${variant === 'icon' ? 'w-4 h-4' : 'w-4 h-4 mr-2'} animate-spin`} />
+      ) : Icon ? (
+        <Icon className={`${variant === 'icon' ? 'w-4 h-4' : 'w-4 h-4 mr-2'} ${!children ? '!mr-0' : ''}`} />
+      ) : null}
+      {children}
+    </button>
+  );
+}
+
+export function AdminBadge({
+  children,
+  variant = 'default',
+  className = '',
+}: {
+  children: React.ReactNode;
+  variant?: 'success' | 'warning' | 'error' | 'info' | 'default';
+  className?: string;
+}) {
+  let variantClasses = "";
+  switch (variant) {
+    case 'success':
+      variantClasses = "bg-success/10 text-success border-success/20";
+      break;
+    case 'warning':
+      variantClasses = "bg-warning/10 text-warning border-warning/20";
+      break;
+    case 'error':
+      variantClasses = "bg-error/10 text-error border-error/20";
+      break;
+    case 'info':
+      variantClasses = "bg-info/10 text-info border-info/30";
+      break;
+    default:
+      variantClasses = "bg-muted text-muted-foreground border-border";
+      break;
+  }
+  return (
+    <span className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-bold uppercase border ${variantClasses} ${className}`}>
+      {children}
+    </span>
+  );
+}
+
+export function AdminInput({
+  label,
+  error,
+  leftIcon: LeftIcon,
+  className = '',
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement> & {
+  label?: string;
+  error?: string;
+  leftIcon?: LucideIcon | string; // Can pass text like '฿'
+}) {
+  return (
+    <div className={className}>
+      {label && <AdminFieldLabel>{label}</AdminFieldLabel>}
+      <div className="relative">
+        {LeftIcon && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold flex items-center justify-center">
+            {typeof LeftIcon === 'string' ? LeftIcon : <LeftIcon className="w-5 h-5" />}
+          </div>
+        )}
+        <input
+          className={`w-full ${LeftIcon ? 'pl-9' : 'pl-4'} pr-4 py-2.5 bg-white border ${error ? 'border-error' : 'border-border focus:border-icsn-teal/50'} rounded-xl focus:ring-2 focus:ring-icsn-teal/20 outline-none transition-all text-foreground text-sm`}
+          {...props}
+        />
+      </div>
+      {error && <p className="text-xs text-error mt-1">{error}</p>}
+    </div>
+  );
+}
+
+export function AdminSelect({
+  label,
+  error,
+  options,
+  className = '',
+  ...props
+}: React.SelectHTMLAttributes<HTMLSelectElement> & {
+  label?: string;
+  error?: string;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <div className={className}>
+      {label && <AdminFieldLabel>{label}</AdminFieldLabel>}
+      <select
+        className={`w-full px-4 py-2.5 bg-white border ${error ? 'border-error' : 'border-border focus:border-icsn-teal/50'} rounded-xl focus:ring-2 focus:ring-icsn-teal/20 outline-none transition-all text-foreground text-sm appearance-none cursor-pointer`}
+        {...props}
+      >
+        {options.map(opt => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+      {error && <p className="text-xs text-error mt-1">{error}</p>}
+    </div>
+  );
+}
+
+export function AdminConfirmModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText = "ยืนยัน",
+  cancelText = "ยกเลิก",
+  isDestructive = false,
+  isLoading = false,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: React.ReactNode;
+  confirmText?: string;
+  cancelText?: string;
+  isDestructive?: boolean;
+  isLoading?: boolean;
+}) {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div 
+        className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-6">
+          <div className="flex items-start gap-4">
+            <div className={`p-3 rounded-full shrink-0 ${isDestructive ? 'bg-error/10 text-error' : 'bg-info/10 text-info'}`}>
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-icsn-navy">{title}</h3>
+              <div className="text-muted-foreground mt-2 text-sm leading-relaxed">{message}</div>
+            </div>
+          </div>
+        </div>
+        <div className="px-6 py-4 bg-muted/50 border-t border-border flex justify-end gap-3">
+          <AdminButton variant="secondary" onClick={onClose} disabled={isLoading}>{cancelText}</AdminButton>
+          <AdminButton 
+            variant={isDestructive ? 'danger' : 'primary'} 
+            onClick={onConfirm} 
+            isLoading={isLoading}
+          >
+            {confirmText}
+          </AdminButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function AdminTableEmpty({
+  message = "ไม่พบข้อมูล",
+  colSpan,
+}: {
+  message?: string;
+  colSpan: number;
+}) {
+  return (
+    <tr>
+      <td colSpan={colSpan} className="px-6 py-12 text-center text-muted-foreground font-medium">
+        {message}
+      </td>
+    </tr>
   );
 }

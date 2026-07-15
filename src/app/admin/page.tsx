@@ -28,6 +28,28 @@ export default function AdminPage() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+
+  // Sync tab with URL hash on mount and hashchange
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '') as AdminTab;
+      if (hash) {
+        setActiveTab(hash);
+      }
+    };
+    
+    // Initial check
+    handleHashChange();
+    
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const handleTabChange = (tab: AdminTab) => {
+    setActiveTab(tab);
+    window.location.hash = tab;
+  };
+
   const [pendingSlipCount, setPendingSlipCount] = useState(0);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -86,11 +108,11 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-icsn-bg flex font-sarabun text-foreground">
+    <div className="min-h-[100dvh] bg-icsn-bg flex font-sarabun text-foreground">
       {/* ── Fixed Sidebar (desktop) + Slide-out Drawer (mobile/tablet) ── */}
       <AdminSidebar
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         pendingSlipCount={pendingSlipCount}
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
@@ -98,7 +120,7 @@ export default function AdminPage() {
       />
 
       {/* ── Main content area pushed right by sidebar on desktop ── */}
-      <div className="flex-1 flex flex-col min-w-0 xl:ml-64 min-h-screen">
+      <div className="flex-1 flex flex-col min-w-0 xl:ml-64 min-h-[100dvh]">
 
         {/* Sticky Top Header (Mobile only) */}
         <header className="xl:hidden bg-background border-b border-border no-print sticky top-0 z-40 h-[64px] flex items-center shrink-0">
@@ -118,7 +140,7 @@ export default function AdminPage() {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 xl:p-8 overflow-hidden">
+        <main className="flex-1 p-4 xl:p-8 overflow-y-auto overflow-x-hidden">
           {/* max-w keeps whitespace on ultra-wide screens */}
           <div className="mx-auto w-full max-w-[1400px] pb-12">
             {activeTab === 'dashboard'  && <AdminDashboard onRefresh={refreshPendingCount} onNavigate={(tab) => setActiveTab(tab as AdminTab)} />}

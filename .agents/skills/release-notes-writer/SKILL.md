@@ -18,19 +18,21 @@ Skill นี้ทำหน้าที่เขียน release notes ภา�
 
 ### Step 1: รวบรวมข้อมูลดิบ
 
-รันคำสั่งเหล่านี้เพื่อเก็บข้อมูล:
-
+**1. เช็กความต้องการของผู้ใช้ (Timeframe Filtering):**
+หากผู้ใช้สั่งว่า "สรุปของวันนี้" ให้ดึงเฉพาะ Commit ของวันนี้โดยไม่ต้องอิงตาม Tag เก่า เพื่อป้องกันการนำฟีเจอร์เก่าที่ยังไม่ได้ release มารวมด้วย:
 ```bash
-# ดู tag ก่อนหน้า
-git describe --tags --abbrev=0
+# ใช้สำหรับกรณี "ของวันนี้" หรือ "ล่าสุดจริงๆ"
+git log --since="midnight" --oneline --no-merges
+git diff HEAD@{midnight}..HEAD --name-only
+```
 
-# ดู commits ทั้งหมดตั้งแต่ tag ก่อนหน้า (ไม่รวม merge commits)
-git log $(git describe --tags --abbrev=0)..HEAD --oneline --no-merges
-
-# ดูไฟล์ที่เปลี่ยนแปลง
-git diff $(git describe --tags --abbrev=0)..HEAD --name-only
-
-# ดู version ปัจจุบันใน package.json
+**2. รันคำสั่งปกติ (หากผู้ใช้ไม่ได้ระบุเวลา):**
+หากผู้ใช้สั่งเขียน Release Notes ปกติ ให้เปรียบเทียบกับ Tag ล่าสุดตามมาตรฐาน:
+```bash
+# ใช้ Powershell Syntax สำหรับ Windows
+$tag = git describe --tags --abbrev=0
+git log $tag..HEAD --oneline --no-merges
+git diff $tag..HEAD --name-only
 node -p "require('./package.json').version"
 ```
 
@@ -121,16 +123,21 @@ node -p "require('./package.json').version"
 มกราคม, กุมภาพันธ์, มีนาคม, เมษายน, พฤษภาคม, มิถุนายน,
 กรกฎาคม, สิงหาคม, กันยายน, ตุลาคม, พฤศจิกายน, ธันวาคม
 
-### Step 5: บันทึกไฟล์
+### Step 5: กำหนดเลขเวอร์ชันและบันทึกไฟล์
+
+ให้วิเคราะห์การเปลี่ยนแปลงทั้งหมดแล้วกำหนดเลขเวอร์ชันถัดไปตามหลัก **Semantic Versioning (SemVer)** (MAJOR.MINOR.PATCH):
+- **MAJOR:** ขยับเลขแรก (เช่น 1.0.0 -> 2.0.0) ถ้ามีเนื้อหาในหมวด `⚠️ ต้องระวัง` (มีการแก้ไขที่เปลี่ยนพฤติกรรมระบบเดิมชัดเจน ผู้ใช้ต้องปรับตัว)
+- **MINOR:** ขยับเลขกลาง (เช่น 1.0.0 -> 1.1.0) ถ้ามีเนื้อหาในหมวด `✅ เพิ่มใหม่` (มีฟีเจอร์ใหม่)
+- **PATCH:** ขยับเลขท้าย (เช่น 1.0.0 -> 1.0.1) ถ้ามีแค่หมวด `🔧 ปรับปรุง` หรือ `🐛 แก้บั๊ก` (ไม่มีฟีเจอร์ใหม่)
+
+เช็กเวอร์ชันล่าสุดที่ปล่อยไปจากชื่อไฟล์ในโฟลเดอร์ `releases/` หรือจาก Git Tag ล่าสุด เพื่อนำมาคำนวณเวอร์ชันถัดไป
 
 บันทึกออกมาเป็น:
 ```
 releases/v{VERSION}.md
 ```
 
-เช่น `releases/v1.1.0.md`, `releases/v1.2.0.md`
-
-Version ดึงจาก `package.json` — ไม่ต้องให้ผู้ใช้พิมพ์เอง
+เช่น `releases/v1.0.1.md`, `releases/v1.1.0.md`
 
 ### Step 6: แจ้งให้ผู้ใช้รู้
 
