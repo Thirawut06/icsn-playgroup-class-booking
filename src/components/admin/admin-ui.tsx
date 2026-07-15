@@ -27,7 +27,7 @@ export function AdminTabs<T extends string>({
   className?: string;
 }) {
   return (
-    <div className={`flex p-1 bg-muted rounded-xl w-full md:w-auto overflow-x-auto custom-scrollbar shrink-0 ${className}`}>
+    <div className={`flex p-1 bg-muted rounded-xl w-full xl:w-auto max-w-full overflow-x-auto custom-scrollbar shrink-0 ${className}`}>
       {tabs.map((tab) => (
         <button
           key={tab.id}

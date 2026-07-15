@@ -34,7 +34,7 @@ export function AdminUsers() {
         <div className="p-6 space-y-6">
           
           {/* Top Controls: Search & Tabs */}
-          <div className="flex flex-col xl:flex-row justify-between items-center gap-4 w-full min-w-0">
+          <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 w-full min-w-0">
             
             {/* Segmented Control */}
             <AdminTabs
