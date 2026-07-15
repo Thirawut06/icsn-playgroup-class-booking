@@ -397,3 +397,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Dashboard Syncing:** Editing `.html` email templates locally in `supabase/templates` does NOT automatically update Supabase. The user MUST manually copy and paste the HTML code into the Supabase Dashboard (Authentication > Email Templates).
 - **Staging vs Production Testing:** When testing on `localhost:3000` (which points to the Staging database `ykyifdoufyadgtemkhdd`), remind the user to paste the email templates into the **Staging** project's dashboard, otherwise they will see stale English templates.
 - **Image Formatting for Gmail:** Always include explicit `height` and `width` attributes (e.g., `height="48"`) and `display: block;` in `<img>` tags for email templates. Gmail aggressively blocks images from new domains, and missing dimensions can cause layout breakage when the "broken image" icon is displayed. Avoid explicit `<br>` tags that break text wrapping prematurely.
+
+## React Testing Library Best Practices
+- **Robust Assertions:** When writing tests with React Testing Library, always prefer `await screen.findByText(/pattern/i)` or function matchers over strict `getByText('Exact String')`. This ensures the test is tolerant of async rendering, text splitting across DOM nodes, and unexpected whitespace/linebreaks.
+
+## Next.js CI/CD Environment Validation
+- **CI Build Placeholders:** Next.js build steps in CI (`ci.yml`) will fail if Zod env validation throws errors for missing variables. Always inject safe placeholder values (e.g., `NEXT_PUBLIC_SUPABASE_URL=https://ci.placeholder`) into `$GITHUB_ENV` or the job's `env:` block for PRs or environments where GitHub Secrets are not exposed.
+
+## Git Workflow & Submodules
+- **Avoid Accidental Submodules:** When downloading third-party repositories or agent skills into the workspace via `git clone`, ALWAYS immediately remove the inner `.git` directory (`rm -rf .git`) before committing, unless explicitly instructed to create a git submodule.
