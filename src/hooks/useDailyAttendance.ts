@@ -126,11 +126,9 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
   };
 
   const handleCancel = async (bookingId: string) => {
-    const reason = prompt('เหตุผลในการยกเลิก (จำเป็น):', 'Admin cancelled from daily tab');
-    if (!reason?.trim()) return;
     if (!confirm('แน่ใจหรือไม่ว่าต้องการยกเลิกการจองนี้? (ระบบจะคืนเครดิตให้อัตโนมัติ)')) return;
     try {
-      await bookingModule.cancelBookingAsAdmin(bookingId, reason.trim());
+      await bookingModule.cancelBookingAsAdmin(bookingId, 'Admin cancelled');
       await loadAttendance();
       await loadSessions(); // update booked_count
       onRefresh?.();

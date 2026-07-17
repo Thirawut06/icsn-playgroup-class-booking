@@ -5,8 +5,32 @@ import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://playgroup.icsn.ac.th"),
   title: "ICSN Panda Playgroup",
-  description: "Playgroup Class Booking for ICSN Panda",
+  description: "ระบบจองคลาสเรียน ICSN Panda Playgroup - Come Play, Learn and Grow",
+  keywords: ["ICSN", "Panda", "Playgroup", "Booking", "Class", "Kids"],
+  openGraph: {
+    title: "ICSN Panda Playgroup",
+    description: "ระบบจองคลาสเรียน ICSN Panda Playgroup - Come Play, Learn and Grow",
+    url: "https://playgroup.icsn.ac.th",
+    siteName: "ICSN Panda Playgroup",
+    images: [
+      {
+        url: "/playgroup-banner-icsn.png",
+        width: 1200,
+        height: 630,
+        alt: "ICSN Panda Playgroup",
+      },
+    ],
+    locale: "th_TH",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ICSN Panda Playgroup",
+    description: "ระบบจองคลาสเรียน ICSN Panda Playgroup - Come Play, Learn and Grow",
+    images: ["/playgroup-banner-icsn.png"],
+  },
 };
 
 const sarabun = Sarabun({

@@ -42,6 +42,7 @@ export function ChildSelector() {
 
         <div className="flex-1 relative">
           <select
+            aria-label="Select child"
             value={selectedChildId}
             onChange={(e) => setSelectedChildId(e.target.value)}
             className="w-full text-base pl-4 pr-10 py-3 border-b-2 border-border focus:outline-none focus:border-icsn-teal bg-transparent text-icsn-navy font-bold appearance-none cursor-pointer transition"

@@ -59,14 +59,18 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
       }
 
       // Check if children changed
+      const childPromises = [];
       for (const editChild of editChildren) {
         const originalChild = children.find(c => c.id === editChild.id);
         if (
           originalChild &&
           (originalChild.full_name !== editChild.full_name.trim() || originalChild.nickname !== editChild.nickname.trim())
         ) {
-          await ParentService.updateChildName(editChild.id, editChild.full_name.trim(), editChild.nickname.trim());
+          childPromises.push(ParentService.updateChildName(editChild.id, editChild.full_name.trim(), editChild.nickname.trim()));
         }
+      }
+      if (childPromises.length > 0) {
+        await Promise.all(childPromises);
       }
 
       toast.success('บันทึกการเปลี่ยนแปลงเรียบร้อยแล้ว');

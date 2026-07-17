@@ -1,10 +1,10 @@
 import React from 'react';
 import { CalendarX, Save, X } from 'lucide-react';
-import { AdminFieldLabel, AdminButton } from '../../admin-ui';
+import { AdminFieldLabel, AdminButton, AdminStepBadge } from '../../admin-ui';
 
 interface OverrideConfigPanelProps {
-  selectionMode: 'single' | 'range' | 'multi';
-  setSelectionMode: (mode: 'single' | 'range' | 'multi') => void;
+  selectionMode: 'range' | 'multi';
+  setSelectionMode: (mode: 'range' | 'multi') => void;
   multiDates: string[];
   setMultiDates: (dates: string[]) => void;
   rangeStart: string;
@@ -46,41 +46,31 @@ export function OverrideConfigPanel({
 
   return (
     <div className="bg-white border border-border rounded-2xl p-4 sm:p-5 shadow-sm">
-      <h4 className="font-bold text-icsn-navy mb-4 flex items-center gap-2">
+      <h4 className="font-bold text-icsn-navy mb-5 flex items-center gap-2 pb-3 border-b border-border/50">
         <CalendarX className="w-5 h-5" />
         ตั้งค่าวันหยุดพิเศษ / เปิดพิเศษ (Macro)
       </h4>
 
-      <div className="flex bg-muted p-1 rounded-lg mb-4">
+      {/* STEP 1 */}
+      <div className="mb-6">
+        <AdminStepBadge step={1} label="เลือกรูปแบบและวันที่" className="mb-3" />
+        <div className="flex bg-muted p-1 rounded-lg mb-4">
         <button
-          onClick={() => { setSelectionMode('single'); setMultiDates([]); setRangeStart(''); setRangeEnd(''); setIsPickingRangeEnd(false); }}
-          className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${selectionMode === 'single' ? 'bg-white text-icsn-navy shadow-sm' : 'text-muted-foreground hover:text-foreground/90'}`}
+          onClick={() => { setSelectionMode('multi'); setMultiDates([]); setRangeStart(''); setRangeEnd(''); setIsPickingRangeEnd(false); }}
+          className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${selectionMode === 'multi' ? 'bg-white text-icsn-navy shadow-sm' : 'text-muted-foreground hover:text-foreground/90'}`}
         >
-          เลือกวันเดียว (Single)
+          เลือกแบบอิสระ (คลิกวันที่)
         </button>
         <button
           onClick={() => { setSelectionMode('range'); setMultiDates([]); setRangeStart(''); setRangeEnd(''); setIsPickingRangeEnd(false); }}
           className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${selectionMode === 'range' ? 'bg-white text-icsn-navy shadow-sm' : 'text-muted-foreground hover:text-foreground/90'}`}
         >
-          เลือกแบบช่วง (Range)
-        </button>
-        <button
-          onClick={() => { setSelectionMode('multi'); setMultiDates([]); setRangeStart(''); setRangeEnd(''); setIsPickingRangeEnd(false); }}
-          className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${selectionMode === 'multi' ? 'bg-white text-icsn-navy shadow-sm' : 'text-muted-foreground hover:text-foreground/90'}`}
-        >
-          เลือกทีละวัน (Multi)
+          เลือกแบบช่วงยาว (Range)
         </button>
       </div>
 
       <div className="space-y-4">
-        {selectionMode === 'single' ? (
-          <div>
-            <AdminFieldLabel>วันที่เลือก</AdminFieldLabel>
-            <div className="min-h-[42px] px-3 py-2 bg-muted/50 border border-border rounded-xl flex items-center justify-center text-sm font-bold text-icsn-navy">
-              {rangeStart ? formatDisplayDateStr(rangeStart) : <span className="text-muted-foreground/70 font-normal">คลิกที่ปฏิทินเพื่อเลือกวัน</span>}
-            </div>
-          </div>
-        ) : selectionMode === 'range' ? (
+        {selectionMode === 'range' ? (
           <div>
             {isPickingRangeEnd && (
               <div className="text-xs text-icsn-teal font-bold mb-2 flex items-center justify-center bg-icsn-teal/10 py-1.5 rounded-lg animate-pulse">
@@ -129,33 +119,48 @@ export function OverrideConfigPanel({
             </div>
           </div>
         )}
+      </div>
+      </div>
 
+
+      {/* STEP 2 */}
+      <div className="mb-6">
+        <AdminStepBadge step={2} label="กำหนดสถานะและเหตุผล" className="mb-3" />
         <div className="flex bg-muted p-1 rounded-lg">
           <button
-            onClick={() => setOverrideStatus('closed')}
-            className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${overrideStatus === 'closed'
-                ? 'bg-white text-error shadow-sm ring-1 ring-border'
-                : 'text-muted-foreground hover:text-foreground/90'
+            onClick={() => {
+              setOverrideStatus('closed');
+              if (overrideReason === 'เปิดพิเศษ' || overrideReason === 'บังคับเปิด') setOverrideReason('');
+            }}
+            className={`flex-1 py-2 text-sm font-bold flex flex-col items-center justify-center gap-1 rounded-xl border-2 transition-all ${overrideStatus === 'closed'
+                ? 'bg-white text-error shadow-sm ring-1 ring-border border-error'
+                : 'border-transparent text-muted-foreground hover:bg-white hover:shadow-sm'
               }`}
           >
+            <span className="w-1.5 h-1.5 rounded-full bg-error"></span>
             ปิดรับจอง
           </button>
           <button
-            onClick={() => setOverrideStatus('open')}
-            className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${overrideStatus === 'open'
-                ? 'bg-white text-success shadow-sm ring-1 ring-border'
-                : 'text-muted-foreground hover:text-foreground/90'
+            onClick={() => {
+              setOverrideStatus('open');
+              if (overrideReason === 'ปิดทำการ' || overrideReason === 'ปิดรับจอง' || overrideReason === 'วันหยุด') setOverrideReason('');
+            }}
+            className={`flex-1 py-2 text-sm font-bold flex flex-col items-center justify-center gap-1 rounded-xl border-2 transition-all ${overrideStatus === 'open'
+                ? 'bg-white text-success shadow-sm ring-1 ring-border border-success'
+                : 'border-transparent text-muted-foreground hover:bg-white hover:shadow-sm'
               }`}
           >
+            <span className="w-1.5 h-1.5 rounded-full bg-success"></span>
             บังคับเปิด
           </button>
           <button
             onClick={() => { setOverrideStatus('reset'); setOverrideReason(''); }}
-            className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${overrideStatus === 'reset'
-                ? 'bg-white text-foreground/90 shadow-sm ring-1 ring-border'
-                : 'text-muted-foreground hover:text-foreground/90'
+            className={`flex-1 py-2 text-sm font-bold rounded-xl flex flex-col items-center justify-center gap-1 border-2 transition-all ${overrideStatus === 'reset'
+                ? 'bg-white text-foreground/90 shadow-sm ring-1 ring-border border-border'
+                : 'border-transparent text-muted-foreground hover:bg-white hover:shadow-sm'
               }`}
           >
+            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50"></span>
             ยกเลิกค่า (Reset)
           </button>
         </div>
@@ -171,7 +176,11 @@ export function OverrideConfigPanel({
             />
           </div>
         )}
+      </div>
 
+      {/* STEP 3 */}
+      <div>
+        <AdminStepBadge step={3} label="บันทึกการตั้งค่า" className="mb-3" />
         <div className="pt-2">
           <AdminButton
             variant="primary"

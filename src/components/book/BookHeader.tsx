@@ -32,7 +32,7 @@ export function BookHeader({ parentName, creditsRemaining, parentPhotoUrl, onLog
                 <h1 className="font-bold text-icsn-navy text-base leading-tight">
                   {dict.common.brandName}
                 </h1>
-                <p className="text-xs text-icsn-teal font-medium mt-0.5">
+                <p className="text-xs text-icsn-navy font-medium mt-0.5 opacity-80">
                   {dict.common.tagline}
                 </p>
               </div>

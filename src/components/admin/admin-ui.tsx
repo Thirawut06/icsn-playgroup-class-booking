@@ -93,6 +93,17 @@ export function AdminFieldLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+export function AdminStepBadge({ step, label, className = '' }: { step: number | string; label: React.ReactNode; className?: string }) {
+  return (
+    <div className={`flex items-center gap-2 ${className}`}>
+      <span className="bg-icsn-teal/15 text-icsn-teal w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-sm font-black">
+        {step}
+      </span>
+      <h5 className="font-bold text-sm text-foreground/80">{label}</h5>
+    </div>
+  );
+}
+
 export function AdminPrimaryButton({
   children,
   className = '',
@@ -112,6 +123,66 @@ export function AdminPrimaryButton({
 // ---------------------------------------------------------------------------
 // 🌍 World-Class Component Library Extensions
 // ---------------------------------------------------------------------------
+
+export function AdminTimeRangePicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+}) {
+  // value is expected to be "HH.mm - HH.mm" or "HH:mm - HH:mm"
+  const normalizedValue = value.replace(/:/g, '.');
+  const parts = normalizedValue.split(' - ');
+  const start = parts[0] || '09.00';
+  const end = parts[1] || '12.00';
+
+  const [startH, startM] = start.includes('.') ? start.split('.') : start.split(':');
+  const [endH, endM] = end.includes('.') ? end.split('.') : end.split(':');
+
+  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+  const minutes = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0')); // 00, 05, 10...
+
+  const handleChange = (type: 'startH' | 'startM' | 'endH' | 'endM', val: string) => {
+    let newStartH = startH;
+    let newStartM = startM;
+    let newEndH = endH;
+    let newEndM = endM;
+
+    if (type === 'startH') newStartH = val;
+    if (type === 'startM') newStartM = val;
+    if (type === 'endH') newEndH = val;
+    if (type === 'endM') newEndM = val;
+
+    onChange(`${newStartH}.${newStartM} - ${newEndH}.${newEndM}`);
+  };
+
+  const SelectBox = ({ val, options, onChangeField }: { val: string, options: string[], onChangeField: (v: string) => void }) => (
+    <select 
+      value={val}
+      onChange={(e) => onChangeField(e.target.value)}
+      className="bg-white border border-border/80 rounded-md px-3 py-1.5 text-base font-bold text-icsn-navy focus:outline-none focus:border-icsn-teal shadow-sm cursor-pointer"
+    >
+      {options.map(o => <option key={o} value={o}>{o}</option>)}
+    </select>
+  );
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-1.5 bg-muted/40 p-2 rounded-lg border border-border/50">
+        <SelectBox val={startH} options={hours} onChangeField={(v) => handleChange('startH', v)} />
+        <span className="font-bold text-muted-foreground mx-0.5">:</span>
+        <SelectBox val={startM} options={minutes} onChangeField={(v) => handleChange('startM', v)} />
+      </div>
+      <span className="font-bold text-muted-foreground/40">-</span>
+      <div className="flex items-center gap-1.5 bg-muted/40 p-2 rounded-lg border border-border/50">
+        <SelectBox val={endH} options={hours} onChangeField={(v) => handleChange('endH', v)} />
+        <span className="font-bold text-muted-foreground mx-0.5">:</span>
+        <SelectBox val={endM} options={minutes} onChangeField={(v) => handleChange('endM', v)} />
+      </div>
+    </div>
+  );
+}
 
 export function AdminInfoBox({
   title,

@@ -37,6 +37,9 @@ export function AdminHolidays() {
               multiDates={hook.multiDates}
               handleDayClick={hook.handleDayClick}
               loading={hook.loading}
+              hoverDate={hook.hoverDate}
+              setHoverDate={hook.setHoverDate}
+              isPickingRangeEnd={hook.isPickingRangeEnd}
             />
 
             {/* Right Column: Unified Config Panel */}
@@ -77,9 +80,6 @@ export function AdminHolidays() {
                 closures={hook.closures}
                 fetchData={hook.fetchData}
                 handleDeleteClosure={hook.handleDeleteClosure}
-                deleteTargetId={hook.deleteTargetId}
-                setDeleteTargetId={hook.setDeleteTargetId}
-                confirmDeleteClosure={hook.confirmDeleteClosure}
               />
             </div>
           </div>

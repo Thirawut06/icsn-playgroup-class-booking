@@ -12,10 +12,11 @@ export function useAdminHolidays() {
   const [monthIndex, setMonthIndex] = useState(0);
 
   // Selection State
-  const [selectionMode, setSelectionMode] = useState<'single' | 'range' | 'multi'>('single');
+  const [selectionMode, setSelectionMode] = useState<'range' | 'multi'>('multi');
   const [rangeStart, setRangeStart] = useState<string>('');
   const [rangeEnd, setRangeEnd] = useState<string>('');
   const [isPickingRangeEnd, setIsPickingRangeEnd] = useState(false);
+  const [hoverDate, setHoverDate] = useState<string | null>(null);
   const [multiDates, setMultiDates] = useState<string[]>([]);
 
   const [overrideStatus, setOverrideStatus] = useState<'open' | 'closed' | 'reset'>('closed');
@@ -27,7 +28,6 @@ export function useAdminHolidays() {
 
   // Local operating days for editing before save
   const [tempOperatingDays, setTempOperatingDays] = useState<number[]>([]);
-  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -53,14 +53,28 @@ export function useAdminHolidays() {
       currentViewDate.setMonth(currentViewDate.getMonth() + monthIndex);
       const year = currentViewDate.getFullYear();
       const month = currentViewDate.getMonth();
-      const startDate = new Date(year, month, 1).toISOString().split('T')[0];
-      const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
+      
+      const yearStr = year;
+      const monthStr = String(month + 1).padStart(2, '0');
+      const monthStart = `${yearStr}-${monthStr}-01`;
+      
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      const monthEnd = `${yearStr}-${monthStr}-${String(lastDay).padStart(2, '0')}`;
+
+      const allDates = [monthStart, monthEnd];
+      if (rangeStart) allDates.push(rangeStart);
+      if (rangeEnd) allDates.push(rangeEnd);
+      if (multiDates && multiDates.length > 0) allDates.push(...multiDates);
+      
+      allDates.sort();
+      const fetchStart = allDates[0];
+      const fetchEnd = allDates[allDates.length - 1];
 
       const { data: sessionsData, error: sessionsErr } = await supabase
         .from('sessions')
         .select('id, session_date, time_label, is_active, total_capacity, booked_count, theme')
-        .gte('session_date', startDate)
-        .lte('session_date', endDate);
+        .gte('session_date', fetchStart)
+        .lte('session_date', fetchEnd);
 
       if (sessionsErr) throw sessionsErr;
       setSessions(sessionsData || []);
@@ -94,11 +108,7 @@ export function useAdminHolidays() {
   };
 
   const handleDayClick = (dateStr: string, isCurrentlyOpen: boolean, existingClosure: SchoolClosure | undefined) => {
-    if (selectionMode === 'single') {
-      setRangeStart(dateStr);
-      setRangeEnd(dateStr);
-      setMultiDates([]);
-    } else if (selectionMode === 'range') {
+    if (selectionMode === 'range') {
       if (!isPickingRangeEnd || !rangeStart) {
         setRangeStart(dateStr);
         setRangeEnd(dateStr);
@@ -107,10 +117,11 @@ export function useAdminHolidays() {
         if (dateStr >= rangeStart) {
           setRangeEnd(dateStr);
         } else {
+          setRangeEnd(rangeStart);
           setRangeStart(dateStr);
-          setRangeEnd(dateStr);
         }
         setIsPickingRangeEnd(false);
+        setHoverDate(null);
       }
     } else {
       if (multiDates.includes(dateStr)) {
@@ -135,7 +146,7 @@ export function useAdminHolidays() {
     try {
       if (overrideStatus === 'reset') {
         const datesToReset: string[] = [];
-        if (selectionMode === 'range' || selectionMode === 'single') {
+        if (selectionMode === 'range') {
           if (!rangeStart || !rangeEnd) { toast.error('กรุณาระบุช่วงวันที่'); setSavingOverride(false); return; }
           let curr = new Date(rangeStart);
           const end = new Date(rangeEnd);
@@ -149,15 +160,17 @@ export function useAdminHolidays() {
 
         if (datesToReset.length === 0) { toast.error('กรุณาเลือกวัน'); setSavingOverride(false); return; }
 
+        const closureIdsToDelete = new Set<string>();
         for (const date of datesToReset) {
           const overlappingClosures = closures.filter(c => date >= c.start_date && date <= c.end_date);
-          await Promise.all(overlappingClosures.map(c => AdminService.deleteSchoolClosure(c.id)));
+          overlappingClosures.forEach(c => closureIdsToDelete.add(c.id));
         }
+        await Promise.all(Array.from(closureIdsToDelete).map(id => AdminService.deleteSchoolClosure(id)));
         await AdminService.bulkReopenSpecificDays(datesToReset);
 
         toast.success('ยกเลิกการตั้งค่าเรียบร้อยแล้ว');
       } else {
-        if (selectionMode === 'range' || selectionMode === 'single') {
+        if (selectionMode === 'range') {
           if (!rangeStart || !rangeEnd) { toast.error('กรุณาระบุช่วงวันที่'); setSavingOverride(false); return; }
           if (rangeStart > rangeEnd) { toast.error('วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด'); setSavingOverride(false); return; }
 
@@ -173,25 +186,24 @@ export function useAdminHolidays() {
       }
 
       setRangeStart(''); setRangeEnd(''); setIsPickingRangeEnd(false); setOverrideReason(''); setMultiDates([]);
-      fetchData();
     } catch (err) {
       toast.error('เกิดข้อผิดพลาดในการบันทึก/ยกเลิก');
     } finally {
       setSavingOverride(false);
+      fetchData();
     }
   };
 
-  const handleDeleteClosure = (id: string) => {
-    setDeleteTargetId(id);
-  };
-
-  const confirmDeleteClosure = async () => {
-    if (!deleteTargetId) return;
-
+  const handleDeleteClosure = async (targetId: string | string[]) => {
     try {
-      await AdminService.deleteSchoolClosure(deleteTargetId);
+      if (Array.isArray(targetId)) {
+        await Promise.all(targetId.map(id => AdminService.deleteSchoolClosure(id)));
+      } else {
+        await AdminService.deleteSchoolClosure(targetId);
+      }
       toast.success('ยกเลิกรายการเรียบร้อยแล้ว');
-      const deleted = closures.find(c => c.id === deleteTargetId);
+      const firstId = Array.isArray(targetId) ? targetId[0] : targetId;
+      const deleted = closures.find(c => c.id === firstId);
       if (deleted && deleted.start_date === rangeStart) {
         setRangeStart('');
         setRangeEnd('');
@@ -200,10 +212,10 @@ export function useAdminHolidays() {
       await fetchData();
     } catch (err) {
       toast.error('ไม่สามารถยกเลิกได้');
-    } finally {
-      setDeleteTargetId(null);
     }
   };
+
+
 
   // Prepare calendar logic
   const currentViewDate = new Date();
@@ -244,13 +256,13 @@ export function useAdminHolidays() {
     rangeStart,
     rangeEnd,
     isPickingRangeEnd,
+    hoverDate,
     multiDates,
     overrideStatus,
     overrideReason,
     savingSettings,
     savingOverride,
     tempOperatingDays,
-    deleteTargetId,
     currentViewDate,
     
     // Setters
@@ -259,10 +271,10 @@ export function useAdminHolidays() {
     setRangeStart,
     setRangeEnd,
     setIsPickingRangeEnd,
+    setHoverDate,
     setMultiDates,
     setOverrideStatus,
     setOverrideReason,
-    setDeleteTargetId,
     
     // Derived
     getDaysInMonth,
@@ -273,7 +285,6 @@ export function useAdminHolidays() {
     handleDayClick,
     handleSaveOverride,
     handleDeleteClosure,
-    confirmDeleteClosure,
     fetchData,
   };
 }

@@ -156,11 +156,7 @@ export function SlipPreviewModal({
                   
                   <button
                     type="button"
-                    onClick={() => {
-                      if (confirm('แน่ใจหรือไม่ว่าต้องการปฏิเสธสลิปนี้?')) {
-                        onReject(slip.id);
-                      }
-                    }}
+                    onClick={() => onReject(slip.id)}
                     disabled={isProcessing}
                     className="w-full flex items-center justify-center gap-2 bg-white border-2 border-error/20 text-error hover:bg-error/10 hover:border-error/30 py-2.5 rounded-xl font-bold transition-all disabled:opacity-50"
                   >

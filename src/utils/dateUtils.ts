@@ -77,6 +77,18 @@ export function checkIsBookableDate(
     return false;
   }
   
+  // 1.5 Cannot book beyond +60 days from today
+  const maxDate = new Date(today);
+  maxDate.setDate(maxDate.getDate() + 60);
+  const maxYyyy = maxDate.getFullYear();
+  const maxMm = String(maxDate.getMonth() + 1).padStart(2, '0');
+  const maxDd = String(maxDate.getDate()).padStart(2, '0');
+  const maxDateStr = `${maxYyyy}-${maxMm}-${maxDd}`;
+  
+  if (dateStr > maxDateStr) {
+    return false;
+  }
+  
   // 2. Cannot book today if past cutoff time
   const isToday = dateStr === todayStr;
   if (isToday && today.getHours() >= cutoffHour) {
@@ -84,8 +96,8 @@ export function checkIsBookableDate(
   }
 
   // 3. Determine base operating status
-  const targetDate = new Date(dateStr);
-  const dayOfWeek = targetDate.getDay();
+  const targetDate = new Date(dateStr + "T00:00:00Z");
+  const dayOfWeek = targetDate.getUTCDay();
   let isBookable = operatingDays.includes(dayOfWeek);
 
   // 4. Check closures and overrides

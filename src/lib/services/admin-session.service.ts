@@ -16,6 +16,33 @@ export const AdminSessionService = {
     return data;
   },
 
+  async getSessionsForSpecificDate(dateStr: string): Promise<Session[]> {
+    const { data, error } = await supabase
+      .from('sessions')
+      .select('id, session_date, time_label, total_capacity, trial_capacity, booked_count, is_active')
+      .eq('session_date', dateStr)
+      .order('time_label', { ascending: true });
+    if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
+    return data || [];
+  },
+
+  async createCustomSession(dateStr: string, timeLabel: string, capacity: number): Promise<void> {
+    const { error } = await supabase
+      .from('sessions')
+      .insert([
+        {
+          session_date: dateStr,
+          time_label: timeLabel,
+          total_capacity: capacity,
+          trial_capacity: capacity, // Use same for trial capacity as a default for custom sessions
+          is_active: true,
+          booked_count: 0,
+          trial_booked_count: 0
+        }
+      ]);
+    if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
+  },
+
   async getBlockoutDates(): Promise<{ id: string; block_date: string; reason: string | null }[]> {
     const { data, error } = await supabase
       .from('blockout_dates')
@@ -25,10 +52,10 @@ export const AdminSessionService = {
     return data || [];
   },
 
-  async getSchoolClosures(): Promise<{ id: string; start_date: string; end_date: string; reason: string; time_label: string | null }[]> {
+  async getSchoolClosures(): Promise<{ id: string; start_date: string; end_date: string; reason: string; time_label: string | null; is_force_open: boolean }[]> {
     const { data, error } = await supabase
       .from('school_closures')
-      .select('id, start_date, end_date, reason, time_label')
+      .select('id, start_date, end_date, reason, time_label, is_force_open')
       .order('start_date', { ascending: true });
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
     return data || [];

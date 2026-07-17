@@ -1,0 +1,9 @@
+﻿import { createClient } from '@supabase/supabase-js';
+import * as dotenv from 'dotenv';
+dotenv.config({ path: 'c:/icsn-playgroup-class-booking/.env.local' });
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+async function check() {
+  const { data } = await supabase.from('system_settings').select('*');
+  console.log(data);
+}
+check();

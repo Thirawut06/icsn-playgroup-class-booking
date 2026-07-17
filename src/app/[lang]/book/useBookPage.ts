@@ -106,6 +106,7 @@ export function useBookPage() {
       return;
     }
 
+    // 1. Determine which dates will be selected (FIFO logic)
     let updatedDates = [...selectedDates];
     let removedDate: string | null = null;
 
@@ -114,19 +115,9 @@ export function useBookPage() {
     }
 
     updatedDates.push(dateStr);
-    setSelectedDates(updatedDates);
-
-    if (removedDate) {
-      setSelectedSessionsMap(prev => {
-        const next = { ...prev };
-        if (removedDate) delete next[removedDate];
-        return next;
-      });
-    }
-
+    
+    // 2. Fetch or create sessions BEFORE updating state to prevent UI bouncing
     let currentSessions = dayObj.sessions || [];
-
-    // Always fetch/create sessions for this date to ensure templates are synced
     try {
       const newSessions = await sessionModule.getOrCreateSessionsForDate(dateStr);
       if (newSessions.length > 0) {
@@ -137,7 +128,18 @@ export function useBookPage() {
       console.error("Failed to fetch sessions for date", err);
     }
 
-    // Auto-select first available active session that has capacity
+    // 3. Now that sessions are loaded, update all states together
+    setSelectedDates(updatedDates);
+
+    if (removedDate) {
+      setSelectedSessionsMap(prev => {
+        const next = { ...prev };
+        if (removedDate) delete next[removedDate];
+        return next;
+      });
+    }
+
+    // 4. Auto-select first available active session that has capacity
     const activePackage = packages
       .filter(p => p.credits_remaining > 0)
       .sort((a, b) => new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime())[0];

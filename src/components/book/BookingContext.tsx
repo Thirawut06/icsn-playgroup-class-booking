@@ -7,22 +7,7 @@ import type { Child, Package, Session, PackageOption, Booking } from '@/types';
 import type { SystemSettings } from '@/lib/services/settings.service';
 import { STORAGE_KEYS } from '@/config/constants';
 
-const bookCache: Record<string, any> = {};
-
-function useCachedState<T>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
-  const [state, setState] = useState<T>(() => {
-    if (key in bookCache) {
-      return bookCache[key];
-    }
-    return defaultValue;
-  });
-
-  useEffect(() => {
-    bookCache[key] = state;
-  }, [key, state]);
-
-  return [state, setState];
-}
+import { useCachedState } from '@/hooks/useCachedState';
 
 interface BookingContextValue {
   parentId: string;
@@ -48,19 +33,19 @@ const BookingContext = createContext<BookingContextValue | undefined>(undefined)
 export function BookingProvider({ children: reactChildren }: { children: React.ReactNode }) {
   const router = useRouter();
   
-  const [parentId, setParentId] = useCachedState('book_parentId', '');
-  const [parentName, setParentName] = useCachedState('book_parentName', '');
-  const [creditsRemaining, setCreditsRemaining] = useCachedState('book_creditsRemaining', 0);
-  const [children, setChildren] = useCachedState<Child[]>('book_children', []);
-  const [packages, setPackages] = useCachedState<Package[]>('book_packages', []);
-  const [paymentPackages, setPaymentPackages] = useCachedState<PackageOption[]>('book_paymentPackages', []);
-  const [sessions, setSessions] = useCachedState<Session[]>('book_sessions', []);
-  const [myBookings, setMyBookings] = useCachedState<Booking[]>('book_myBookings', []);
-  const [closures, setClosures] = useCachedState<import('@/types').SchoolClosure[]>('book_closures', []);
-  const [settings, setSettings] = useCachedState<SystemSettings | null>('book_settings', null);
-  const [loading, setLoading] = useCachedState('book_loading', true);
-  const [selectedChildId, setSelectedChildId] = useCachedState('book_selectedChildId', '');
-  const [hasPendingSlip, setHasPendingSlip] = useCachedState('book_hasPendingSlip', false);
+  const [parentId, setParentId] = useCachedState('book', 'parentId', '');
+  const [parentName, setParentName] = useCachedState('book', 'parentName', '');
+  const [creditsRemaining, setCreditsRemaining] = useCachedState('book', 'creditsRemaining', 0);
+  const [children, setChildren] = useCachedState<Child[]>('book', 'children', []);
+  const [packages, setPackages] = useCachedState<Package[]>('book', 'packages', []);
+  const [paymentPackages, setPaymentPackages] = useCachedState<PackageOption[]>('book', 'paymentPackages', []);
+  const [sessions, setSessions] = useCachedState<Session[]>('book', 'sessions', []);
+  const [myBookings, setMyBookings] = useCachedState<Booking[]>('book', 'myBookings', []);
+  const [closures, setClosures] = useCachedState<import('@/types').SchoolClosure[]>('book', 'closures', []);
+  const [settings, setSettings] = useCachedState<SystemSettings | null>('book', 'settings', null);
+  const [loading, setLoading] = useCachedState('book', 'loading', true);
+  const [selectedChildId, setSelectedChildId] = useCachedState('book', 'selectedChildId', '');
+  const [hasPendingSlip, setHasPendingSlip] = useCachedState('book', 'hasPendingSlip', false);
 
   const checkPendingSlips = async (pId: string) => {
     try {
@@ -78,6 +63,13 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
   const loadData = async (pId: string, showLoading = true) => {
     if (showLoading) setLoading(true);
     try {
+      try {
+        const sysSettings = await SettingsService.getAllSettings();
+        setSettings(sysSettings);
+      } catch (e) {
+        console.error("Failed to load settings:", e);
+      }
+
       const parent = await ParentService.getParentDetails(pId);
       if (parent) {
         setParentName(parent.name);
@@ -107,9 +99,6 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
       const bookings = await BookingService.getBookings(pId);
       setMyBookings(bookings);
 
-      const sysSettings = await SettingsService.getAllSettings();
-      setSettings(sysSettings);
-
       await checkPendingSlips(pId);
     } catch (e) {
       console.error(e);
@@ -127,7 +116,8 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
       setParentId(user.id);
       
       // If we already have this user cached, do a background fetch without showing the loading screen
-      const hasCache = bookCache['book_parentId'] === user.id;
+      // Assuming cache key matches globalCache in useCachedState ('book::parentId')
+      const hasCache = !!parentId && parentId === user.id;
       loadData(user.id, !hasCache);
     });
   }, [router]);

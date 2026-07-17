@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const globalCache: Record<string, any> = {};
+const globalCache: Record<string, unknown> = {};
 
 /**
  * A hook that caches state in memory to survive navigation without full page reload.
@@ -17,7 +17,7 @@ export function useCachedState<T>(
 
   const [state, setState] = useState<T>(() => {
     if (fullKey in globalCache) {
-      return globalCache[fullKey];
+      return globalCache[fullKey] as T;
     }
     return defaultValue;
   });

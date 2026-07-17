@@ -1,13 +1,15 @@
 "use client";
 import React from 'react';
 import { BookHeader } from '@/components/book/BookHeader';
-import { TopUpModal } from '@/components/book/TopUpModal';
+import dynamic from 'next/dynamic';
 import { ChildSelector } from '@/components/book/ChildSelector';
 import { UpcomingBookings } from '@/components/book/UpcomingBookings';
 import { CalendarWidget } from '@/components/book/CalendarWidget';
 import { BookingSummary } from '@/components/book/BookingSummary';
-import { CancelConfirmModal } from '@/components/book/CancelConfirmModal';
-import { BookingConfirmModal } from '@/components/book/BookingConfirmModal';
+
+const TopUpModal = dynamic(() => import('@/components/book/TopUpModal').then(mod => mod.TopUpModal));
+const CancelConfirmModal = dynamic(() => import('@/components/book/CancelConfirmModal').then(mod => mod.CancelConfirmModal));
+const BookingConfirmModal = dynamic(() => import('@/components/book/BookingConfirmModal').then(mod => mod.BookingConfirmModal));
 import { ClosureNotificationBanner } from '@/components/book/ClosureNotificationBanner';
 import { MissingPhotoBlocker } from '@/components/book/MissingPhotoBlocker';
 
