@@ -124,6 +124,16 @@ export function AdminPrimaryButton({
 // 🌍 World-Class Component Library Extensions
 // ---------------------------------------------------------------------------
 
+const SelectBox = ({ val, options, onChangeField }: { val: string, options: string[], onChangeField: (v: string) => void }) => (
+  <select 
+    value={val}
+    onChange={(e) => onChangeField(e.target.value)}
+    className="bg-white border border-border/80 rounded-md px-3 py-1.5 text-base font-bold text-icsn-navy focus:outline-none focus:border-icsn-teal shadow-sm cursor-pointer"
+  >
+    {options.map(o => <option key={o} value={o}>{o}</option>)}
+  </select>
+);
+
 export function AdminTimeRangePicker({
   value,
   onChange,
@@ -157,15 +167,7 @@ export function AdminTimeRangePicker({
     onChange(`${newStartH}.${newStartM} - ${newEndH}.${newEndM}`);
   };
 
-  const SelectBox = ({ val, options, onChangeField }: { val: string, options: string[], onChangeField: (v: string) => void }) => (
-    <select 
-      value={val}
-      onChange={(e) => onChangeField(e.target.value)}
-      className="bg-white border border-border/80 rounded-md px-3 py-1.5 text-base font-bold text-icsn-navy focus:outline-none focus:border-icsn-teal shadow-sm cursor-pointer"
-    >
-      {options.map(o => <option key={o} value={o}>{o}</option>)}
-    </select>
-  );
+
 
   return (
     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
