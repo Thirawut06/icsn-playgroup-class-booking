@@ -628,6 +628,7 @@ export function AdminConfirmModal({
   cancelText = "ยกเลิก",
   isDestructive = false,
   isLoading = false,
+  onCancelAction,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -638,27 +639,37 @@ export function AdminConfirmModal({
   cancelText?: string;
   isDestructive?: boolean;
   isLoading?: boolean;
+  onCancelAction?: () => void;
 }) {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      onClick={onClose}
+    >
       <div 
-        className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+        className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
+        <button 
+           onClick={onClose}
+           className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-colors z-10"
+        >
+          <X className="w-5 h-5" />
+        </button>
         <div className="p-6">
           <div className="flex items-start gap-4">
             <div className={`p-3 rounded-full shrink-0 ${isDestructive ? 'bg-error/10 text-error' : 'bg-info/10 text-info'}`}>
               <AlertTriangle className="w-6 h-6" />
             </div>
-            <div>
+            <div className="pr-6">
               <h3 className="text-lg font-bold text-icsn-navy">{title}</h3>
               <div className="text-muted-foreground mt-2 text-sm leading-relaxed">{message}</div>
             </div>
           </div>
         </div>
         <div className="px-6 py-4 bg-muted/50 border-t border-border flex justify-end gap-3">
-          <AdminButton variant="secondary" onClick={onClose} disabled={isLoading}>{cancelText}</AdminButton>
+          <AdminButton variant="secondary" onClick={onCancelAction || onClose} disabled={isLoading}>{cancelText}</AdminButton>
           <AdminButton 
             variant={isDestructive ? 'danger' : 'primary'} 
             onClick={onConfirm} 

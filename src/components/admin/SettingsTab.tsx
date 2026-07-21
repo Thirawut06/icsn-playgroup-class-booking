@@ -6,7 +6,8 @@ import { SettingsService } from '@/lib/services/settings.service';
 import type { SystemSettings } from '@/lib/services/settings.service';
 import toast from 'react-hot-toast';
 import { COPY } from '@/config/copy';
-import { AdminPrimaryButton } from './admin-ui';
+import { AdminPrimaryButton, AdminConfirmModal } from './admin-ui';
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
 import { BookingRulesSection } from './settings/BookingRulesSection';
 import { AnnouncementsSection } from './settings/AnnouncementsSection';
 import { AutoApproveSection } from './settings/AutoApproveSection';
@@ -46,7 +47,7 @@ export function SettingsTab() {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<boolean> => {
     setSaving(true);
     setSuccessMsg('');
     try {
@@ -55,10 +56,19 @@ export function SettingsTab() {
       setSuccessMsg('บันทึกการตั้งค่าระบบเรียบร้อยแล้ว');
       toast.success('บันทึกการตั้งค่าระบบเรียบร้อยแล้ว');
       setTimeout(() => setSuccessMsg(''), 3000);
+      return true;
     } catch (err) {
       toast.error(COPY.ALERTS.ERROR_GENERIC(err instanceof Error ? err.message : String(err)));
+      return false;
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveAndLeave = async () => {
+    const success = await handleSave();
+    if (success) {
+      handleConfirmLeave();
     }
   };
 
@@ -66,6 +76,9 @@ export function SettingsTab() {
     if (!originalSettings) return false;
     return JSON.stringify(settings) !== JSON.stringify(originalSettings);
   }, [settings, originalSettings]);
+
+  // Use Custom Hook for Clean Code
+  const { isLeaveModalOpen, handleConfirmLeave, handleCancelLeave } = useUnsavedChangesGuard(hasUnsavedChanges);
 
   if (loading) {
     return (
@@ -76,15 +89,15 @@ export function SettingsTab() {
   }
 
   return (
-    <div className="w-full animate-in fade-in duration-500 max-w-3xl relative">
-      <div className="space-y-8 pb-24">
+    <div className="w-full animate-in fade-in duration-500 max-w-3xl relative flex flex-col h-full">
+      <div className="space-y-4 pb-4">
         <BookingRulesSection settings={settings} setSettings={setSettings} />
         <AnnouncementsSection settings={settings} setSettings={setSettings} />
         <AutoApproveSection settings={settings} setSettings={setSettings} />
       </div>
 
       {/* Sticky Save Bar */}
-      <div className={`fixed sm:absolute bottom-0 left-0 right-0 sm:rounded-b-2xl p-4 sm:p-6 bg-white border-t border-border shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] flex items-center justify-between z-10 transition-transform duration-300 ${hasUnsavedChanges ? 'translate-y-0' : 'translate-y-0 sm:translate-y-0'}`}>
+      <div className="sticky bottom-0 left-0 right-0 p-4 bg-white border-t border-border flex items-center justify-between z-10 mt-auto rounded-b-2xl shadow-sm">
         <div className="flex items-center gap-3">
           {hasUnsavedChanges && (
             <>
@@ -102,12 +115,25 @@ export function SettingsTab() {
         <AdminPrimaryButton
           onClick={handleSave}
           disabled={saving || !hasUnsavedChanges}
-          className={`px-6 sm:px-8 py-3 h-auto text-base ${hasUnsavedChanges ? 'bg-error hover:bg-error/90 ring-4 ring-error/20' : ''}`}
+          className={`px-6 sm:px-8 py-2.5 h-auto text-sm ${hasUnsavedChanges ? 'bg-error hover:bg-error/90 ring-2 ring-error/20' : ''}`}
         >
-          {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
+          {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
           {saving ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่า'}
         </AdminPrimaryButton>
       </div>
+
+      {/* Confirmation Modal */}
+      <AdminConfirmModal
+        isOpen={isLeaveModalOpen}
+        onClose={handleCancelLeave} // Backdrop/X -> Cancel routing, stay on page
+        onCancelAction={handleConfirmLeave} // Left button -> Discard and leave
+        onConfirm={handleSaveAndLeave} // Right button -> Save and leave
+        title="มีข้อมูลที่ยังไม่ได้บันทึก"
+        message="คุณต้องการบันทึกการตั้งค่าก่อนออกจากหน้านี้หรือไม่?"
+        confirmText="บันทึกและออก"
+        cancelText="ไม่บันทึก"
+        isDestructive={false}
+      />
     </div>
   );
 }

@@ -46,9 +46,28 @@ export default function AdminPage() {
   }, []);
 
   const handleTabChange = (tab: AdminTab) => {
-    setActiveTab(tab);
-    window.location.hash = tab;
+    const event = new CustomEvent('requestTabChange', {
+      detail: { tab },
+      cancelable: true
+    });
+    // If e.preventDefault() is called in a listener, dispatchEvent returns false
+    const allowed = window.dispatchEvent(event);
+    
+    if (allowed) {
+      setActiveTab(tab);
+      window.location.hash = tab;
+    }
   };
+
+  useEffect(() => {
+    const handleForceTabChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ tab: AdminTab }>;
+      setActiveTab(customEvent.detail.tab);
+      window.location.hash = customEvent.detail.tab;
+    };
+    window.addEventListener('forceTabChange', handleForceTabChange);
+    return () => window.removeEventListener('forceTabChange', handleForceTabChange);
+  }, []);
 
   const [pendingSlipCount, setPendingSlipCount] = useState(0);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);

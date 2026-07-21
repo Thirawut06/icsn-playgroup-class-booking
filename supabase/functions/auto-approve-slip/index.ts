@@ -34,7 +34,7 @@ async function sendGoogleChat(message: string) {
   }).catch(e => console.error("Webhook failed:", e))
 }
 
-function isWithinWindow(start: string, end: string, current: string): boolean {
+export function isWithinWindow(start: string, end: string, current: string): boolean {
   if (start < end) {
       return current >= start && current <= end;
   } else {
@@ -77,45 +77,72 @@ async function checkEligibility(supabaseAdmin: ReturnType<typeof createClient>) 
 }
 
 async function executeAutoApproval(supabaseAdmin: ReturnType<typeof createClient>, slip: any) {
-  // A. Update Slip Status
-  await supabaseAdmin.from('slip_uploads').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', slip.id);
+  // A. Atomic Claim: Update Slip Status ONLY if it is still 'pending'
+  const { data: updatedSlip, error: updateErr } = await supabaseAdmin
+    .from('slip_uploads')
+    .update({ status: 'approved', reviewed_at: new Date().toISOString() })
+    .eq('id', slip.id)
+    .eq('status', 'pending')
+    .select()
+    .maybeSingle();
 
-  // B. Calculate Credits
-  let creditsToAdd = 10;
-  if (slip.package_id) {
-    const { data: pkgOption } = await supabaseAdmin.from('package_options').select('credits').eq('name', slip.package_id).maybeSingle();
-    if (pkgOption) creditsToAdd = pkgOption.credits;
+  if (updateErr || !updatedSlip) {
+    throw new Error('Race condition or slip not pending. Aborting auto-approval.');
   }
 
-  // C. Create new package
-  const { data: newPackage, error: pkgErr } = await supabaseAdmin.from('packages').insert([{
-    parent_id: slip.parent_id,
-    type: slip.package_id || 'purchase',
-    credits_remaining: creditsToAdd,
-    non_refundable: false
-  }]).select('id, credits_remaining').single();
-  if (pkgErr) throw pkgErr;
+  try {
+    // B. Calculate Credits
+    let creditsToAdd = 10; // Default fallback ONLY if no package_id was provided
+    if (slip.package_id) {
+      const { data: pkgOption, error: pkgOptErr } = await supabaseAdmin.from('package_options').select('credits').eq('name', slip.package_id).maybeSingle();
+      if (pkgOptErr) {
+        throw new Error(`Database error fetching package option: ${pkgOptErr.message}`);
+      }
+      if (!pkgOption) {
+        // Critical: Do NOT guess credits if the package doesn't exist. Abort so admin can manually review.
+        throw new Error(`Package option '${slip.package_id}' not found. Cannot determine credits.`);
+      }
+      creditsToAdd = pkgOption.credits;
+    }
 
-  // D. Record Transaction
-  await supabaseAdmin.from('credit_transactions').insert([{
-    parent_id: slip.parent_id,
-    package_id: newPackage.id,
-    action_type: 'topup',
-    amount: creditsToAdd,
-    notes: `auto-approved slip: ${slip.id}`
-  }]);
+    // C. Create new package
+    const { data: newPackage, error: pkgErr } = await supabaseAdmin.from('packages').insert([{
+      parent_id: slip.parent_id,
+      type: slip.package_id || 'purchase',
+      credits_remaining: creditsToAdd,
+      non_refundable: slip.non_refundable ?? false
+    }]).select('id, credits_remaining').single();
+    
+    if (pkgErr) throw pkgErr;
 
-  // E. Send Notification
-  const { data: parentInfo } = await supabaseAdmin.from('parents').select('name, children(nickname, full_name)').eq('id', slip.parent_id).single();
-  const child = parentInfo?.children?.[0];
-  const childName = child ? (child.full_name && child.nickname ? `${child.full_name} (${child.nickname})` : child.full_name || child.nickname || 'ไม่ระบุ') : 'ไม่ระบุ';
-  
-  const { data: totalCreditsData } = await supabaseAdmin.from('packages').select('credits_remaining').eq('parent_id', slip.parent_id).gt('credits_remaining', 0);
-  const totalCredits = (totalCreditsData || []).reduce((acc, curr) => acc + curr.credits_remaining, 0);
+    // D. Record Transaction
+    const { error: txErr } = await supabaseAdmin.from('credit_transactions').insert([{
+      parent_id: slip.parent_id,
+      package_id: newPackage.id,
+      action_type: 'topup',
+      amount: creditsToAdd,
+      notes: `auto-approved slip: ${slip.id}`
+    }]);
 
-  await sendGoogleChat(`🤖 *อนุมัติสลิปอัตโนมัติยามวิกาล!*\n*ผู้ปกครองของ:* ${childName}\n*แพ็กเกจ:* ได้รับ +${creditsToAdd} เครดิต\n⭐ *เครดิตคงเหลือปัจจุบัน:* ${totalCredits} เครดิต`);
+    if (txErr) console.error('Failed to insert credit_transaction (non-fatal):', txErr);
 
-  return creditsToAdd;
+    // E. Send Notification
+    const { data: parentInfo } = await supabaseAdmin.from('parents').select('name, children(nickname, full_name)').eq('id', slip.parent_id).single();
+    const child = parentInfo?.children?.[0];
+    const childName = child ? (child.full_name && child.nickname ? `${child.full_name} (${child.nickname})` : child.full_name || child.nickname || 'ไม่ระบุ') : 'ไม่ระบุ';
+    
+    const { data: totalCreditsData } = await supabaseAdmin.from('packages').select('credits_remaining').eq('parent_id', slip.parent_id).gt('credits_remaining', 0);
+    const totalCredits = (totalCreditsData || []).reduce((acc, curr) => acc + curr.credits_remaining, 0);
+
+    await sendGoogleChat(`🤖 *อนุมัติสลิปอัตโนมัติยามวิกาล!*\n*ผู้ปกครองของ:* ${childName}\n*แพ็กเกจ:* ได้รับ +${creditsToAdd} เครดิต\n⭐ *เครดิตคงเหลือปัจจุบัน:* ${totalCredits} เครดิต`);
+
+    return creditsToAdd;
+  } catch (err) {
+    // F. Rollback on critical failure (if package insertion fails)
+    console.error('Critical failure during auto-approval. Rolling back slip status...', err);
+    await supabaseAdmin.from('slip_uploads').update({ status: 'pending', reviewed_at: null }).eq('id', slip.id);
+    throw err;
+  }
 }
 
 Deno.serve(async (req) => {
