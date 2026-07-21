@@ -126,11 +126,9 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
   };
 
   const handleCancel = async (bookingId: string) => {
-    const reason = prompt('เหตุผลในการยกเลิก (จำเป็น):', 'Admin cancelled from daily tab');
-    if (!reason?.trim()) return;
     if (!confirm('แน่ใจหรือไม่ว่าต้องการยกเลิกการจองนี้? (ระบบจะคืนเครดิตให้อัตโนมัติ)')) return;
     try {
-      await bookingModule.cancelBookingAsAdmin(bookingId, reason.trim());
+      await bookingModule.cancelBookingAsAdmin(bookingId, 'Admin cancelled');
       await loadAttendance();
       await loadSessions(); // update booked_count
       onRefresh?.();
@@ -164,29 +162,29 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     }
   };
 
-  const handleToggleSession = async () => {
-    if (!activeSession) return;
-    const newState = !activeSession.is_active;
-    let reason = '';
-    if (!newState) {
-      const input = prompt('ยืนยันการปิดรับจองรอบนี้? ระบบจะยกเลิกการจองและคืนเครดิตอัตโนมัติ (สำหรับ Walk-in ต้องโอนเงินคืนเอง)\\n\\nกรุณากรอกเหตุผล (เช่น ครูลาป่วย, เต็มแล้ว):');
-      if (input === null) return; // User cancelled
-      reason = input.trim() || 'ปิดรับจอง (ไม่มีเหตุผล)';
-    } else {
-      if (!confirm('เปิดรับจองรอบนี้อีกครั้ง?')) return;
-    }
-    
+  const handleCloseSession = async (reason: string) => {
+    if (!activeSession || !activeSession.is_active) return;
     setTogglingSession(true);
     try {
-      if (!newState) {
-        // Closing session with reason
-        await sessionModule.adminCloseSession(selectedSessionId, reason);
-        toast.success("ปิดรับจองเรียบร้อย คืนเครดิตให้ลูกค้าที่มีแพ็กเกจแล้ว");
-      } else {
-        // Re-opening session
-        await sessionModule.toggleSessionActive(selectedSessionId, true);
-        toast.success("เปิดรับจองรอบนี้อีกครั้ง");
+      await sessionModule.adminCloseSession(selectedSessionId, reason || 'ปิดรับจอง (ไม่มีเหตุผล)');
+      toast.success("ปิดรับจองเรียบร้อย คืนเครดิตให้ลูกค้าที่มีแพ็กเกจแล้ว");
+      const updatedSess = await AdminService.getSessionForDate(dailyDate, activeSession.time_label as string);
+      if (updatedSess) {
+        setSessions(prev => prev.map(s => s.id === selectedSessionId ? updatedSess : s));
       }
+    } catch (err) {
+      toast.error(COPY.ALERTS.ERROR_GENERIC(getErrorMessage(err)));
+    } finally {
+      setTogglingSession(false);
+    }
+  };
+
+  const handleOpenSession = async () => {
+    if (!activeSession || activeSession.is_active) return;
+    setTogglingSession(true);
+    try {
+      await sessionModule.toggleSessionActive(selectedSessionId, true);
+      toast.success("เปิดรับจองรอบนี้อีกครั้ง");
       const updatedSess = await AdminService.getSessionForDate(dailyDate, activeSession.time_label as string);
       if (updatedSess) {
         setSessions(prev => prev.map(s => s.id === selectedSessionId ? updatedSess : s));
@@ -231,7 +229,8 @@ export function useDailyAttendance({ onRefresh }: UseDailyAttendanceOptions = {}
     handleCancel,
     handleCheckin,
     handleSaveCapacity,
-    handleToggleSession,
+    handleCloseSession,
+    handleOpenSession,
     refreshData: loadAttendance,
   };
 }

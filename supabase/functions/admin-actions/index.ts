@@ -96,8 +96,16 @@ async function handleRejectSlip(payload: any, supabase: ReturnType<typeof create
   const { data: slip, error: sErr } = await supabase.from('slip_uploads').select('parent_id').eq('id', slipId).single();
   if (sErr) throw sErr;
 
-  const { error } = await supabase.from('slip_uploads').update({ status: 'rejected', reviewed_at: new Date().toISOString() }).eq('id', slipId);
-  if (error) throw error;
+  const { data: updatedSlip, error } = await supabase.from('slip_uploads')
+    .update({ status: 'rejected', reviewed_at: new Date().toISOString() })
+    .eq('id', slipId)
+    .eq('status', 'pending')
+    .select()
+    .maybeSingle();
+
+  if (error || !updatedSlip) {
+    throw new Error('Slip is no longer pending. It may have already been auto-approved or handled by another admin.');
+  }
 
   const family = await getFamilyDetails(supabase, slip.parent_id);
   const creditsRemaining = await getRemainingCredits(supabase, slip.parent_id);

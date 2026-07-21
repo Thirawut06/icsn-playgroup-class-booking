@@ -2,6 +2,7 @@ import React from 'react';
 import type { PackageOption } from '@/types';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
 import { LineSupportCard } from '@/components/ui/LineSupportCard';
+import Image from 'next/image';
 
 interface PaymentSectionProps {
   path: 'trial' | 'payment' | null;
@@ -65,7 +66,7 @@ export function PaymentSection({
           <span className="text-base font-bold text-foreground">{dict.apply.paymentEvidence} <span className="text-error">*</span></span>
         </label>
         <div className="mb-4 max-w-sm mx-auto">
-          <img src="/New_Kbank_QR_acc-no.png" alt="Payment Method Instruction" className="w-full h-auto rounded-xl border border-border shadow-sm" />
+          <Image src="/New_Kbank_QR_acc-no.png" alt="Payment Method Instruction" width={384} height={384} className="w-full h-auto rounded-xl border border-border shadow-sm" />
         </div>
         <input
           type="file"
@@ -77,7 +78,7 @@ export function PaymentSection({
         <span className="block text-xs text-muted-foreground/70 mb-2">{dict.apply.uploadLimit}</span>
         {paymentSlipData && (
           <div className="mt-2 w-32 rounded-xl overflow-hidden border border-border bg-muted">
-            <img src={paymentSlipData} alt="Preview" className="w-full h-auto object-contain" />
+            <img src={paymentSlipData} alt="Preview" loading="lazy" className="w-full h-auto object-contain" />
           </div>
         )}
       </div>

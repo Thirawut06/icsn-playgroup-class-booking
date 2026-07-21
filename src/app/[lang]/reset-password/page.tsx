@@ -3,6 +3,7 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { ResetPasswordForm } from '@/components/login/ResetPasswordForm';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
 import { supabase } from '@/lib/supabase';
@@ -73,7 +74,7 @@ function ResetPasswordContent() {
   }
 
   return (
-    <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)] pb-10 flex flex-col relative overflow-hidden">
+    <div className="max-w-[480px] mx-auto bg-white min-h-[100dvh] shadow-[0_0_20px_rgba(0,0,0,0.05)] pb-10 flex flex-col relative overflow-x-hidden">
       {/* Top banner */}
       <div
         className="bg-icsn-navy w-full aspect-[3/1] text-white text-center relative overflow-hidden bg-cover bg-center flex flex-col items-center justify-center"
@@ -87,7 +88,7 @@ function ResetPasswordContent() {
       {/* Form Container */}
       <div className="p-8 sm:p-10 flex-1">
         <div className="flex justify-center mb-6">
-          <img src="/main-logo-icsn.png" alt="ICSN Logo" className="w-24 h-auto object-contain" />
+          <Image src="/main-logo-icsn.png" alt="ICSN Logo" width={96} height={96} priority className="w-24 h-auto object-contain" />
         </div>
         
         <h1 className="text-2xl font-bold text-center text-icsn-navy mb-2">{dict.auth.updatePasswordTitle}</h1>

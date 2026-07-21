@@ -54,6 +54,18 @@ export const SettingsService = {
           } catch (e) {
             console.error('Failed to parse operating_days', e);
           }
+        } else if (row.key === 'auto_approve_slip_enabled') {
+          settingsObj.auto_approve_slip_enabled = row.value === 'true';
+        } else if (row.key === 'auto_approve_slip_start') {
+          settingsObj.auto_approve_slip_start = row.value;
+        } else if (row.key === 'auto_approve_slip_end') {
+          settingsObj.auto_approve_slip_end = row.value;
+        } else if (row.key === 'auto_approve_full_days') {
+          try {
+            settingsObj.auto_approve_full_days = JSON.parse(row.value);
+          } catch (e) {
+            console.error('Failed to parse auto_approve_full_days', e);
+          }
         }
       }
     }
@@ -91,6 +103,18 @@ export const SettingsService = {
     }
     if (settings.operating_days !== undefined) {
       updates.push({ key: 'operating_days', value: JSON.stringify(settings.operating_days), updated_at: now });
+    }
+    if (settings.auto_approve_slip_enabled !== undefined) {
+      updates.push({ key: 'auto_approve_slip_enabled', value: String(settings.auto_approve_slip_enabled), updated_at: now });
+    }
+    if (settings.auto_approve_slip_start !== undefined) {
+      updates.push({ key: 'auto_approve_slip_start', value: settings.auto_approve_slip_start, updated_at: now });
+    }
+    if (settings.auto_approve_slip_end !== undefined) {
+      updates.push({ key: 'auto_approve_slip_end', value: settings.auto_approve_slip_end, updated_at: now });
+    }
+    if (settings.auto_approve_full_days !== undefined) {
+      updates.push({ key: 'auto_approve_full_days', value: JSON.stringify(settings.auto_approve_full_days), updated_at: now });
     }
 
     if (updates.length > 0) {

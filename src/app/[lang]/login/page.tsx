@@ -4,6 +4,7 @@ import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { LoginForm } from '@/components/login/LoginForm';
 import { SignupForm } from '@/components/login/SignupForm';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
@@ -25,7 +26,7 @@ function LoginFormContent() {
   };
 
   return (
-    <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)] pb-10 flex flex-col relative overflow-hidden">
+    <div className="max-w-[480px] mx-auto bg-white min-h-[100dvh] shadow-[0_0_20px_rgba(0,0,0,0.05)] pb-10 flex flex-col relative overflow-x-hidden">
       {/* Top banner */}
       <div
         className="bg-icsn-navy w-full aspect-[3/1] text-white text-center relative overflow-hidden bg-cover bg-center flex flex-col items-center justify-center"
@@ -42,7 +43,7 @@ function LoginFormContent() {
       {/* Form Container */}
       <div className="p-8 sm:p-10 flex-1">
         <div className="flex justify-center mb-6">
-          <img src="/main-logo-icsn.png" alt="ICSN Logo" className="w-24 h-auto object-contain" />
+          <Image src="/main-logo-icsn.png" alt="ICSN Logo" width={96} height={96} priority className="w-24 h-auto object-contain" />
         </div>
         {/* Tab Selector Switch */}
         <div className="grid grid-cols-2 p-1.5 bg-muted rounded-2xl mb-8">

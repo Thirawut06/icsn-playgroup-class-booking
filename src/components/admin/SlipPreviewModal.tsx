@@ -68,7 +68,7 @@ export function SlipPreviewModal({
               <div className="w-full flex flex-col items-center justify-center space-y-4">
                 {previewUrl ? (
                   <>
-                    <img src={previewUrl} alt="Preview" className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-sm" />
+                    <img src={previewUrl} alt="Preview" loading="lazy" className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-sm" />
                     <button 
                       onClick={() => { setSelectedFile(null); setPreviewUrl(null); }}
                       className="text-error font-bold text-sm hover:underline"
@@ -156,11 +156,7 @@ export function SlipPreviewModal({
                   
                   <button
                     type="button"
-                    onClick={() => {
-                      if (confirm('แน่ใจหรือไม่ว่าต้องการปฏิเสธสลิปนี้?')) {
-                        onReject(slip.id);
-                      }
-                    }}
+                    onClick={() => onReject(slip.id)}
                     disabled={isProcessing}
                     className="w-full flex items-center justify-center gap-2 bg-white border-2 border-error/20 text-error hover:bg-error/10 hover:border-error/30 py-2.5 rounded-xl font-bold transition-all disabled:opacity-50"
                   >

@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { UserPlus, LogIn, ChevronRight, Lock } from 'lucide-react';
+import Image from 'next/image';
 import { ROUTES } from '@/config/routes';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
 import { LanguageSwitcher } from '@/components/ui/language-switcher';
@@ -11,7 +12,7 @@ export default function HomePage() {
   const { dict, lang } = useDictionary();
 
   return (
-    <div className="max-w-[480px] mx-auto bg-white min-h-screen shadow-[0_0_20px_rgba(0,0,0,0.05)] pb-10 flex flex-col relative overflow-hidden">
+    <div className="max-w-[480px] mx-auto bg-white min-h-[100dvh] shadow-[0_0_20px_rgba(0,0,0,0.05)] pb-10 flex flex-col relative overflow-x-hidden">
       {/* Top banner with nice branding */}
       <div
         className="bg-icsn-navy w-full aspect-[3/1] text-white text-center relative overflow-hidden bg-cover bg-center flex flex-col items-center justify-center"
@@ -26,7 +27,7 @@ export default function HomePage() {
       {/* Navigation flow based on Parent State */}
       <div className="p-6 sm:p-8 space-y-6">
         <div className="text-center flex flex-col items-center justify-center gap-3">
-          <img src="/main-logo-icsn.png" alt="ICSN Logo" className="w-24 h-auto object-contain" />
+          <Image src="/main-logo-icsn.png" alt="ICSN Logo" width={96} height={96} priority className="w-24 h-auto object-contain" />
           <h2 className="text-icsn-navy font-extrabold text-lg leading-tight">
             {dict.home.selectStatus}
           </h2>

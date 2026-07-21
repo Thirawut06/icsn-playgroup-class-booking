@@ -46,7 +46,7 @@ export function PhotoUploadSection({
         <span className="block text-xs text-muted-foreground/70">{dict.apply.uploadLimit}</span>
         {parentPhotoData && (
           <div className="mt-2 w-28 h-28 rounded-xl overflow-hidden border border-border bg-muted">
-            <img src={parentPhotoData} alt="Preview" className="w-full h-full object-cover" />
+            <img src={parentPhotoData} alt="Preview" loading="lazy" className="w-full h-full object-cover" />
           </div>
         )}
       </div>
@@ -66,7 +66,7 @@ export function PhotoUploadSection({
         <span className="block text-xs text-muted-foreground/70">{dict.apply.uploadLimit}</span>
         {childPhotoData && (
           <div className="mt-2 w-28 h-28 rounded-xl overflow-hidden border border-border bg-muted">
-            <img src={childPhotoData} alt="Preview" className="w-full h-full object-cover" />
+            <img src={childPhotoData} alt="Preview" loading="lazy" className="w-full h-full object-cover" />
           </div>
         )}
       </div>

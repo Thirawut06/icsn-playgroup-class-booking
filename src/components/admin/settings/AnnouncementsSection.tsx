@@ -10,34 +10,27 @@ interface Props {
 
 export function AnnouncementsSection({ settings, setSettings }: Props) {
   return (
-    <section className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
-      <div className="bg-warning/5 px-6 py-4 border-b border-warning/10 flex items-center gap-3">
-        <div className="bg-warning/20 p-2 rounded-lg text-warning">
-          <BellRing className="w-5 h-5" />
-        </div>
+    <section className="bg-white border border-warning/20 rounded-2xl shadow-sm overflow-hidden">
+      <div className="px-5 py-3.5 bg-warning/5 border-b border-warning/10 flex items-center gap-3">
+        <BellRing className="w-5 h-5 text-warning" />
         <div>
-          <h3 className="font-bold text-icsn-navy text-lg">ประกาศหน้าแอป (Announcements)</h3>
-          <p className="text-sm text-muted-foreground">ข้อความที่จะแสดงเด่นชัดให้ผู้ปกครองทุกคนเห็น</p>
+          <h3 className="font-bold text-icsn-navy">ประกาศหน้าแอป (Announcements)</h3>
         </div>
       </div>
 
-      <div className="p-6">
+      <div className="p-5">
         <div>
           <AdminFieldLabel>ข้อความประกาศแจ้งผู้ปกครอง (Announcement Text)</AdminFieldLabel>
           <textarea
             value={settings.announcement_text}
             onChange={(e) => setSettings({ ...settings, announcement_text: e.target.value })}
             placeholder="เช่น โรงเรียนหยุดทำการในวันศุกร์ที่ 12 เนื่องในวันหยุด..."
-            rows={3}
-            className="w-full mt-2 px-4 py-3 bg-white border border-border rounded-xl focus:ring-2 focus:ring-warning/30 focus:border-warning/50 outline-none text-sm transition-all resize-none text-icsn-navy"
+            rows={2}
+            className="w-full mt-1.5 px-3 py-2 bg-white border border-border rounded-lg focus:ring-2 focus:ring-warning/30 focus:border-warning/50 outline-none text-sm transition-all resize-y text-icsn-navy"
           />
-          <div className="flex items-start gap-2 mt-3 p-3 bg-warning/5 rounded-lg border border-warning/10">
-            <Info className="w-4 h-4 shrink-0 mt-0.5 text-warning" />
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              ข้อความนี้จะแสดงอยู่<span className="font-bold text-warning">บนสุดของหน้าหลัก (แถบสีเหลือง)</span> ในแอปพลิเคชันฝั่งผู้ปกครอง<br />
-              หากไม่ต้องการแสดงประกาศ ให้ลบข้อความออกให้หมด (เว้นว่างไว้)
-            </p>
-          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            ข้อความนี้จะแสดงอยู่บนสุดของหน้าหลัก (แถบสีเหลือง) ฝั่งผู้ปกครอง <span className="font-bold">หากไม่ต้องการแสดงประกาศ ให้ลบข้อความออกให้หมด (เว้นว่างไว้)</span>
+          </p>
         </div>
       </div>
     </section>

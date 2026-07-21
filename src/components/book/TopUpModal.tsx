@@ -6,6 +6,7 @@ import type { PackageOption } from '@/types';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
 import { useBookingContext } from './BookingContext';
 import { LineSupportCard } from '@/components/ui/LineSupportCard';
+import Image from 'next/image';
 
 interface TopUpModalProps {
   isOpen: boolean;
@@ -123,10 +124,12 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
               <div className="w-20 h-20 bg-success/10 text-success rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle2 className="w-10 h-10" />
               </div>
-              <h4 className="text-xl font-bold text-icsn-navy mb-2">{dict.topUp.submitted}</h4>
-              <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                {dict.topUp.submittedMsg}
-              </p>
+              <h4 className="text-xl font-bold text-icsn-navy mb-3">{dict.topUp.submitted}</h4>
+              <div className="text-muted-foreground leading-relaxed space-y-2">
+                {dict.topUp.submittedMsg.split('\n').map((line, i) => (
+                  <p key={i} className="text-balance">{line}</p>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -157,7 +160,7 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
 
               <div>
                 <label className="block text-sm font-bold text-foreground mb-2">{dict.topUp.paymentMethod} <span className="text-error">*</span></label>
-                <img src="/New_Kbank_QR_acc-no.png" alt="Payment details" className="w-full rounded-xl shadow-md" />
+                <Image src="/New_Kbank_QR_acc-no.png" alt="Payment details" width={384} height={384} className="w-full h-auto rounded-xl shadow-md" />
               </div>
 
               <div>
@@ -171,7 +174,7 @@ export function TopUpModal({ isOpen, onClose, parentId, paymentPackages }: TopUp
                 <span className="block text-xs text-muted-foreground/70 mb-3">{dict.apply.uploadLimit}</span>
                 {paymentSlipData && (
                   <div className="w-24 h-auto rounded-xl overflow-hidden border border-border bg-white shadow-sm">
-                    <img src={paymentSlipData} alt="Slip Preview" className="w-full h-auto object-contain" />
+                    <img src={paymentSlipData} alt="Slip Preview" loading="lazy" className="w-full h-auto object-contain" />
                   </div>
                 )}
               </div>

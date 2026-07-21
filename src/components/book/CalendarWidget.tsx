@@ -72,9 +72,9 @@ export function CalendarWidget({
 
         <div className="flex items-center gap-1">
           <button
-            onClick={() => onMonthChange(0)}
+            onClick={() => onMonthChange(monthIndex - 1)}
             className="p-2 hover:bg-muted/80 rounded-xl transition text-icsn-navy disabled:opacity-30 disabled:hover:bg-transparent"
-            disabled={monthIndex === 0}
+            disabled={monthIndex <= 0}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -82,9 +82,17 @@ export function CalendarWidget({
             {monthName}
           </h4>
           <button
-            onClick={() => onMonthChange(1)}
+            onClick={() => onMonthChange(monthIndex + 1)}
             className="p-2 hover:bg-muted/80 rounded-xl transition text-icsn-navy disabled:opacity-30 disabled:hover:bg-transparent"
-            disabled={monthIndex === 1}
+            disabled={(() => {
+              // Only allow advancing if the 1st of the next month is within 60 days from today
+              const today = new Date();
+              const maxDate = new Date(today);
+              maxDate.setDate(maxDate.getDate() + 60);
+              
+              const nextMonthDate = new Date(today.getFullYear(), today.getMonth() + monthIndex + 1, 1);
+              return nextMonthDate > maxDate;
+            })()}
             title={dict.book.nextMonthTitle}
           >
             <ChevronRight className="w-4 h-4" />
@@ -106,7 +114,7 @@ export function CalendarWidget({
           const hasOpenSession = dayObj.sessions.some(s => s.is_active && (s.total_capacity - (s.booked_count || 0)) > 0);
           
           // Check if day is fundamentally bookable based on date/cutoff/closures/operatingDays
-          const operatingDays = settings?.operating_days || [0, 1, 2, 3, 4, 5, 6];
+          const operatingDays = settings?.operating_days || [];
           const isDateBookable = checkIsBookableDate(dayObj.dateStr, closures, operatingDays, cutoffHour);
           
           // True if bookable AND has at least one open session
@@ -130,7 +138,16 @@ export function CalendarWidget({
               dotClass = "bg-primary";
             }
           } else {
-            const isFuture = new Date(dayObj.dateStr) >= new Date(new Date().setHours(0, 0, 0, 0));
+            // Unbookable state
+            const targetDate = new Date(dayObj.dateStr + "T00:00:00Z");
+            const dayOfWeek = targetDate.getUTCDay();
+            const isBaseOperatingDay = operatingDays.includes(dayOfWeek);
+            const closureForDate = closures.find(c => dayObj.dateStr >= c.start_date && dayObj.dateStr <= c.end_date && !c.time_label);
+            
+            const isExplicitlyClosed = closureForDate && !closureForDate.is_force_open;
+            const hasAnySession = dayObj.sessions.length > 0;
+            const isFullyBooked = isDateBookable && hasAnySession && !hasOpenSession;
+
             if (isBooked) {
               if (isSelected) {
                 btnClass = "bg-foreground text-background shadow-md font-black scale-[1.05]";
@@ -139,27 +156,13 @@ export function CalendarWidget({
                 btnClass = "bg-foreground/5 text-foreground border border-foreground/20 font-black";
                 dotClass = "bg-foreground";
               }
-            } else if (isFuture) {
-              const isBaseOperatingDay = operatingDays.includes(new Date(dayObj.dateStr).getDay());
-              const closureForDate = closures.find(c => dayObj.dateStr >= c.start_date && dayObj.dateStr <= c.end_date && !c.time_label);
-              const isExplicitlyClosed = (closureForDate && !closureForDate.is_force_open) || (!isBaseOperatingDay && closureForDate && !closureForDate.is_force_open);
-              const hasClosedSession = dayObj.sessions.some(s => !s.is_active && s.theme);
-
-              if (isExplicitlyClosed || (isBaseOperatingDay && hasClosedSession)) {
-                // Explicitly closed by admin
-                btnClass = "bg-destructive/10 text-destructive border border-destructive/20 cursor-not-allowed";
-                dotClass = "bg-destructive";
-              } else if (isBaseOperatingDay) {
-                // Operating day but fully booked
-                btnClass = "bg-muted text-muted-foreground cursor-not-allowed";
-                dotClass = "bg-destructive";
-              } else {
-                // Normal weekend / non-operating day
-                btnClass = "bg-muted text-muted-foreground/60 cursor-not-allowed opacity-60";
-                dotClass = "bg-transparent";
-              }
+            } else if (isExplicitlyClosed || isFullyBooked) {
+              // Explicitly closed by admin OR Operating day but fully booked
+              btnClass = "bg-destructive/10 text-destructive border border-destructive/20 cursor-not-allowed";
+              dotClass = "bg-destructive";
             } else {
-              btnClass = "bg-muted text-muted-foreground cursor-not-allowed opacity-60";
+              // Normal weekend / non-operating day / Past / >60 days / Past Cutoff
+              btnClass = "bg-muted text-muted-foreground/60 cursor-not-allowed opacity-60";
               dotClass = "bg-transparent";
             }
           }

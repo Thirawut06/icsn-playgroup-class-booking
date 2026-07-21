@@ -12,6 +12,7 @@ interface Closure {
   reason: string;
   time_label: string | null;
   created_at: string;
+  is_force_open: boolean;
 }
 
 export function ClosureNotificationBanner() {
@@ -96,7 +97,13 @@ export function ClosureNotificationBanner() {
           const sDate = formatShortDate(c.start_date);
           const eDate = formatShortDate(c.end_date);
           const dateDisplay = c.start_date === c.end_date ? sDate : `${sDate} – ${eDate}`;
-          const timeStr = c.time_label ? `${dict.book.closureSession} ${c.time_label}` : dict.book.closureFullDay;
+          
+          let timeStr = '';
+          if (c.is_force_open) {
+            timeStr = c.time_label ? `${dict.book.openSpecialSession} ${c.time_label}` : dict.book.openSpecialFullDay;
+          } else {
+            timeStr = c.time_label ? `${dict.book.closureSession} ${c.time_label}` : dict.book.closureFullDay;
+          }
 
           return (
             <div 

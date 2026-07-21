@@ -58,7 +58,7 @@ export function CancelConfirmModal({
             <div className="p-6 pt-4 space-y-4">
               <div className="bg-error/5 border border-error/20 rounded-2xl p-5 text-center">
                 <p className="text-[15px] text-error font-medium leading-relaxed">
-                  {dict.book.cancelRefundNotice} <span className="font-bold">{dict.book.refundHighlight}</span>
+                  {dict.book.cancelRefundNotice} <span className="font-bold whitespace-nowrap">{dict.book.refundHighlight}</span>
                 </p>
               </div>
 

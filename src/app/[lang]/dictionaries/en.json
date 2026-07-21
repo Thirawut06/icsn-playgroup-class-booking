@@ -137,6 +137,8 @@
     "closureSession": "Closed for",
     "closureDateLabel": "Date",
     "closureBecause": "due to",
+    "openSpecialFullDay": "Open all day (Special)",
+    "openSpecialSession": "Open for (Special)",
     "closureCollapse": "Hide notifications",
     "closureShowMore": "Show {count} more",
     "pendingSlipNotice": "You have a pending payment waiting for admin approval. Credits will be updated once approved."
@@ -149,8 +151,8 @@
     "paymentMethod": "Payment Method",
     "uploadSlip": "Upload Payment Slip",
     "confirmPayment": "Confirm Payment",
-    "submitted": "Submitted!",
-    "submittedMsg": "Your payment evidence has been submitted successfully.\nPlease wait for our staff to verify and update your credits.",
+    "submitted": "Submitted Successfully",
+    "submittedMsg": "We have received your payment evidence.\nPlease wait for our staff to verify and update your credits.",
     "acknowledgeClose": "Acknowledge / Close"
   },
   "apply": {

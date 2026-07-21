@@ -70,12 +70,14 @@ export class SupabasePackageAdapter implements IPackageRepository {
 
     // Background sync to Google Drive is now handled by Database Webhooks automatically.
 
-    // Try to trigger Auto Approve (fire and forget)
-    supabase.functions.invoke('auto-approve-slip', {
-      body: { slipId: data.id }
-    }).catch(err => {
-      console.error('Failed to trigger auto-approve-slip:', err)
-    })
+    // Await Auto Approve so the UI can reflect the immediate approval
+    try {
+      await supabase.functions.invoke('auto-approve-slip', {
+        body: { slipId: data.id }
+      });
+    } catch (err) {
+      console.error('Failed to trigger auto-approve-slip:', err);
+    }
 
     return data;
   }
