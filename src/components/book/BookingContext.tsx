@@ -126,7 +126,7 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
     if (!parentId) return;
 
     const channel = supabase
-      .channel('realtime-slips')
+      .channel('realtime-booking-data')
       .on(
         'postgres_changes',
         {
@@ -137,6 +137,39 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
         },
         () => {
           checkPendingSlips(parentId);
+          loadData(parentId, false);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'system_settings'
+        },
+        () => {
+          loadData(parentId, false);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'school_closures'
+        },
+        () => {
+          loadData(parentId, false);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sessions'
+        },
+        () => {
           loadData(parentId, false);
         }
       )
