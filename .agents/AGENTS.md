@@ -413,3 +413,6 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## JavaScript Date Timezone Safety (CRITICAL)
 - **Deno / Edge Function Timezones:** Edge functions run in UTC. If you format dates inside an Edge Function to send as plain strings to external services (like Google Sheets), you MUST manually shift the time to UTC+7 (Asia/Bangkok) before formatting (e.g., `new Date(d.getTime() + (7 * 60 * 60 * 1000))`). Otherwise, displayed times will be 7 hours behind.
+## Supabase Auth URL Configuration (CRITICAL)
+- **Localhost vs Production Links:** If a user reports that the password reset link inside their email redirects them to `localhost:3000` in production, this is an infrastructure misconfiguration. The codebase (`redirectTo: ${window.location.origin}...`) is correct. The root cause is the **Site URL** setting in the Supabase Dashboard.
+- **Resolution:** Instruct the developer/admin to log into the Supabase Dashboard -> Authentication -> URL Configuration. For Production, set "Site URL" to `https://playgroup.icsn.ac.th` and add `https://playgroup.icsn.ac.th/*` to Redirect URLs. Never attempt to "fix" this in the codebase.

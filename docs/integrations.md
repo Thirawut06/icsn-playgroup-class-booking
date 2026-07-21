@@ -53,12 +53,13 @@ Triggered via Edge Functions (`sync-files-to-drive`) when slips or profile photo
   ```
 - **Response Handling:** The Edge Function receives `{ "fileUrl": "...", "folderUrl": "..." }` and updates the `parents.google_drive_url` column with the `folderUrl`.
 
-## 2. LINE Notifications
-Used to notify admins or parents about actions.
-- **Service:** Uses LINE Messaging API via Edge Functions.
-- **Secrets Required:** `LINE_CHANNEL_ACCESS_TOKEN`
+## 2. Google Chat Notifications
+Used to notify admins about important events (e.g., slip approvals, auto-approvals, class cancellations, manual credit adjustments).
+- **Service:** Google Chat Webhooks via Supabase Edge Functions (`google-chat-notify`, `admin-actions`, `auto-approve-slip`).
+- **Secrets Required:** `GOOGLE_CHAT_WEBHOOK_URL`
 
-## 3. Email Notifications
-Triggered for booking confirmations, cancellations, and general alerts.
-- **Service:** Resend API.
-- **Secrets Required:** `RESEND_API_KEY`
+## 3. Email Notifications (Resend)
+Used for critical system emails, specifically sending "Reset your password" links to parents.
+- **Service:** Resend API (Configured as Custom SMTP in the Supabase Dashboard, not directly in the Next.js codebase).
+- **Secrets Required:** Configured in Supabase Production Dashboard (Auth > SMTP).
+- **Dashboard Configuration (CRITICAL):** The **Site URL** and **Redirect URLs** in the Supabase Dashboard (Auth -> URL Configuration) MUST be set to the correct production domain (e.g. `https://playgroup.icsn.ac.th`). If left as default (`http://localhost:3000`), the password reset link inside the email will point to localhost, preventing users from resetting their passwords.

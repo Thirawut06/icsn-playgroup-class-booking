@@ -7,13 +7,13 @@ A modern, highly-available class booking and management system built for the ICS
 - **Admin Dashboard:** Full CRM capabilities, daily roster generation, manual adjustments, and payment slip verification.
 - **Smart Queueing:** FIFO auto-deselect logic prevents overbooking when capacities are maxed out, providing a fluid user experience.
 - **Automated Google Sync:** Zero-overhead integration with Google Workspace. Uploads files to Google Drive and synchronizes data to Google Sheets in real-time via custom Google Apps Script Webhooks.
-- **Automated Notifications:** Email alerts via Resend API and instant admin notifications via LINE Messaging API.
+- **Automated Notifications:** Instant admin notifications via Google Chat Webhooks, and reliable system emails (e.g., password resets) via Resend.
 
 ## 🛠️ Tech Stack
 - **Framework:** Next.js 15+ (App Router), React 19
 - **Styling:** Tailwind CSS v4, shadcn/ui
 - **Database & Auth:** Supabase (PostgreSQL, Edge Functions, Row-Level Security, Storage)
-- **Integrations:** Google Apps Script (Drive/Sheets), LINE API, Resend
+- **Integrations:** Google Apps Script (Drive/Sheets), Google Chat, Resend
 
 ---
 
@@ -73,6 +73,12 @@ git commit -m "feat: your new feature"
 git push origin main
 ```
 
+### 4. Supabase Auth (Site URL Configuration)
+When deploying to Production, you MUST configure the **Site URL** and **Redirect URLs** manually in the Supabase Dashboard (`Authentication -> URL Configuration`). 
+- **Site URL:** `https://playgroup.icsn.ac.th`
+- **Redirect URLs:** `https://playgroup.icsn.ac.th/*`
+*If you fail to do this, password reset emails sent by Resend will contain `http://localhost:3000` links, causing them to fail in production.*
+
 ---
 
 ## 🔄 Syncing Environments (Database Baseline)
@@ -92,7 +98,7 @@ For a deep dive into the system's architecture, business rules, and design decis
 
 1. **[Business Domain Rules](docs/domain-rules.md):** Core business logic, booking cut-offs, FIFO auto-queue, and trial package limitations.
 2. **[Database Architecture](docs/database-architecture.md):** Information about table relationships, data dictionary, and the strict source of truth for credits.
-3. **[External Integrations](docs/integrations.md):** How the system pushes payloads to Google Workspace (Sheets/Drive), LINE, and Resend.
+3. **[External Integrations](docs/integrations.md):** How the system pushes payloads to Google Workspace (Sheets/Drive) and handles notifications (Google Chat & Resend).
 4. **Architecture Decision Records (ADRs):**
    - [ADR-001: Google Apps Script Webhooks](docs/decisions/001-google-apps-script-webhooks.md)
    - [ADR-002: Credits Source of Truth](docs/decisions/002-credits-source-of-truth.md)
