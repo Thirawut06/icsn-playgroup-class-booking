@@ -1,72 +1,101 @@
 # ICSN Panda Playgroup - Class Booking System
 
-This is the booking and management system for ICSN Panda Playgroup. It is built with Next.js (App Router), Tailwind CSS, and Supabase.
+A modern, highly-available class booking and management system built for the ICSN Panda Playgroup. Designed for preschool operations, the platform handles end-to-end parent registration, package purchasing, daily class bookings, slip verification, and school administration.
 
-## 🚀 Environments
+## 🌟 Key Features
+- **Parent Portal:** Register children, purchase session packages (e.g., 5-passes, 10-passes, free trials), and book daily slots securely.
+- **Admin Dashboard:** Full CRM capabilities, daily roster generation, manual adjustments, and payment slip verification.
+- **Smart Queueing:** FIFO auto-deselect logic prevents overbooking when capacities are maxed out, providing a fluid user experience.
+- **Automated Google Sync:** Zero-overhead integration with Google Workspace. Uploads files to Google Drive and synchronizes data to Google Sheets in real-time via custom Google Apps Script Webhooks.
+- **Automated Notifications:** Email alerts via Resend API and instant admin notifications via LINE Messaging API.
 
-The project strictly follows a **Staging vs Production** environment model to ensure data safety.
-
-- **Production Database Ref:** `psusuyesaxuhiondxqie` (Used by Vercel for the live site)
-- **Staging Database Ref:** `ykyifdoufyadgtemkhdd` (Used for Local Development & Testing)
-
-> ⚠️ **CRITICAL RULE:** Never connect your `.env.local` to the Production database. Always point `.env.local` to Staging (`ykyifdoufyadgtemkhdd`) to prevent polluting real parent data during development.
-
----
-
-## 💻 Local Development (Staging)
-
-1. Ensure your `.env.local` is set up with **Staging Keys**.
-2. Run the development server:
-   ```bash
-   npm run dev
-   ```
-3. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Tech Stack
+- **Framework:** Next.js 15+ (App Router), React 19
+- **Styling:** Tailwind CSS v4, shadcn/ui
+- **Database & Auth:** Supabase (PostgreSQL, Edge Functions, Row-Level Security, Storage)
+- **Integrations:** Google Apps Script (Drive/Sheets), LINE API, Resend
 
 ---
 
-## 🚢 Deployment Workflow (Going Live to Production)
+## 🚀 Quick Start (Local Development)
 
-When you have thoroughly tested your changes locally and on the Staging environment, follow these 3 steps to deploy to Production:
+### 1. Prerequisites
+- Node.js (v18+)
+- Docker Desktop (Required for Supabase CLI local database interactions)
+- Supabase CLI installed globally (`npm i -g supabase`)
+
+### 2. Environment Variables
+To ensure data safety, the project strictly uses a **Staging vs Production** environment model.
+Copy the environment template:
+```bash
+cp .env.example .env.local
+```
+> ⚠️ **CRITICAL RULE:** Never connect your `.env.local` to the Production database. Always point `.env.local` to your Staging environment to prevent polluting real parent data during development.
+
+### 3. Start the Application
+Install dependencies and run the local development server:
+```bash
+npm install
+npm run dev
+```
+Access the application at [http://localhost:3000](http://localhost:3000).
+
+---
+
+## 🚢 Deployment & CI/CD Workflow
+
+The application is deployed securely, ensuring zero downtime and database integrity.
 
 ### 1. Database & Storage Migrations
-If you added new tables, columns, or Storage Buckets, you must push these schema changes to the Production database.
+If you added new tables, columns, or Storage Buckets, you must push schema changes to Production.
 ```bash
 # 1. Link your Supabase CLI to the Production Project
-npx supabase link --project-ref psusuyesaxuhiondxqie
+npx supabase link --project-ref <PRODUCTION_PROJECT_REF>
 
 # 2. Push the migrations to Production
 npx supabase db push
 
 # 3. IMPORTANT: Link back to Staging immediately to keep local dev safe!
-npx supabase link --project-ref ykyifdoufyadgtemkhdd
+npx supabase link --project-ref <STAGING_PROJECT_REF>
 ```
 
-### 2. Edge Functions (API)
-If you modified any code inside `supabase/functions/` (e.g., Google Drive Webhooks, email notifications), you must deploy the functions to Production.
+### 2. Edge Functions Deployment
+If you modified API logic in `supabase/functions/` (e.g., webhooks, email triggers):
 ```bash
-# Deploy all edge functions to Production
-npx supabase functions deploy --project-ref psusuyesaxuhiondxqie
+npx supabase functions deploy --project-ref <PRODUCTION_PROJECT_REF>
 ```
 
-### 3. Frontend Application
-The Next.js frontend is deployed via Vercel and is linked to the `main` branch of the GitHub repository.
-1. Commit your code changes.
-2. Push your code to the `main` branch on GitHub:
-   ```bash
-   git add .
-   git commit -m "Your descriptive commit message"
-   git push origin main
-   ```
-3. **Vercel** will automatically detect the push and deploy the new version of the website.
+### 3. Frontend Deployment (Vercel)
+The Next.js frontend is deployed via Vercel. Pushing to the `main` branch triggers an automatic production build.
+```bash
+git add .
+git commit -m "feat: your new feature"
+git push origin main
+```
 
 ---
 
-## 🔄 Syncing Staging from Production (Creating a Baseline)
-
-If the Production database was modified manually and Staging is out of sync, you must pull a baseline from Production and push it to Staging:
+## 🔄 Syncing Environments (Database Baseline)
+If the Production database was modified manually and Staging is out of sync, pull a baseline from Production to Staging:
 ```bash
-npx supabase link --project-ref psusuyesaxuhiondxqie
+npx supabase link --project-ref <PRODUCTION_PROJECT_REF>
 npx supabase db pull
-npx supabase link --project-ref ykyifdoufyadgtemkhdd
+npx supabase link --project-ref <STAGING_PROJECT_REF>
 npx supabase db push
 ```
+
+---
+
+## 📚 Documentation & Architecture
+
+For a deep dive into the system's architecture, business rules, and design decisions, please refer to the `docs/` directory:
+
+1. **[Business Domain Rules](docs/domain-rules.md):** Core business logic, booking cut-offs, FIFO auto-queue, and trial package limitations.
+2. **[Database Architecture](docs/database-architecture.md):** Information about table relationships, data dictionary, and the strict source of truth for credits.
+3. **[External Integrations](docs/integrations.md):** How the system pushes payloads to Google Workspace (Sheets/Drive), LINE, and Resend.
+4. **Architecture Decision Records (ADRs):**
+   - [ADR-001: Google Apps Script Webhooks](docs/decisions/001-google-apps-script-webhooks.md)
+   - [ADR-002: Credits Source of Truth](docs/decisions/002-credits-source-of-truth.md)
+
+---
+*Developed securely for ICSN Panda Playgroup.*

@@ -9,8 +9,11 @@ const corsHeaders = {
 function formatDateStr(dateStr: string | null): string {
   if (!dateStr) return "";
   try {
-    const d = new Date(dateStr);
-    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+    const isPureDate = /^\d{4}-\d{2}-\d{2}$/.test(dateStr.trim());
+    const parseStr = isPureDate ? `${dateStr.trim()}T00:00:00Z` : dateStr;
+    const d = new Date(parseStr);
+    const bkkTime = new Date(d.getTime() + (7 * 60 * 60 * 1000)); // Add 7 hours for UTC+7
+    return `${bkkTime.getUTCDate().toString().padStart(2, '0')}/${(bkkTime.getUTCMonth() + 1).toString().padStart(2, '0')}/${bkkTime.getUTCFullYear()}`;
   } catch {
     return dateStr;
   }
@@ -20,7 +23,8 @@ function formatDateTimeStr(dateStr: string | null): string {
   if (!dateStr) return "";
   try {
     const d = new Date(dateStr);
-    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
+    const bkkTime = new Date(d.getTime() + (7 * 60 * 60 * 1000)); // Add 7 hours for UTC+7
+    return `${bkkTime.getUTCDate().toString().padStart(2, '0')}/${(bkkTime.getUTCMonth() + 1).toString().padStart(2, '0')}/${bkkTime.getUTCFullYear()} ${bkkTime.getUTCHours().toString().padStart(2, '0')}:${bkkTime.getUTCMinutes().toString().padStart(2, '0')}:${bkkTime.getUTCSeconds().toString().padStart(2, '0')}`;
   } catch {
     return dateStr;
   }
@@ -189,12 +193,12 @@ serve(async (req) => {
     // 4. Fetch Balances (Optimized: O(1) queries instead of N+1)
     const balanceData = [];
     if (parents) {
-      // Calculate balances in memory
+      // Calculate balances in memory using packages as the true source of truth (matching web app)
       const balancesMap: Record<string, number> = {};
-      if (creditTxs) {
-        for (const tx of creditTxs) {
-          if (!balancesMap[tx.parent_id]) balancesMap[tx.parent_id] = 0;
-          balancesMap[tx.parent_id] += tx.amount;
+      if (allPackages) {
+        for (const pkg of allPackages) {
+          if (!balancesMap[pkg.parent_id]) balancesMap[pkg.parent_id] = 0;
+          balancesMap[pkg.parent_id] += (pkg.credits_remaining || 0);
         }
       }
 

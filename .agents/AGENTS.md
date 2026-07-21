@@ -406,3 +406,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Git Workflow & Submodules
 - **Avoid Accidental Submodules:** When downloading third-party repositories or agent skills into the workspace via `git clone`, ALWAYS immediately remove the inner `.git` directory (`rm -rf .git`) before committing, unless explicitly instructed to create a git submodule.
+
+## Google Sheets Sync Architecture (Crucial)
+- **Balance Calculation Source of Truth:** When exporting or calculating balances (e.g., in Edge Functions), ALWAYS calculate the balance by summing `packages.credits_remaining` for the parent. NEVER aggregate `credit_transactions.amount`, as some administrative functions (like `grant_trial_package`) grant credits without inserting `credit_transactions`, leading to incorrect negative balances in reports.
+- **GAS Time-Driven Triggers Safety:** If a Google Apps Script is designed to run automatically on a Time-driven trigger, NEVER call `SpreadsheetApp.getUi()`. Attempting to access the UI context in a background trigger throws an immediate exception and halts the entire script execution. Always wrap UI calls in `try...catch` or skip them if running headlessly.
+
+## JavaScript Date Timezone Safety (CRITICAL)
+- **Deno / Edge Function Timezones:** Edge functions run in UTC. If you format dates inside an Edge Function to send as plain strings to external services (like Google Sheets), you MUST manually shift the time to UTC+7 (Asia/Bangkok) before formatting (e.g., `new Date(d.getTime() + (7 * 60 * 60 * 1000))`). Otherwise, displayed times will be 7 hours behind.

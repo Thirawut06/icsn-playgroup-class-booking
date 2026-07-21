@@ -162,10 +162,17 @@ function buildPaymentRow_(parent, child, pkg, nonRefundable, driveLinks) {
 // ──────────────────────────────────────────────────────────
 
 function backfillFromSupabase() {
-  const ui     = SpreadsheetApp.getUi();
+  let ui = null;
+  try { ui = SpreadsheetApp.getUi(); } catch (e) { /* Ignore when running from Time-based trigger */ }
+  
   const config = getConfig_();
   const sheet  = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-  if (!sheet) { ui.alert('❌ ไม่พบ sheet: ' + SHEET_NAME); return; }
+  if (!sheet) {
+    const msg = '❌ ไม่พบ sheet: ' + SHEET_NAME;
+    if (ui) ui.alert(msg);
+    Logger.log(msg);
+    return;
+  }
 
   Logger.log('=== Sync starting: Incremental ===');
 
@@ -260,10 +267,9 @@ function backfillFromSupabase() {
     const lastRow = sheet.getLastRow();
     sheet.getRange(lastRow + 1, 1, rowsToAppend.length, 37).setValues(rowsToAppend);
     Logger.log('✅ Written ' + rowsToAppend.length + ' rows to sheet.');
-    ui.alert('✅ อัปเดตข้อมูลจากระบบเว็บ Playgroup สำเร็จ!\nเพิ่มแถวใหม่: ' + rowsToAppend.length + ' rows\n(ดู Logs ใน Apps Script console สำหรับรายละเอียด)');
+    if (ui) ui.alert('✅ อัปเดตข้อมูลจากระบบเว็บ Playgroup สำเร็จ!\nเพิ่มแถวใหม่: ' + rowsToAppend.length + ' rows\n(ดู Logs ใน Apps Script console สำหรับรายละเอียด)');
   } else {
-    ui.alert('ℹ️ ข้อมูลระบบเว็บ Playgroup ล่าสุดแล้ว (ไม่มีแถวใหม่ต้องเพิ่ม)');
+    Logger.log('ℹ️ ข้อมูลระบบเว็บ Playgroup ล่าสุดแล้ว (ไม่มีแถวใหม่ต้องเพิ่ม)');
+    if (ui) ui.alert('ℹ️ ข้อมูลระบบเว็บ Playgroup ล่าสุดแล้ว (ไม่มีแถวใหม่ต้องเพิ่ม)');
   }
 }
-
-

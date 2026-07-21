@@ -128,11 +128,12 @@ export function SettingsTab() {
         onClose={handleCancelLeave} // Backdrop/X -> Cancel routing, stay on page
         onCancelAction={handleConfirmLeave} // Left button -> Discard and leave
         onConfirm={handleSaveAndLeave} // Right button -> Save and leave
-        title="มีข้อมูลที่ยังไม่ได้บันทึก"
-        message="คุณต้องการบันทึกการตั้งค่าก่อนออกจากหน้านี้หรือไม่?"
+        title="ข้อมูลยังไม่ได้บันทึก"
+        message="ต้องการบันทึกก่อนออกหรือไม่?"
         confirmText="บันทึกและออก"
         cancelText="ไม่บันทึก"
-        isDestructive={false}
+        isDestructive={true}
+        isWarning={false}
       />
     </div>
   );
