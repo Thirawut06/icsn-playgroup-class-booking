@@ -126,7 +126,7 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
     if (!parentId) return;
 
     const channel = supabase
-      .channel('realtime-booking-data')
+      .channel(`realtime-global-changes-${parentId}`)
       .on(
         'postgres_changes',
         {
@@ -173,7 +173,13 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
           loadData(parentId, false);
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[Realtime] Subscribed to booking updates');
+        } else if (err) {
+          console.error('[Realtime] Subscription error:', status, err);
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
