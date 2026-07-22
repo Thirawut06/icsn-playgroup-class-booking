@@ -465,7 +465,7 @@ export function AdminButton({
   className = '',
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'icon';
+  variant?: 'primary' | 'secondary' | 'danger' | 'warning' | 'ghost' | 'icon';
   size?: 'sm' | 'md' | 'icon';
   icon?: LucideIcon;
   isLoading?: boolean;
@@ -482,6 +482,9 @@ export function AdminButton({
       break;
     case 'danger':
       variantClasses = "bg-error text-white hover:bg-error/90 shadow-sm";
+      break;
+    case 'warning':
+      variantClasses = "bg-warning text-white hover:bg-warning/90 shadow-sm";
       break;
     case 'ghost':
       variantClasses = "text-muted-foreground hover:bg-muted hover:text-foreground";
@@ -627,6 +630,7 @@ export function AdminConfirmModal({
   confirmText = "ยืนยัน",
   cancelText = "ยกเลิก",
   isDestructive = false,
+  isWarning = false,
   isLoading = false,
   onCancelAction,
 }: {
@@ -638,6 +642,7 @@ export function AdminConfirmModal({
   confirmText?: string;
   cancelText?: string;
   isDestructive?: boolean;
+  isWarning?: boolean;
   isLoading?: boolean;
   onCancelAction?: () => void;
 }) {
@@ -659,7 +664,7 @@ export function AdminConfirmModal({
         </button>
         <div className="p-6">
           <div className="flex items-start gap-4">
-            <div className={`p-3 rounded-full shrink-0 ${isDestructive ? 'bg-error/10 text-error' : 'bg-info/10 text-info'}`}>
+            <div className={`p-3 rounded-full shrink-0 ${isDestructive ? 'bg-error/10 text-error' : isWarning ? 'bg-warning/10 text-warning' : 'bg-info/10 text-info'}`}>
               <AlertTriangle className="w-6 h-6" />
             </div>
             <div className="pr-6">
@@ -671,7 +676,7 @@ export function AdminConfirmModal({
         <div className="px-6 py-4 bg-muted/50 border-t border-border flex justify-end gap-3">
           <AdminButton variant="secondary" onClick={onCancelAction || onClose} disabled={isLoading}>{cancelText}</AdminButton>
           <AdminButton 
-            variant={isDestructive ? 'danger' : 'primary'} 
+            variant={isDestructive ? 'danger' : isWarning ? 'warning' : 'primary'} 
             onClick={onConfirm} 
             isLoading={isLoading}
           >

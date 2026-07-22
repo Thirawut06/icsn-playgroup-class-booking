@@ -10,6 +10,7 @@ interface UseBookingActionsProps {
   selectedSessionsMap: Record<string, Session>;
   packages: Package[];
   onSuccess: () => void;
+  onError?: () => void;
   clearSelection: () => void;
 }
 
@@ -20,6 +21,7 @@ export function useBookingActions({
   selectedSessionsMap,
   packages,
   onSuccess,
+  onError,
   clearSelection
 }: UseBookingActionsProps) {
   const { dict } = useDictionary();
@@ -46,6 +48,7 @@ export function useBookingActions({
       onSuccess();
     } catch (e: unknown) {
       setBookingError(dict.book.bookingFailed + " " + (e instanceof Error ? e.message : String(e)));
+      if (onError) onError();
     } finally {
       setIsSubmitting(false);
     }

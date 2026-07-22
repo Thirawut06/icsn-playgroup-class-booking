@@ -73,6 +73,7 @@ export function useBookPage() {
     selectedSessionsMap,
     packages,
     onSuccess: handleBookingSuccess,
+    onError: () => refreshData(false),
     clearSelection
   });
 
