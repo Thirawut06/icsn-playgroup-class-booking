@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Session } from '@/types';
 import { useBookingContext } from './BookingContext';
-import { getThaiMonthName, checkIsBookableDate } from '@/utils/dateUtils';
+import { getThaiMonthName, checkIsBookableDate, findClosureForDate } from '@/utils/dateUtils';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
 
 export interface DayObj {
@@ -142,9 +142,9 @@ export function CalendarWidget({
             const targetDate = new Date(dayObj.dateStr + "T00:00:00Z");
             const dayOfWeek = targetDate.getUTCDay();
             const isBaseOperatingDay = operatingDays.includes(dayOfWeek);
-            const closureForDate = closures.find(c => dayObj.dateStr >= c.start_date && dayObj.dateStr <= c.end_date && !c.time_label);
+            const closureForDate = findClosureForDate(closures, dayObj.dateStr);
             
-            const isExplicitlyClosed = closureForDate && !closureForDate.is_force_open;
+            const isExplicitlyClosed = closureForDate && !closureForDate.is_force_open && isBaseOperatingDay;
             const hasAnySession = dayObj.sessions.length > 0;
             const isFullyBooked = isDateBookable && hasAnySession && !hasOpenSession;
 

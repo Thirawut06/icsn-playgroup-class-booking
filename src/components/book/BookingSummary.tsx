@@ -118,12 +118,12 @@ export function BookingSummary({
                     const session = sessionsForDate.find(s => s.id === e.target.value);
                     if (session) onSelectSessionMap(dateStr, session);
                   }}
-                  disabled={!isBookable || sessionsForDate.length === 0}
+                  disabled={!isBookable}
                 >
                   {!isBookable ? (
                     <option value="">{dict.book.closedBooking}</option>
                   ) : sessionsForDate.length === 0 ? (
-                    <option value="">{dict.book.closed}</option>
+                    <option value="default">{lang === 'th' ? 'รอบปกติ (09:00 - 12:00)' : 'Regular Session (09:00 - 12:00)'}</option>
                   ) : (
                     sessionsForDate.map(session => {
                       const isDisabled = getIsDisabled(session);

@@ -61,7 +61,7 @@ export const AdminSessionService = {
     return data || [];
   },
 
-  async setDateStatus(startDate: string, endDate: string, isOpen: boolean, reason?: string, timeLabel?: string): Promise<void> {
+  async setDateStatus(startDate: string, endDate: string, isOpen: boolean, reason?: string, timeLabel?: string): Promise<{ success: boolean; cancelledBookingsCount?: number }> {
     const { data, error } = await supabase.rpc('set_date_status', {
       p_start_date: startDate,
       p_end_date: endDate,
@@ -71,6 +71,7 @@ export const AdminSessionService = {
     });
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
     if (data && data.success === false) throw new Error(data.error || 'Set date status failed');
+    return data || { success: true };
   },
 
   async bulkReopenDays(startDate: string, endDate: string): Promise<void> {
@@ -124,20 +125,20 @@ export const AdminSessionService = {
   async getSessionTemplates() {
     const { data, error } = await supabase
       .from('session_templates')
-      .select('id, time_label, capacity, trial_capacity, is_active, created_at')
+      .select('id, time_label, capacity, trial_capacity, is_active, day_of_week, created_at')
       .order('time_label', { ascending: true });
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
     return data;
   },
 
-  async addSessionTemplate(timeLabel: string, capacity: number, trialCapacity: number): Promise<void> {
+  async addSessionTemplate(timeLabel: string, capacity: number, trialCapacity: number, dayOfWeek?: number[] | null): Promise<void> {
     const { error } = await supabase
       .from('session_templates')
-      .insert([{ time_label: timeLabel, capacity, trial_capacity: trialCapacity, is_active: true }]);
+      .insert([{ time_label: timeLabel, capacity, trial_capacity: trialCapacity, is_active: true, day_of_week: dayOfWeek || null }]);
     if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
   },
 
-  async updateSessionTemplate(id: string, updates: { time_label?: string; capacity?: number; trial_capacity?: number; is_active?: boolean; }): Promise<void> {
+  async updateSessionTemplate(id: string, updates: { time_label?: string; capacity?: number; trial_capacity?: number; is_active?: boolean; day_of_week?: number[] | null; }): Promise<void> {
     const { error } = await supabase
       .from('session_templates')
       .update(updates)
