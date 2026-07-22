@@ -416,3 +416,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Supabase Auth URL Configuration (CRITICAL)
 - **Localhost vs Production Links:** If a user reports that the password reset link inside their email redirects them to `localhost:3000` in production, this is an infrastructure misconfiguration. The codebase (`redirectTo: ${window.location.origin}...`) is correct. The root cause is the **Site URL** setting in the Supabase Dashboard.
 - **Resolution:** Instruct the developer/admin to log into the Supabase Dashboard -> Authentication -> URL Configuration. For Production, set "Site URL" to `https://playgroup.icsn.ac.th` and add `https://playgroup.icsn.ac.th/*` to Redirect URLs. Never attempt to "fix" this in the codebase.
+
+## Supabase PostgREST RPC Overloading (CRITICAL)
+- **No Function Overloading in PostgREST**: PostgREST maps REST API endpoints to Postgres RPC functions by function name and parameter names. If Postgres contains overloaded functions with identical names but different argument types (e.g. `get_affected_bookings_list(date[])` vs `get_affected_bookings_list(text[])`), PostgREST cannot disambiguate the request and returns a `400 Bad Request (PGRST203)` error.
+- **Explicit Drop in Migrations**: NEVER create overloaded RPC functions in migrations. When changing an RPC function's parameter types, ALWAYS explicitly drop the old function signature in the migration (e.g. `DROP FUNCTION IF EXISTS public.my_func(date[]);`) before creating the updated version.
+
+## Frontend Context Data Loading & Fetch Deduplication
+- **Promise.allSettled for Context Loaders**: Root or feature Data Providers (e.g., `BookingContext`) MUST NOT execute sequential `await` chains for independent queries. ALWAYS fetch independent datasets in parallel using `Promise.allSettled()` to reduce page load waterfall latencies.
+- **Context-Level Data Reuse**: Child components rendered inside a Provider MUST consume data directly from `useContext()` (e.g., `useBookingContext()`). NEVER issue duplicate `supabase.from(...)` queries in child components for data that is already fetched and managed by the parent Provider.
+
+## Admin Form Inputs & Sensible Defaults
+- **Pre-filled Operational Defaults**: When building creation forms for non-technical admin staff (e.g. adding custom daily sessions), ALWAYS pre-fill sensible default values (e.g., default capacity `12`) instead of leaving inputs as empty strings. Automatically reset inputs back to these defaults upon successful form submissions to minimize repetitive manual typing.
+

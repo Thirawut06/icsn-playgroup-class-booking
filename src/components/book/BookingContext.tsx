@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { ParentService, PackageService, BookingService, SettingsService, supabase } from '@/lib/supabase';
 import type { Child, Package, Session, PackageOption, Booking } from '@/types';
 import type { SystemSettings } from '@/lib/services/settings.service';
-import { STORAGE_KEYS } from '@/config/constants';
 
 import { useCachedState } from '@/hooks/useCachedState';
 
@@ -63,43 +62,73 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
   const loadData = async (pId: string, showLoading = true) => {
     if (showLoading) setLoading(true);
     try {
-      try {
-        const sysSettings = await SettingsService.getAllSettings();
-        setSettings(sysSettings);
-      } catch (e) {
-        console.error("Failed to load settings:", e);
-      }
-
-      const parent = await ParentService.getParentDetails(pId);
-      if (parent) {
-        setParentName(parent.name);
-        setChildren(parent.children || []);
-        if (parent.children && parent.children.length > 0) {
-          setSelectedChildId(parent.children[0].id);
-        }
-      }
-
-      const pkgs = await PackageService.getPackages(pId);
-      setPackages(pkgs);
-      const totalCredits = pkgs.reduce((sum, pkg) => sum + pkg.credits_remaining, 0);
-      setCreditsRemaining(totalCredits);
-
-      const pkgOptions = await PackageService.getPackageOptions();
-      setPaymentPackages(pkgOptions);
-
+      // Phase 1: Fire all independent queries in parallel (no sequential waterfall)
       const today = new Date();
       const startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
       const endDate = new Date(today.getFullYear() + 1, today.getMonth(), 0).toISOString().split('T')[0];
-      const loadedSessions = await BookingService.getSessions(startDate, endDate);
-      setSessions(loadedSessions);
 
-      const fetchedClosures = await BookingService.getSchoolClosures();
-      setClosures(fetchedClosures);
+      const [
+        settingsResult,
+        parentResult,
+        packagesResult,
+        pkgOptionsResult,
+        sessionsResult,
+        closuresResult,
+        bookingsResult,
+        slipsResult,
+      ] = await Promise.allSettled([
+        SettingsService.getAllSettings(),
+        ParentService.getParentDetails(pId),
+        PackageService.getPackages(pId),
+        PackageService.getPackageOptions(),
+        BookingService.getSessions(startDate, endDate),
+        BookingService.getSchoolClosures(),
+        BookingService.getBookings(pId),
+        supabase.from('slip_uploads').select('id').eq('parent_id', pId).eq('status', 'pending'),
+      ]);
 
-      const bookings = await BookingService.getBookings(pId);
-      setMyBookings(bookings);
+      // Phase 2: Process results (order-independent)
+      if (settingsResult.status === 'fulfilled') {
+        setSettings(settingsResult.value);
+      } else {
+        console.error('Failed to load settings:', settingsResult.reason);
+      }
 
-      await checkPendingSlips(pId);
+      if (parentResult.status === 'fulfilled' && parentResult.value) {
+        setParentName(parentResult.value.name);
+        setChildren(parentResult.value.children || []);
+        if (parentResult.value.children && parentResult.value.children.length > 0) {
+          setSelectedChildId(parentResult.value.children[0].id);
+        }
+      }
+
+      if (packagesResult.status === 'fulfilled') {
+        const pkgs = packagesResult.value;
+        setPackages(pkgs);
+        const totalCredits = pkgs.reduce((sum, pkg) => sum + pkg.credits_remaining, 0);
+        setCreditsRemaining(totalCredits);
+      }
+
+      if (pkgOptionsResult.status === 'fulfilled') {
+        setPaymentPackages(pkgOptionsResult.value);
+      }
+
+      if (sessionsResult.status === 'fulfilled') {
+        setSessions(sessionsResult.value);
+      }
+
+      if (closuresResult.status === 'fulfilled') {
+        setClosures(closuresResult.value);
+      }
+
+      if (bookingsResult.status === 'fulfilled') {
+        setMyBookings(bookingsResult.value);
+      }
+
+      if (slipsResult.status === 'fulfilled') {
+        const slipData = slipsResult.value.data;
+        setHasPendingSlip((slipData || []).length > 0);
+      }
     } catch (e) {
       console.error(e);
     } finally {

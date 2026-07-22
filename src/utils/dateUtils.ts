@@ -45,17 +45,50 @@ export function formatThaiFullDate(date: Date): string {
 }
 
 /**
+ * Formats a Date object into a YYYY-MM-DD string in local time.
+ */
+export function formatISODateString(date: Date): string {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+/**
+ * Returns an array of YYYY-MM-DD date strings between start and end inclusive, using timezone-safe UTC date arithmetic.
+ */
+export function getDateRangeArray(startDateStr: string, endDateStr: string): string[] {
+  if (!startDateStr || !endDateStr || startDateStr > endDateStr) return [];
+
+  const [startY, startM, startD] = startDateStr.split('-').map(Number);
+  const [endY, endM, endD] = endDateStr.split('-').map(Number);
+
+  const dates: string[] = [];
+  const curr = new Date(Date.UTC(startY, startM - 1, startD));
+  const endDateObj = new Date(Date.UTC(endY, endM - 1, endD));
+
+  while (curr <= endDateObj) {
+    const yyyy = curr.getUTCFullYear();
+    const mm = String(curr.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(curr.getUTCDate()).padStart(2, '0');
+    dates.push(`${yyyy}-${mm}-${dd}`);
+    curr.setUTCDate(curr.getUTCDate() + 1);
+  }
+
+  return dates;
+}
+
+/**
  * Checks if a given date is bookable based on business rules:
  * 1. Cannot book past dates.
- * 2. Cannot book today if the current time is past the cutoff hour.
- * 3. Cannot book on weekends (Sunday=0, Saturday=6).
- * 4. Cannot book on blockout dates (admin-defined holidays).
+ * 2. Cannot book beyond +60 days from today.
+ * 3. Cannot book today if the current time is past the cutoff hour.
+ * 4. Cannot book on non-operating days or closed dates (unless force open).
  * 
  * @param dateStr The date string to check (YYYY-MM-DD)
- * @param blockoutDates Optional array of blocked date strings (YYYY-MM-DD)
- * @param cutoffHour Optional hour of the day (0-23) after which same-day booking is disallowed (default 7)
  * @param closures Array of SchoolClosure objects
  * @param operatingDays Array of operating days (0=Sunday, 6=Saturday)
+ * @param cutoffHour Optional hour of the day (0-23) after which same-day booking is disallowed (default 7)
  * @returns true if bookable, false otherwise
  */
 export function checkIsBookableDate(
@@ -65,31 +98,23 @@ export function checkIsBookableDate(
   cutoffHour: number = 7
 ): boolean {
   const today = new Date();
-  
-  // Format today as YYYY-MM-DD in local time
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  const todayStr = `${yyyy}-${mm}-${dd}`;
+  const todayStr = formatISODateString(today);
 
   // 1. Cannot book past dates
   if (dateStr < todayStr) {
     return false;
   }
   
-  // 1.5 Cannot book beyond +60 days from today
+  // 2. Cannot book beyond +60 days from today
   const maxDate = new Date(today);
   maxDate.setDate(maxDate.getDate() + 60);
-  const maxYyyy = maxDate.getFullYear();
-  const maxMm = String(maxDate.getMonth() + 1).padStart(2, '0');
-  const maxDd = String(maxDate.getDate()).padStart(2, '0');
-  const maxDateStr = `${maxYyyy}-${maxMm}-${maxDd}`;
+  const maxDateStr = formatISODateString(maxDate);
   
   if (dateStr > maxDateStr) {
     return false;
   }
   
-  // 2. Cannot book today if past cutoff time
+  // 3. Cannot book today if past cutoff time
   const isToday = dateStr === todayStr;
   if (isToday && today.getHours() >= cutoffHour) {
     return false;

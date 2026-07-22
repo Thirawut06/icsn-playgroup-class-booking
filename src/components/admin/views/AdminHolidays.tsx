@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { CalendarCog, AlertTriangle, Loader2 } from 'lucide-react';
+import { CalendarCog } from 'lucide-react';
 import { AdminPanel, AdminPanelHeader } from '../admin-ui';
 import { useAdminHolidays } from './holidays/useAdminHolidays';
 import { HolidaysCalendar } from './holidays/HolidaysCalendar';
