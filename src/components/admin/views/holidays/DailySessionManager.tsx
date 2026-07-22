@@ -13,6 +13,9 @@ interface DailySessionManagerProps {
   fetchData: () => Promise<void>;
 }
 
+const DEFAULT_TIME_LABEL = '09.00 - 12.00';
+const DEFAULT_CAPACITY = '12';
+
 export function DailySessionManager({
   targetDate,
   sessions,
@@ -20,8 +23,8 @@ export function DailySessionManager({
   isGenerating,
   fetchData
 }: DailySessionManagerProps) {
-  const [newTimeLabel, setNewTimeLabel] = useState('09.00 - 12.00');
-  const [newCapacity, setNewCapacity] = useState('12');
+  const [newTimeLabel, setNewTimeLabel] = useState(DEFAULT_TIME_LABEL);
+  const [newCapacity, setNewCapacity] = useState(DEFAULT_CAPACITY);
   const [isAddingSession, setIsAddingSession] = useState(false);
 
   function formatDisplayDateStr(dateStr: string) {
@@ -33,8 +36,9 @@ export function DailySessionManager({
     if (!newTimeLabel || !newCapacity) return;
     setIsAddingSession(true);
     try {
-      await AdminService.createCustomSession(targetDate, newTimeLabel, parseInt(newCapacity));
+      await AdminService.createCustomSession(targetDate, newTimeLabel, parseInt(newCapacity, 10));
       toast.success('เพิ่มรอบเวลาเฉพาะกิจสำเร็จ');
+      setNewCapacity(DEFAULT_CAPACITY);
       await fetchData();
     } catch (err: any) {
       toast.error(err.message || 'ไม่สามารถเพิ่มรอบเวลาได้');

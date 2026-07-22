@@ -3,14 +3,7 @@ import { AdminService, SettingsService, supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { COPY } from '@/config/copy';
 import type { SchoolClosure, Session } from '@/types';
-
-export interface AffectedBookingRow {
-  id: string;
-  session_date: string;
-  child_nickname: string;
-  parent_name: string;
-  parent_phone: string;
-}
+import { getDateRangeArray } from '@/utils/dateUtils';
 
 export function useAdminHolidays() {
   const [closures, setClosures] = useState<SchoolClosure[]>([]);
@@ -148,68 +141,17 @@ export function useAdminHolidays() {
     }
   };
 
-  // Modal Confirmation state for closing dates with active bookings
-  const [pendingClosureModal, setPendingClosureModal] = useState<{ isOpen: boolean; affectedBookings: AffectedBookingRow[] } | null>(null);
-
-  const fetchAffectedBookingsList = async (): Promise<AffectedBookingRow[]> => {
-    try {
-      const datesToCheck: string[] = [];
-      if (selectionMode === 'range') {
-        if (!rangeStart || !rangeEnd) return [];
-        const [startY, startM, startD] = rangeStart.split('-').map(Number);
-        const [endY, endM, endD] = rangeEnd.split('-').map(Number);
-        let curr = new Date(Date.UTC(startY, startM - 1, startD));
-        const endDateObj = new Date(Date.UTC(endY, endM - 1, endD));
-        while (curr <= endDateObj) {
-          const yyyy = curr.getUTCFullYear();
-          const mm = String(curr.getUTCMonth() + 1).padStart(2, '0');
-          const dd = String(curr.getUTCDate()).padStart(2, '0');
-          datesToCheck.push(`${yyyy}-${mm}-${dd}`);
-          curr.setUTCDate(curr.getUTCDate() + 1);
-        }
-      } else {
-        if (multiDates.length === 0) return [];
-        datesToCheck.push(...multiDates);
-      }
-
-      if (datesToCheck.length === 0) return [];
-
-      const { data, error } = await supabase.rpc('get_affected_bookings_list', { p_dates: datesToCheck });
-
-      if (error) {
-        console.error('Error checking active bookings list:', error);
-        return [];
-      }
-
-      return (data as AffectedBookingRow[]) || [];
-    } catch (err) {
-      console.error('Failed to fetch affected bookings list:', err);
-      return [];
-    }
-  };
-
   const handleSaveOverride = async () => {
     setSavingOverride(true);
 
     try {
       if (overrideStatus === 'reset') {
-        const datesToReset: string[] = [];
+        let datesToReset: string[] = [];
         if (selectionMode === 'range') {
           if (!rangeStart || !rangeEnd) { toast.error('กรุณาระบุช่วงวันที่'); setSavingOverride(false); return; }
-          const [startY, startM, startD] = rangeStart.split('-').map(Number);
-          const [endY, endM, endD] = rangeEnd.split('-').map(Number);
-          let curr = new Date(Date.UTC(startY, startM - 1, startD));
-          const endDateObj = new Date(Date.UTC(endY, endM - 1, endD));
-
-          while (curr <= endDateObj) {
-            const yyyy = curr.getUTCFullYear();
-            const mm = String(curr.getUTCMonth() + 1).padStart(2, '0');
-            const dd = String(curr.getUTCDate()).padStart(2, '0');
-            datesToReset.push(`${yyyy}-${mm}-${dd}`);
-            curr.setUTCDate(curr.getUTCDate() + 1);
-          }
+          datesToReset = getDateRangeArray(rangeStart, rangeEnd);
         } else {
-          datesToReset.push(...multiDates);
+          datesToReset = [...multiDates];
         }
 
         if (datesToReset.length === 0) { toast.error('กรุณาเลือกวัน'); setSavingOverride(false); return; }
@@ -332,7 +274,6 @@ export function useAdminHolidays() {
     savingOverride,
     tempOperatingDays,
     currentViewDate,
-    pendingClosureModal,
     
     // Setters
     setMonthIndex,
@@ -344,7 +285,6 @@ export function useAdminHolidays() {
     setMultiDates,
     setOverrideStatus,
     setOverrideReason,
-    setPendingClosureModal,
     
     // Derived
     getDaysInMonth,
@@ -354,7 +294,6 @@ export function useAdminHolidays() {
     toggleTempDay,
     handleDayClick,
     handleSaveOverride,
-    confirmClosureSave,
     handleDeleteClosure,
     fetchData,
   };

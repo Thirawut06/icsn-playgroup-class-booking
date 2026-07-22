@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { ParentService, PackageService, BookingService, SettingsService, supabase } from '@/lib/supabase';
 import type { Child, Package, Session, PackageOption, Booking } from '@/types';
 import type { SystemSettings } from '@/lib/services/settings.service';
-import { STORAGE_KEYS } from '@/config/constants';
 
 import { useCachedState } from '@/hooks/useCachedState';
 

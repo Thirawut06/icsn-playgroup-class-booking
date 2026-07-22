@@ -65,7 +65,6 @@ export function ClosureNotificationBanner() {
       {/* Closures List */}
       <div className="flex flex-col gap-2.5 px-2">
         {displayClosures.map((c) => {
-          const isFullDay = !c.time_label;
           const locale = lang === 'th' ? 'th-TH' : 'en-US';
           
           const formatShortDate = (dateStr: string) => {
