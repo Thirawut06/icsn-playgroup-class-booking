@@ -1,7 +1,27 @@
--- 1. Add required tables to supabase_realtime publication for UI sync
-ALTER PUBLICATION supabase_realtime ADD TABLE school_closures;
-ALTER PUBLICATION supabase_realtime ADD TABLE sessions;
-ALTER PUBLICATION supabase_realtime ADD TABLE system_settings;
+-- 1. Add required tables to supabase_realtime publication safely (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'school_closures'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE school_closures;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'sessions'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE sessions;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'system_settings'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE system_settings;
+  END IF;
+END $$;
 
 -- 2. Create the Zero Trust validation function for bookings
 CREATE OR REPLACE FUNCTION public.validate_booking_rules()
