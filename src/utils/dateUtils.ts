@@ -100,8 +100,8 @@ export function checkIsBookableDate(
   const dayOfWeek = targetDate.getUTCDay();
   let isBookable = operatingDays.includes(dayOfWeek);
 
-  // 4. Check closures and overrides
-  const closureForDate = closures.find(c => dateStr >= c.start_date && dateStr <= c.end_date && !c.time_label);
+  // 4. Check closures and overrides with single-day exception precedence
+  const closureForDate = findClosureForDate(closures, dateStr);
   if (closureForDate) {
     if (closureForDate.is_force_open) {
       isBookable = true;
@@ -111,4 +111,25 @@ export function checkIsBookableDate(
   }
 
   return isBookable;
+}
+
+/**
+ * Finds the applicable closure record for a specific date with precedence:
+ * Single-day (exact date) records override broad multi-day ranges.
+ */
+export function findClosureForDate(
+  closures: import('@/types').SchoolClosure[] = [],
+  dateStr: string
+): import('@/types').SchoolClosure | undefined {
+  const matching = closures.filter(
+    c => dateStr >= c.start_date && dateStr <= c.end_date && !c.time_label
+  );
+  if (matching.length === 0) return undefined;
+
+  // Single-day (exact date) record takes precedence over broad date range
+  const singleDayMatch = matching.find(c => c.start_date === c.end_date && c.start_date === dateStr);
+  if (singleDayMatch) return singleDayMatch;
+
+  // Otherwise return the first matching range
+  return matching[0];
 }

@@ -4,6 +4,14 @@ import toast from 'react-hot-toast';
 import { COPY } from '@/config/copy';
 import type { SchoolClosure, Session } from '@/types';
 
+export interface AffectedBookingRow {
+  id: string;
+  session_date: string;
+  child_nickname: string;
+  parent_name: string;
+  parent_phone: string;
+}
+
 export function useAdminHolidays() {
   const [closures, setClosures] = useState<SchoolClosure[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -140,6 +148,46 @@ export function useAdminHolidays() {
     }
   };
 
+  // Modal Confirmation state for closing dates with active bookings
+  const [pendingClosureModal, setPendingClosureModal] = useState<{ isOpen: boolean; affectedBookings: AffectedBookingRow[] } | null>(null);
+
+  const fetchAffectedBookingsList = async (): Promise<AffectedBookingRow[]> => {
+    try {
+      const datesToCheck: string[] = [];
+      if (selectionMode === 'range') {
+        if (!rangeStart || !rangeEnd) return [];
+        const [startY, startM, startD] = rangeStart.split('-').map(Number);
+        const [endY, endM, endD] = rangeEnd.split('-').map(Number);
+        let curr = new Date(Date.UTC(startY, startM - 1, startD));
+        const endDateObj = new Date(Date.UTC(endY, endM - 1, endD));
+        while (curr <= endDateObj) {
+          const yyyy = curr.getUTCFullYear();
+          const mm = String(curr.getUTCMonth() + 1).padStart(2, '0');
+          const dd = String(curr.getUTCDate()).padStart(2, '0');
+          datesToCheck.push(`${yyyy}-${mm}-${dd}`);
+          curr.setUTCDate(curr.getUTCDate() + 1);
+        }
+      } else {
+        if (multiDates.length === 0) return [];
+        datesToCheck.push(...multiDates);
+      }
+
+      if (datesToCheck.length === 0) return [];
+
+      const { data, error } = await supabase.rpc('get_affected_bookings_list', { p_dates: datesToCheck });
+
+      if (error) {
+        console.error('Error checking active bookings list:', error);
+        return [];
+      }
+
+      return (data as AffectedBookingRow[]) || [];
+    } catch (err) {
+      console.error('Failed to fetch affected bookings list:', err);
+      return [];
+    }
+  };
+
   const handleSaveOverride = async () => {
     setSavingOverride(true);
 
@@ -148,11 +196,17 @@ export function useAdminHolidays() {
         const datesToReset: string[] = [];
         if (selectionMode === 'range') {
           if (!rangeStart || !rangeEnd) { toast.error('กรุณาระบุช่วงวันที่'); setSavingOverride(false); return; }
-          let curr = new Date(rangeStart);
-          const end = new Date(rangeEnd);
-          while (curr <= end) {
-            datesToReset.push(curr.toISOString().split('T')[0]);
-            curr.setDate(curr.getDate() + 1);
+          const [startY, startM, startD] = rangeStart.split('-').map(Number);
+          const [endY, endM, endD] = rangeEnd.split('-').map(Number);
+          let curr = new Date(Date.UTC(startY, startM - 1, startD));
+          const endDateObj = new Date(Date.UTC(endY, endM - 1, endD));
+
+          while (curr <= endDateObj) {
+            const yyyy = curr.getUTCFullYear();
+            const mm = String(curr.getUTCMonth() + 1).padStart(2, '0');
+            const dd = String(curr.getUTCDate()).padStart(2, '0');
+            datesToReset.push(`${yyyy}-${mm}-${dd}`);
+            curr.setUTCDate(curr.getUTCDate() + 1);
           }
         } else {
           datesToReset.push(...multiDates);
@@ -170,28 +224,42 @@ export function useAdminHolidays() {
 
         toast.success('ยกเลิกการตั้งค่าเรียบร้อยแล้ว');
       } else {
+        let totalCancelled = 0;
         if (selectionMode === 'range') {
           if (!rangeStart || !rangeEnd) { toast.error('กรุณาระบุช่วงวันที่'); setSavingOverride(false); return; }
           if (rangeStart > rangeEnd) { toast.error('วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด'); setSavingOverride(false); return; }
 
-          await AdminService.setDateStatus(rangeStart, rangeEnd, overrideStatus === 'open', overrideReason);
+          const res = await AdminService.setDateStatus(rangeStart, rangeEnd, overrideStatus === 'open', overrideReason);
+          totalCancelled += res?.cancelledBookingsCount || 0;
         } else {
           if (multiDates.length === 0) { toast.error('กรุณาเลือกอย่างน้อย 1 วัน'); setSavingOverride(false); return; }
 
-          await Promise.all(multiDates.map(date =>
-            AdminService.setDateStatus(date, date, overrideStatus === 'open', overrideReason)
-          ));
+          // Save multiDates sequentially to avoid Postgres transaction locking conflicts
+          for (const date of multiDates) {
+            const res = await AdminService.setDateStatus(date, date, overrideStatus === 'open', overrideReason);
+            totalCancelled += res?.cancelledBookingsCount || 0;
+          }
         }
-        toast.success('บันทึกสำเร็จ');
+        
+        if (totalCancelled > 0) {
+          toast.success(`บันทึกสำเร็จ (ยกเลิกและคืนสิทธิ์เรียนให้ผู้ปกครองเรียบร้อย ${totalCancelled} รายการ)`);
+        } else {
+          toast.success('บันทึกสำเร็จ');
+        }
       }
 
       setRangeStart(''); setRangeEnd(''); setIsPickingRangeEnd(false); setOverrideReason(''); setMultiDates([]);
-    } catch (err) {
-      toast.error('เกิดข้อผิดพลาดในการบันทึก/ยกเลิก');
+    } catch (err: any) {
+      const msg = err?.message || (err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการบันทึก/ยกเลิก');
+      toast.error(`เกิดข้อผิดพลาด: ${msg}`);
     } finally {
       setSavingOverride(false);
       fetchData();
     }
+  };
+
+  const confirmClosureSave = () => {
+    handleSaveOverride();
   };
 
   const handleDeleteClosure = async (targetId: string | string[]) => {
@@ -264,6 +332,7 @@ export function useAdminHolidays() {
     savingOverride,
     tempOperatingDays,
     currentViewDate,
+    pendingClosureModal,
     
     // Setters
     setMonthIndex,
@@ -275,6 +344,7 @@ export function useAdminHolidays() {
     setMultiDates,
     setOverrideStatus,
     setOverrideReason,
+    setPendingClosureModal,
     
     // Derived
     getDaysInMonth,
@@ -284,6 +354,7 @@ export function useAdminHolidays() {
     toggleTempDay,
     handleDayClick,
     handleSaveOverride,
+    confirmClosureSave,
     handleDeleteClosure,
     fetchData,
   };

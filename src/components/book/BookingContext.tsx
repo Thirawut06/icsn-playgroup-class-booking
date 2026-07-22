@@ -89,7 +89,7 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
 
       const today = new Date();
       const startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-      const endDate = new Date(today.getFullYear(), today.getMonth() + 2, 0).toISOString().split('T')[0];
+      const endDate = new Date(today.getFullYear() + 1, today.getMonth(), 0).toISOString().split('T')[0];
       const loadedSessions = await BookingService.getSessions(startDate, endDate);
       setSessions(loadedSessions);
 
@@ -126,7 +126,7 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
     if (!parentId) return;
 
     const channel = supabase
-      .channel('realtime-booking-data')
+      .channel(`realtime-global-changes-${parentId}`)
       .on(
         'postgres_changes',
         {
@@ -173,7 +173,24 @@ export function BookingProvider({ children: reactChildren }: { children: React.R
           loadData(parentId, false);
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'session_templates'
+        },
+        () => {
+          loadData(parentId, false);
+        }
+      )
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[Realtime] Subscribed to booking updates');
+        } else if (err) {
+          console.error('[Realtime] Subscription error:', status, err);
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);

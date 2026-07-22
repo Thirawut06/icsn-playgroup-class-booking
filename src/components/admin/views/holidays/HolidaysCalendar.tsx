@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { AdminStepBadge } from '../../admin-ui';
-import { getThaiMonthName } from '@/utils/dateUtils';
+import { getThaiMonthName, findClosureForDate } from '@/utils/dateUtils';
 import type { SchoolClosure, Session } from '@/types';
 
 interface HolidaysCalendarProps {
@@ -109,7 +109,7 @@ export function HolidaysCalendar({
 
             // Sync with User View Logic
             const daySessions = sessions.filter(s => s.session_date === dayObj.dateStr);
-            const closureForDate = closures.find(c => dayObj.dateStr >= c.start_date && dayObj.dateStr <= c.end_date && !c.time_label);
+            const closureForDate = findClosureForDate(closures, dayObj.dateStr);
             // Timezone safe target date
             const targetDate = new Date(dayObj.dateStr + "T00:00:00Z");
             const dayOfWeek = targetDate.getUTCDay();
@@ -143,8 +143,16 @@ export function HolidaysCalendar({
             let dotClass = "bg-transparent";
 
             const isForcedOpen = closureForDate && closureForDate.is_force_open;
-            const isExplicitlyClosed = closureForDate && !closureForDate.is_force_open;
+            const isExplicitlyClosed = closureForDate && !closureForDate.is_force_open && isBaseOperatingDay;
             const isFullyBooked = isFundamentallyOpen && hasAnySession && !hasOpenSession;
+
+            // Check if date is in the past
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${yyyy}-${mm}-${dd}`;
+            const isPastDate = dayObj.dateStr < todayStr;
 
             if (isBookable) {
               if (isSelected) {
@@ -153,6 +161,9 @@ export function HolidaysCalendar({
               } else if (isInHoverRange) {
                 btnClass = "bg-primary/20 text-primary border border-primary/40";
                 dotClass = "bg-primary/50";
+              } else if (isPastDate) {
+                btnClass = "bg-muted/70 text-muted-foreground/60 border border-border/40 opacity-60 hover:opacity-100 transition-all";
+                dotClass = "bg-muted-foreground/40";
               } else if (isForcedOpen) {
                 btnClass = "bg-success/10 text-success border border-success/30 hover:border-success/50 hover:bg-success/20";
                 dotClass = "bg-success";
@@ -168,6 +179,9 @@ export function HolidaysCalendar({
               } else if (isInHoverRange) {
                 btnClass = "bg-foreground/20 text-foreground border border-foreground/40";
                 dotClass = "bg-foreground/50";
+              } else if (isPastDate) {
+                btnClass = "bg-muted/60 text-muted-foreground/50 border border-border/30 opacity-50 hover:opacity-90 transition-all";
+                dotClass = "bg-transparent";
               } else if (isExplicitlyClosed) {
                 btnClass = "bg-destructive/10 text-destructive border border-destructive/30 hover:bg-destructive/20";
                 dotClass = "bg-destructive";
@@ -191,6 +205,7 @@ export function HolidaysCalendar({
                 onClick={() => handleDayClick(dayObj.dateStr, isBookable, closureForDate)}
                 disabled={loading}
                 className={`py-3 rounded-xl transition-all flex flex-col items-center justify-center relative cursor-pointer active:scale-95 ${btnClass}`}
+                title={isPastDate ? `${dayObj.dateStr} (วันที่ผ่านไปแล้ว)` : undefined}
               >
                 <span>{dayObj.day}</span>
                 <span className={`w-1.5 h-1.5 rounded-full mt-1 ${dotClass}`}></span>
@@ -201,6 +216,10 @@ export function HolidaysCalendar({
 
         {/* Legend */}
         <div className="pt-2 flex flex-wrap justify-center gap-4 text-xs text-muted-foreground font-medium">
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 bg-muted/70 border border-border/50 rounded-full opacity-60"></span>
+            วันที่ผ่านไปแล้ว
+          </span>
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 bg-muted border border-border rounded-full"></span>
             ปิดปกติ

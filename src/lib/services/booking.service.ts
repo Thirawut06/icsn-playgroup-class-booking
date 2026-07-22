@@ -24,6 +24,12 @@ export const BookingService = {
     return data || [];
   },
 
+  async getOrCreateSessionsForDate(dateStr: string): Promise<Session[]> {
+    const { data, error } = await supabase.rpc('get_or_create_sessions_for_date', { p_date: dateStr });
+    if (error) throw new AppError(error.message || 'An error occurred', error.code, error);
+    return data || [];
+  },
+
 
   async getBookings(parentId: string): Promise<Booking[]> {
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });

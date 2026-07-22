@@ -148,6 +148,7 @@ export interface SessionTemplate {
   capacity: number;
   trial_capacity?: number;
   is_active: boolean;
+  day_of_week?: number[] | null;
   created_at: string;
 }
 
