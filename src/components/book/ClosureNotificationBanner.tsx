@@ -1,26 +1,20 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { ChevronDown, ChevronUp, X, Megaphone } from 'lucide-react';
 import { useDictionary } from '@/lib/i18n/dictionary-context';
-
-interface Closure {
-  id: string;
-  start_date: string;
-  end_date: string;
-  reason: string;
-  time_label: string | null;
-  created_at: string;
-  is_force_open: boolean;
-}
+import { useBookingContext } from './BookingContext';
 
 export function ClosureNotificationBanner() {
   const { dict, lang } = useDictionary();
-  const [closures, setClosures] = useState<Closure[]>([]);
+  const { closures: contextClosures } = useBookingContext();
   const [expanded, setExpanded] = useState(false);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const [mounted, setMounted] = useState(false);
+
+  // Filter to upcoming closures only
+  const todayStr = new Date().toISOString().split('T')[0];
+  const closures = (contextClosures || []).filter(c => c.end_date >= todayStr);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -33,21 +27,6 @@ export function ClosureNotificationBanner() {
         // ignore JSON parse error
       }
     }
-
-    async function fetchClosures() {
-      const today = new Date().toISOString().split('T')[0];
-      
-      const { data, error } = await supabase
-        .from('school_closures')
-        .select('id, start_date, end_date, reason, time_label, is_force_open, created_at')
-        .gte('end_date', today)
-        .order('start_date', { ascending: true });
-        
-      if (!error && data) {
-        setClosures(data);
-      }
-    }
-    fetchClosures();
   }, []);
 
   const handleDismiss = () => {

@@ -80,7 +80,7 @@ export const ADMIN_NAV_SCHEMA: NavItem[] = [
     id: 'settings',
     label: 'General Settings',
     icon: Settings,
-    description: 'ตั้งค่าระบบ Line Alert และ Webhook ต่างๆ',
+    description: 'กฎการจอง เวลาตัดรอบ วันเปิดบริการ ประกาศ และอนุมัติสลิปอัตโนมัติ',
     requiredRole: 'admin',
     group: 'Configurations',
   }
