@@ -21,7 +21,7 @@ export function DailySessionManager({
   fetchData
 }: DailySessionManagerProps) {
   const [newTimeLabel, setNewTimeLabel] = useState('09.00 - 12.00');
-  const [newCapacity, setNewCapacity] = useState('');
+  const [newCapacity, setNewCapacity] = useState('12');
   const [isAddingSession, setIsAddingSession] = useState(false);
 
   function formatDisplayDateStr(dateStr: string) {
@@ -125,8 +125,8 @@ export function DailySessionManager({
                     }
                   }}
                   className={`p-1.5 rounded-md transition-colors ${session.is_active
-                      ? 'text-muted-foreground/70 hover:text-error hover:bg-error/10'
-                      : 'text-error hover:text-success hover:bg-success/10'
+                    ? 'text-muted-foreground/70 hover:text-error hover:bg-error/10'
+                    : 'text-error hover:text-success hover:bg-success/10'
                     }`}
                   title={session.is_active ? "คลิกเพื่อปิดรับจอง" : "คลิกเพื่อเปิดรับจอง"}
                 >
@@ -142,29 +142,29 @@ export function DailySessionManager({
       <div className="mt-6 pt-5 border-t border-border/50">
         <p className="text-base font-bold text-icsn-navy mb-3">เพิ่มรอบเฉพาะกิจ</p>
         <div className="flex flex-col gap-4 p-4 bg-muted/20 rounded-xl border border-border/50">
-          
+
           {/* Time Picker */}
           <div>
             <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">ช่วงเวลา</label>
             <AdminTimeRangePicker value={newTimeLabel} onChange={setNewTimeLabel} />
           </div>
-          
+
           {/* Capacity */}
           <div>
             <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">จำนวนรับ (คน)</label>
-            <input 
-              type="number" 
-              value={newCapacity} 
+            <input
+              type="number"
+              value={newCapacity}
               onChange={(e) => setNewCapacity(e.target.value)}
               placeholder="ตัวอย่าง: 15"
               className="w-full text-base font-bold bg-white border border-border/80 rounded-lg px-3 py-2 outline-none focus:border-icsn-teal focus:ring-1 focus:ring-icsn-teal placeholder:text-muted-foreground/40 placeholder:font-normal transition-all"
             />
           </div>
-          
+
           {/* Submit Button */}
-          <AdminButton 
-            variant="primary" 
-            onClick={handleAddCustomSession} 
+          <AdminButton
+            variant="primary"
+            onClick={handleAddCustomSession}
             disabled={isAddingSession || !newTimeLabel || !newCapacity}
             isLoading={isAddingSession}
             className="w-full justify-center mt-1 py-2.5 text-sm"
@@ -172,7 +172,7 @@ export function DailySessionManager({
           >
             เพิ่มรอบเวลานี้
           </AdminButton>
-          
+
         </div>
       </div>
     </div>
