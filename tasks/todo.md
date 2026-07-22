@@ -1,4 +1,7 @@
-- [x] Task 1: Update BookingContext.tsx
-  - Acceptance: `system_settings`, `school_closures`, and `sessions` tables have real-time listeners that trigger `loadData(parentId, false)`.
-  - Verify: Build succeeds. Manual check: change a setting in DB and observe UI update.
-  - Files: `src/components/book/BookingContext.tsx`
+- [x] Create migration `20260722020000_add_day_of_week_to_session_templates.sql` (Add `day_of_week` column and update `get_or_create_sessions_for_date`).
+- [x] Push migration to Staging DB (`npx supabase db push`).
+- [x] Update Type Definitions in `src/types/index.ts` to include `day_of_week?: number[] | null`.
+- [x] Update `AdminSessionService` in `src/lib/services/admin-session.service.ts` to support `day_of_week`.
+- [x] Update `AdminTimeSlots.tsx` with Day Selector UI and Badges.
+- [x] Verify functionality on Staging (Passed Typecheck).
+- [x] Push migration to Production DB (`psusuyesaxuhiondxqie`) and reset active link to Staging.
